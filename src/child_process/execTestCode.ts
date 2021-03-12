@@ -17,7 +17,7 @@ import {
 import { outBoundArrayPlugin } from '../babelPlugin'
 import { Script } from "vm";
 import { Args } from '../common/util'
-import { langExtMap, LangBase, CodeLang } from '../common/langConfig'
+import { langExtMap, LangBase, CodeLang, getFileLang } from '../common/langConfig'
 import presetTs = require('@babel/preset-typescript')
 const defaultTimeout = 10000;
 const supportCodeLang = [CodeLang.JavaScript, CodeLang.TypeScript]
@@ -42,17 +42,11 @@ async function execTestCase(options) {
         resultType,
         filepath,
     } = options;
-    const fileParse = path.parse(filepath)
-    const filename = fileParse.name
-    const ext = fileParse.ext
-    const langItem = langExtMap[ext]
-    if (!langItem) {
-        return 'file extension is invalid'
+    const lang = getFileLang(filepath)
+    if (!supportCodeLang.includes(lang)) {
+        return `${lang} is currently not supported`
     }
-    if (!supportCodeLang.includes(langItem.lang)) {
-        return `${langItem.lang} is currently not supported`
-    }
-    const output = await buildCode(filepath, langItem)
+    const output = await buildCode(filepath, lang)
     const code = output[0].code;
     const caseList = parseTestCase(testCase);
     const list: TestResult[] = [];
@@ -87,8 +81,8 @@ async function execTestCase(options) {
     return handleMsg(list, caseList)
 }
 
-async function buildCode(filepath: string, langItem: LangBase) {
-    if (langItem.lang === CodeLang.TypeScript) {
+async function buildCode(filepath: string, lang: CodeLang) {
+    if (lang === CodeLang.TypeScript) {
         return buildTsCode(filepath)
     }
     return buildJsCode(filepath)

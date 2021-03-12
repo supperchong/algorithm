@@ -1,3 +1,4 @@
+import * as path from 'path'
 import { parseTestCase, TestCase, TestResult, normalize, getResultType, getFuncNames, deserializeParam, QuestionMeta, retry } from './common/util';
 import { appendComment, execWithProgress, execWithProgress2, getDebugConfig } from './util';
 import { log, updateConfig } from './config';
@@ -25,7 +26,7 @@ import { githubLogin } from './login';
 import presetTs = require('@babel/preset-typescript')
 import { debug } from 'console';
 import { getQuestionDescription } from './webview/questionPreview';
-import { langExtMap } from './common/langConfig';
+import { CodeLang, getFileLang, langExtMap } from './common/langConfig';
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
 interface PlainObject {
     [key: string]: any
@@ -90,21 +91,13 @@ export async function debugCodeCommand(filePath: string) {
     vscode.debug.startDebugging(p, debugConfiguration)
 }
 export async function buildCodeCommand(context: ExtensionContext, text: string, filePath: string) {
-    if (filePath.endsWith('.js')) {
-        const { code } = await buildCode(text);
-        createPanel(context, code);
-    } else if (filePath.endsWith('.ts')) {
-        const { code } = await buildTsCode(text, filePath);
-        createPanel(context, code);
-    } else {
-        window.showInformationMessage('Currently, only JS and TS are supported')
-    }
-
+    const { code } = await buildCode(text, filePath)
+    createPanel(context, code);
 }
 export async function submitCommand(questionsProvider: QuestionsProvider, text: string, filePath: string) {
     let message = '';
     try {
-        const { result, questionMeta } = await execWithProgress(submitCode(text), 'wait submit');
+        const { result, questionMeta } = await execWithProgress(submitCode(text, filePath), 'wait submit');
 
         message = result.status_msg;
         if (message === 'Accepted') {
@@ -156,8 +149,8 @@ export async function submitCommand(questionsProvider: QuestionsProvider, text: 
 
 
 }
-async function submitCode(text: string) {
-    const buildResult = await buildCode(text);
+async function submitCode(text: string, filePath: string) {
+    const buildResult = await buildCode(text, filePath);
 
     const code = buildResult.code;
     const questionMeta = buildResult.questionMeta;
@@ -235,7 +228,22 @@ interface BuildCode {
     code: string,
     questionMeta: QuestionMeta
 }
-export async function buildCode(text: string): Promise<BuildCode> {
+export async function buildCode(text: string, filePath: string): Promise<BuildCode> {
+    const lang = getFileLang(filePath)
+
+    if (lang === CodeLang.JavaScript) {
+        return buildJsCode(text)
+    }
+    if (lang === CodeLang.TypeScript) {
+        return buildTsCode(text, filePath)
+    }
+    const msg = 'Currently, only JS and TS are supported'
+    window.showInformationMessage(msg)
+    throw new Error(msg)
+
+}
+
+export async function buildJsCode(text: string) {
     try {
         const { funcNames, questionMeta } = getFuncNames(text);
         const funcRunStr = 'console.log(' + funcNames.map(f => f + '()').join('+') + ')';

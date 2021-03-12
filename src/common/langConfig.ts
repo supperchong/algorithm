@@ -1,3 +1,5 @@
+import * as path from 'path'
+
 const langsConfig = {
     algorithms: [
         {
@@ -146,4 +148,13 @@ export enum CodeLang {
     Rust = 'Rust',
     PHP = 'PHP',
     TypeScript = 'TypeScript'
+}
+
+export function getFileLang(filePath: string) {
+    const ext = path.extname(filePath)
+    const langItem = langExtMap[ext]
+    if (!langItem) {
+        throw new Error('file extname invalid')
+    }
+    return langItem.lang
 }
