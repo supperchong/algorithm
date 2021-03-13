@@ -28,7 +28,7 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/supperchong/algorithm.git"
-      },
+    },
     "main": "./out/extension.js",
     "contributes": {
         "configuration": {
@@ -62,15 +62,15 @@
                     ],
                     "scope": "window"
                 },
-                "algorithm.autoImportStr":{
-                    "type":"string",
-                    "default":"",
-                    "description":"The string will be inserted at the beginning of the coding file",
+                "algorithm.autoImportStr": {
+                    "type": "string",
+                    "default": "",
+                    "description": "The string will be inserted at the beginning of the coding file",
                     "scope": "window"
                 },
-                "algorithm.baseDir":{
-                    "type":"string",
-                    "default":"",
+                "algorithm.baseDir": {
+                    "type": "string",
+                    "default": "",
                     "description": "The path of the folder to save the problem files.",
                     "scope": "window"
                 }
@@ -99,22 +99,27 @@
                     "command": "algorithm.signIn",
                     "when": "view == questions",
                     "group": "navigation"
-                },{
+                },
+                {
                     "command": "algorithm.search",
                     "when": "view == questions",
                     "group": "navigation"
                 }
             ],
-            "commandPalette":[{
-                "command": "algorithm.buildCode",
-                "when": "never"
-            },{
-                "command": "algorithm.copyCode",
-                "when": "never"
-            },{
-                "command": "algorithm.questionPreview",
-                "when": "never"
-            }]
+            "commandPalette": [
+                {
+                    "command": "algorithm.buildCode",
+                    "when": "never"
+                },
+                {
+                    "command": "algorithm.copyCode",
+                    "when": "never"
+                },
+                {
+                    "command": "algorithm.questionPreview",
+                    "when": "never"
+                }
+            ]
         },
         "commands": [
             {
@@ -203,12 +208,12 @@
         "unitTest": "node node_modules/mocha/bin/mocha  ./src/test/unit"
     },
     "devDependencies": {
-        "@babel/core": "^7.9.6",
-        "@babel/plugin-proposal-class-properties": "^7.10.1",
-        "@babel/plugin-proposal-decorators": "^7.10.3",
+        "@types/babel__core": "^7.1.9",
+        "@types/esprima": "^4.0.2",
         "@types/glob": "^7.1.1",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
+        "@types/request": "^2.48.5",
         "@types/vscode": "^1.46.0",
         "@typescript-eslint/eslint-plugin": "^2.30.0",
         "@typescript-eslint/parser": "^2.30.0",
@@ -216,13 +221,11 @@
         "glob": "^7.1.6",
         "mocha": "^7.1.2",
         "typescript": "^3.8.3",
-        "vscode-test": "^1.3.0",
-        "@types/babel__core": "^7.1.9",
-        "@types/esprima": "^4.0.2",
-        "@types/request": "^2.48.5"
+        "vscode-test": "^1.3.0"
     },
     "dependencies": {
         "@babel/preset-typescript": "^7.13.0",
+        "@babel/core": "^7.13.10",
         "@rollup/plugin-babel": "^5.0.4",
         "@rollup/plugin-node-resolve": "^8.1.0",
         "@rollup/plugin-typescript": "^8.2.0",
