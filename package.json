@@ -6,6 +6,7 @@
     "engines": {
         "vscode": "^1.46.0"
     },
+    "publisher": "supperchong",
     "categories": [
         "Other"
     ],
