@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from 'fs';
 import os = require('os');
 import path = require('path');
 import { window, workspace, ConfigurationChangeEvent, OutputChannel, Uri, commands } from 'vscode';
-import { Lang ,AskForImportState} from './model/common'
+import { Lang, AskForImportState } from './model/common'
 import { cache } from './cache';
 import { QuestionsProvider } from './provider/questionsProvider';
 import { CodeLang } from './common/langConfig'
@@ -23,15 +23,19 @@ const defaultNodeBinPath = 'node'
 const defaultLang = Lang.en
 const defaultBaseDir = path.join(os.homedir(), '.alg')
 export const log = window.createOutputChannel('algorithm');
+export const InstallState = {
+    installEsbuild: false,
+    installAlgm: false
+}
 interface BaseDir {
     algDir: string;
     cacheDir: string;
     questionDir: string
 }
 
-interface AlgorithmEnv{
-    hasInstallEsbuild:boolean
-    askForImportState:AskForImportState
+interface AlgorithmEnv {
+    hasInstallEsbuild: boolean
+    askForImportState: AskForImportState
 }
 
 export interface Config extends BaseDir {
@@ -47,19 +51,19 @@ export interface Config extends BaseDir {
     // algorithmPath: string
     debugOptionsFilePath: string
     autoImportStr: string
-    autoImportAlgm: boolean 
+    autoImportAlgm: boolean
     cacheBaseDir: string
     existAlgmModule: boolean,
     //the node_module dir
     moduleDir: string
     // the node_module/algm dir
     algmModuleDir: string
-    env:AlgorithmEnv
-    hasAskForImport:boolean
+    env: AlgorithmEnv
+    hasAskForImport: boolean
 }
-type UpdateConfigKey  = keyof Pick<Config,'lang' | 'nodeBinPath' | 'codeLang'|'autoImportAlgm'> 
+type UpdateConfigKey = keyof Pick<Config, 'lang' | 'nodeBinPath' | 'codeLang' | 'autoImportAlgm'>
 function initConfig(): Config {
-    
+
     const codeLang: CodeLang = customConfig.get('codeLang') || defaultCodeLang
     const autoImportStr: string = customConfig.get('autoImportStr') || ''
     const lang: Lang = customConfig.get("lang") || defaultLang
@@ -81,8 +85,8 @@ function initConfig(): Config {
     const moduleDir: string = path.join(baseDir, 'node_modules')
     const algmModuleDir: string = path.join(moduleDir, 'algm')
     const existAlgmModule = fs.existsSync(algmModuleDir)
-    const env=getEnv(cacheBaseDir)
-    const hasAskForImport=false
+    const env = getEnv(cacheBaseDir)
+    const hasAskForImport = false
     return {
         baseDir,
         lang,
@@ -124,27 +128,27 @@ function initDir() {
         }
     })
 }
-function getEnv(cacheBaseDir:string):AlgorithmEnv{
-    const envPath=path.join(cacheBaseDir,'env.json')
-    const defaultEnv:AlgorithmEnv={
-        hasInstallEsbuild:false,
-        askForImportState:AskForImportState.Later
+function getEnv(cacheBaseDir: string): AlgorithmEnv {
+    const envPath = path.join(cacheBaseDir, 'env.json')
+    const defaultEnv: AlgorithmEnv = {
+        hasInstallEsbuild: false,
+        askForImportState: AskForImportState.Later
     }
-    try{
-        const env= require(envPath)
+    try {
+        const env = require(envPath)
         return {
             ...defaultEnv,
             ...env
         }
-    }catch(err){
+    } catch (err) {
         return defaultEnv
     }
-    
+
 }
-export function updateEnv<T extends keyof AlgorithmEnv>(key:T,value:AlgorithmEnv[T]){
-    config.env[key]=value
-    const envPath=path.join(config.cacheBaseDir,'env.json')
-    fs.writeFileSync(envPath,JSON.stringify(config.env))
+export function updateEnv<T extends keyof AlgorithmEnv>(key: T, value: AlgorithmEnv[T]) {
+    config.env[key] = value
+    const envPath = path.join(config.cacheBaseDir, 'env.json')
+    fs.writeFileSync(envPath, JSON.stringify(config.env))
 }
 export const config = initConfig()
 
@@ -176,17 +180,17 @@ export function onChangeConfig(questionsProvider: QuestionsProvider, e: Configur
          * Check the dir when question file open instead.
          */
     }
-    if(e.affectsConfiguration('algorithm.autoImportAlgm')){
+    if (e.affectsConfiguration('algorithm.autoImportAlgm')) {
         updateAutoImportAlgm()
     }
 }
 
-export function updateConfig<T extends UpdateConfigKey>(section: T, value: Config[T],isSync:boolean=false) {
+export function updateConfig<T extends UpdateConfigKey>(section: T, value: Config[T], isSync: boolean = false) {
     if (config[section] !== value) {
         workspace.getConfiguration("algorithm").update(section, value, true)
     }
-    if(isSync){
-        config[section]=value
+    if (isSync) {
+        config[section] = value
     }
 }
 function updateLang() {
@@ -221,8 +225,8 @@ function updateBaseDir() {
     config.algmModuleDir = path.join(config.moduleDir, 'algm')
     config.existAlgmModule = fs.existsSync(config.algmModuleDir)
 }
-function updateAutoImportAlgm(){
-    config.autoImportAlgm= workspace.getConfiguration("algorithm").get("autoImportAlgm")||false
+function updateAutoImportAlgm() {
+    config.autoImportAlgm = workspace.getConfiguration("algorithm").get("autoImportAlgm") || false
     checkAlgm()
 }
 function checkNodePath() {
@@ -242,10 +246,20 @@ async function checkAlgm() {
         if (existsSync(targetDir)) {
             return
         }
-        log.appendLine('installing algm...')
-        log.show()
-        await downloadNpm(name, moduleDir)
-        log.appendLine('install algm success')
+        if (!InstallState.installAlgm) {
+            InstallState.installAlgm = true
+            log.appendLine('installing algm...')
+            log.show()
+            try {
+                await downloadNpm(name, moduleDir)
+                log.appendLine('install algm success')
+            } catch (err) {
+                console.log(err)
+                log.appendLine('install algm fail')
+            }
+            InstallState.installAlgm = false
+        }
+
     }
 }
 
@@ -262,21 +276,32 @@ async function installEsbuild() {
     const targetDir = path.join(moduleDir, name)
     log.appendLine('installing esbuild from npm...')
     log.show()
-    if(!fs.existsSync(targetDir)){
-        await downloadNpm('esbuild', moduleDir)
-    }
-    
-    const installFile = path.join(targetDir, 'install.js')
-    if (fs.existsSync(installFile)) {
-        const nodeBinPath = config.nodeBinPath
-        const { stderr } = await execFileAsync(nodeBinPath, [installFile])
-        if (stderr) {
-            log.appendLine(stderr)
-        } else {
-            updateEnv('hasInstallEsbuild',true)
-            log.appendLine('install esbuild success')
+    InstallState.installEsbuild = true
+    try {
+        if (!fs.existsSync(targetDir)) {
+            await downloadNpm('esbuild', moduleDir)
         }
+
+        const installFile = path.join(targetDir, 'install.js')
+        if (fs.existsSync(installFile)) {
+            const nodeBinPath = config.nodeBinPath
+            const { stderr } = await execFileAsync(nodeBinPath, [installFile])
+            if (stderr) {
+                log.appendLine(stderr)
+                log.appendLine('install esbuild fail')
+            } else {
+                updateEnv('hasInstallEsbuild', true)
+                log.appendLine('install esbuild success')
+            }
+
+        }
+    } catch (err) {
+        log.appendLine(err)
+        log.appendLine('install esbuild fail')
     }
+    InstallState.installEsbuild = false
+
+
 }
 
 init()
