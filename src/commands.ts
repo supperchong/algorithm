@@ -357,7 +357,7 @@ export async function signInCommand() {
         await selectLogin()
     } catch (err) {
         if (err.code !== 2) {
-            window.showInformationMessage(err.msg)
+            window.showInformationMessage(err.message)
         }
     }
 
