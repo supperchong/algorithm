@@ -241,7 +241,6 @@
         "axios": "^0.21.1",
         "cheerio": "^1.0.0-rc.3",
         "compressing": "^1.5.1",
-        "graphql-tag": "^2.10.3",
         "markdown-it": "^10.0.0",
         "pretty-object-string": "2.0.0-beta.3",
         "pretty-tag": "^0.1.1",
