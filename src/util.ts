@@ -4,9 +4,11 @@ import { transformAsync } from "@babel/core"
 import { generateAddTestCommentPlugin } from './babelPlugin'
 import { langMap, LangBase } from './common/langConfig';
 import { ParseContent } from './common/parseContent'
-import { config } from './config'
+import { config, updateConfig ,updateEnv} from './config'
 import { tag } from 'pretty-tag'
 import { Question, CodeSnippet } from './model/question.cn';
+import { cache } from './cache';
+import { AskForImportState } from './model/common';
 
 export async function execWithProgress(promise: Promise<any>, message: string) {
     return window.withProgress({ location: vscode.ProgressLocation.Notification }, (p) => {
@@ -40,6 +42,33 @@ interface MetaData {
     params: Param[],
     return: ReturnType
 }
+// enum MessagePick{
+//     Yes='Yes',
+//     No='No',
+//     Later='Later'
+// }
+
+export function shouldAskForImport():boolean{
+    return !config.hasAskForImport&&config.env.askForImportState===AskForImportState.Later&&!config.autoImportAlgm
+}
+export async function askForImport(){
+    config.hasAskForImport=true
+    const r= await window.showInformationMessage('auto import the algm module',AskForImportState.Yes,AskForImportState.No,AskForImportState.Later)
+    switch(r){
+        case AskForImportState.Yes:{
+            updateConfig('autoImportAlgm',true,true)
+            updateEnv('askForImportState',AskForImportState.Yes)
+            break
+        }
+        case AskForImportState.No:{
+            updateConfig('autoImportAlgm',false,true)
+            updateEnv('askForImportState',AskForImportState.No)
+            break
+        }
+    }
+    
+   
+}
 export function preprocessCode({ questionId, codeSnippets, metaData, content, titleSlug, questionSourceContent }: Question, weekname: string = '', codeSnippet: CodeSnippet) {
 
     const { codeLang } = config
@@ -49,9 +78,10 @@ export function preprocessCode({ questionId, codeSnippets, metaData, content, ti
     const langConfig = langMap[langSlug];
     const algorithmPath = config.algmModuleDir.replace(/\\/g, '\\\\')
     const weektag = weekname ? `weekname=${weekname}` : ''
-    const supportImport = config.autoImportAlgm && ['JavaScript', 'TypeScript'].includes(langConfig.lang)
-    const importStr = supportImport ? `import * as a from '${algorithmPath}'` : ''
-    const autoImportStr = supportImport ? config.autoImportStr : ''
+    const supportImport=['JavaScript', 'TypeScript'].includes(langConfig.lang)
+    const shouldImport =supportImport&& config.autoImportAlgm
+    const importStr = shouldImport ? `import * as a from '${algorithmPath}'` : ''
+    const autoImportStr = config.autoImportStr||''
     const flag = tag`
             ${langConfig.comment} @algorithm @lc id=${questionId} lang=${langSlug} ${weektag}
             ${langConfig.comment} @title ${titleSlug}

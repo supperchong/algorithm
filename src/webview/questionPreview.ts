@@ -4,7 +4,7 @@ import { commands } from 'vscode';
 import { api, apiCn, apiEn } from '../api/index'
 import { config, log } from '../config';
 import { writeFile, isExist, parseHtml } from '../common/util';
-import { preprocessCode } from '../util'
+import { preprocessCode,shouldAskForImport,askForImport } from '../util'
 import { langMap } from '../common/langConfig';
 
 export const QuestionPreview = 'algorithm.questionPreview';
@@ -84,6 +84,10 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 			const exist = await isExist(filePath);
 
 			if (!exist) {
+				const supportImport=['JavaScript', 'TypeScript'].includes(langConfig.lang)
+				if(supportImport&&shouldAskForImport()){
+					askForImport()
+				}
 				let code = preprocessCode(question, weekname, codeSnippet);
 				await writeFile(filePath, code);
 			}

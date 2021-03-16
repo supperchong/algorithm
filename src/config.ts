@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from 'fs';
 import os = require('os');
 import path = require('path');
 import { window, workspace, ConfigurationChangeEvent, OutputChannel, Uri, commands } from 'vscode';
-import { Lang } from './model/common'
+import { Lang ,AskForImportState} from './model/common'
 import { cache } from './cache';
 import { QuestionsProvider } from './provider/questionsProvider';
 import { CodeLang } from './common/langConfig'
@@ -23,16 +23,17 @@ const defaultNodeBinPath = 'node'
 const defaultLang = Lang.en
 const defaultBaseDir = path.join(os.homedir(), '.alg')
 export const log = window.createOutputChannel('algorithm');
-
 interface BaseDir {
     algDir: string;
     cacheDir: string;
     questionDir: string
 }
+
 interface AlgorithmEnv{
     hasInstallEsbuild:boolean
+    askForImportState:AskForImportState
 }
-type UpdateConfigKey = 'lang' | 'nodeBinPath' | 'codeLang'
+
 export interface Config extends BaseDir {
     baseDir: string
     lang: Lang;
@@ -46,7 +47,7 @@ export interface Config extends BaseDir {
     // algorithmPath: string
     debugOptionsFilePath: string
     autoImportStr: string
-    autoImportAlgm: boolean | undefined
+    autoImportAlgm: boolean 
     cacheBaseDir: string
     existAlgmModule: boolean,
     //the node_module dir
@@ -54,8 +55,9 @@ export interface Config extends BaseDir {
     // the node_module/algm dir
     algmModuleDir: string
     env:AlgorithmEnv
+    hasAskForImport:boolean
 }
-
+type UpdateConfigKey  = keyof Pick<Config,'lang' | 'nodeBinPath' | 'codeLang'|'autoImportAlgm'> 
 function initConfig(): Config {
     
     const codeLang: CodeLang = customConfig.get('codeLang') || defaultCodeLang
@@ -80,6 +82,7 @@ function initConfig(): Config {
     const algmModuleDir: string = path.join(moduleDir, 'algm')
     const existAlgmModule = fs.existsSync(algmModuleDir)
     const env=getEnv(cacheBaseDir)
+    const hasAskForImport=false
     return {
         baseDir,
         lang,
@@ -101,7 +104,8 @@ function initConfig(): Config {
         moduleDir,
         algmModuleDir,
         existAlgmModule,
-        env
+        env,
+        hasAskForImport
     }
 }
 function init() {
@@ -122,18 +126,22 @@ function initDir() {
 }
 function getEnv(cacheBaseDir:string):AlgorithmEnv{
     const envPath=path.join(cacheBaseDir,'env.json')
-    const defaultEnv={
-        hasInstallEsbuild:false
+    const defaultEnv:AlgorithmEnv={
+        hasInstallEsbuild:false,
+        askForImportState:AskForImportState.Later
     }
     try{
         const env= require(envPath)
-        return env
+        return {
+            ...defaultEnv,
+            ...env
+        }
     }catch(err){
         return defaultEnv
     }
     
 }
-function updateEnv<T extends keyof AlgorithmEnv>(key:T,value:AlgorithmEnv[T]){
+export function updateEnv<T extends keyof AlgorithmEnv>(key:T,value:AlgorithmEnv[T]){
     config.env[key]=value
     const envPath=path.join(config.cacheBaseDir,'env.json')
     fs.writeFileSync(envPath,JSON.stringify(config.env))
@@ -168,12 +176,17 @@ export function onChangeConfig(questionsProvider: QuestionsProvider, e: Configur
          * Check the dir when question file open instead.
          */
     }
+    if(e.affectsConfiguration('algorithm.autoImportAlgm')){
+        updateAutoImportAlgm()
+    }
 }
 
-
-export function updateConfig(section: UpdateConfigKey, value: string, questionsProvider: QuestionsProvider) {
+export function updateConfig<T extends UpdateConfigKey>(section: T, value: Config[T],isSync:boolean=false) {
     if (config[section] !== value) {
         workspace.getConfiguration("algorithm").update(section, value, true)
+    }
+    if(isSync){
+        config[section]=value
     }
 }
 function updateLang() {
@@ -207,6 +220,10 @@ function updateBaseDir() {
     config.moduleDir = path.join(baseDir, 'node_modules')
     config.algmModuleDir = path.join(config.moduleDir, 'algm')
     config.existAlgmModule = fs.existsSync(config.algmModuleDir)
+}
+function updateAutoImportAlgm(){
+    config.autoImportAlgm= workspace.getConfiguration("algorithm").get("autoImportAlgm")||false
+    checkAlgm()
 }
 function checkNodePath() {
     const { nodeBinPath } = config

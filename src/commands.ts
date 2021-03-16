@@ -389,9 +389,9 @@ export async function switchEndpointCommand(questionsProvider: QuestionsProvider
     const [itemEN, itemCN] = items
     const result = await window.showQuickPick<LangItem>(items);
     if (result === itemEN) {
-        updateConfig('lang', 'en', questionsProvider)
+        updateConfig('lang', Lang.en)
     } else if (result === itemCN) {
-        updateConfig('lang', 'cn', questionsProvider)
+        updateConfig('lang', Lang.cn)
     }
 
 }
@@ -402,7 +402,7 @@ class CodeLangItem implements vscode.QuickPickItem {
     }
 }
 export async function switchCodeLangCommand(questionsProvider: QuestionsProvider) {
-    const langs = ['JavaScript', 'TypeScript']
+    const langs:CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript]
     const curLang = config.codeLang
     const langLabels = langs.map(lang => {
         if (lang === curLang) {
@@ -414,7 +414,7 @@ export async function switchCodeLangCommand(questionsProvider: QuestionsProvider
     const pickIndex = langLabels.findIndex(v => v === pickItem)
     if (pickIndex !== -1) {
         const pickLang = langs[pickIndex]
-        updateConfig('codeLang', pickLang, questionsProvider)
+        updateConfig('codeLang', pickLang)
     }
 }
 
