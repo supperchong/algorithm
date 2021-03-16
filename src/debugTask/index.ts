@@ -8,7 +8,6 @@ import babel = require('@babel/core');
 import presetTs = require('@babel/preset-typescript')
 import virtual = require('@rollup/plugin-virtual');
 import { getFuncNames } from '../common/util'
-import esbuild = require("esbuild")
 interface DebugOption {
     path: string
     lines: number[]
@@ -109,7 +108,7 @@ async function main() {
 main()
 
 export async function buildTsCode(text: string, filePath: string, dir: string) {
-    return esbuild
+    return require('esbuild')
         .build({
             stdin: {
                 contents: text,

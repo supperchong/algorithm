@@ -5,7 +5,7 @@ const defaultCompletionItems = [
     {
         languages: ['javascript', 'typescript'],
         prefix: 'algorithm',
-        body: "// @algorithm\r\nimport * as a from '" + config.algorithmPath + "'\r\n\r\n"
+        body: "// @algorithm\r\nimport * as a from '" + config.algmModuleDir + "'\r\n\r\n"
     }
 ]
 export function registerCompletionItemProvider(context: vscode.ExtensionContext) {

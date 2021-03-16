@@ -1,15 +1,20 @@
 
 import { parse } from 'pretty-object-string';
 import fs = require('fs');
-import util = require('util');
+import { promisify } from 'util';
 import vm = require('vm');
 import { Question, CodeSnippet } from '../model/question.cn';
 import { ConciseQuestion } from '../model/common';
 import * as path from 'path'
+import axios from 'axios'
+import * as compressing from "compressing";
+
 const cheerio = require('cheerio');
-const access = util.promisify(fs.access);
-const mkdir = util.promisify(fs.mkdir);
-const writeFileAsync = util.promisify(fs.writeFile);
+const access = promisify(fs.access);
+const mkdir = promisify(fs.mkdir);
+const writeFileAsync = promisify(fs.writeFile);
+const rename = promisify(fs.rename)
+const rmdir = promisify(fs.rmdir)
 const isSpace = (s: string) => /\s/.test(s);
 const algorithmToken = '// @algorithm';
 const testRegExp = /^\/\/\s*@test\([^\)]*\)/;
@@ -384,5 +389,34 @@ export interface TestResult {
 }
 export function setLinePrefix(str: string, prefix: string) {
     return str.split('\n').map(line => prefix + line).join('\n')
+}
+export async function downloadNpm(name: string, moduleDir: string) {
+    const url = 'https://registry.npmjs.org/' + name
+
+    try {
+        const randomName = Math.random().toString(32).slice(2)
+        const targetDir = path.join(moduleDir, name)
+        const tempDir = path.join(moduleDir, '.temp', randomName)
+        const res = await axios.request({
+            url,
+        })
+        const data = res.data
+        const latestVersion = data["dist-tags"]["latest"]
+        const fileUrl = data["versions"][latestVersion]["dist"]["tarball"]
+
+        const res2 = await axios.get(fileUrl, { responseType: 'stream' })
+        const stream = res2.data
+
+
+
+        await compressing.tgz.uncompress(stream, tempDir)
+        await rename(
+            path.join(tempDir, "package"),
+            path.join(targetDir),
+        )
+        await rmdir(tempDir)
+    } catch (err) {
+        console.log(err)
+    }
 }
 export { detectEnableExt, getTestCaseList, parseTestCase, parseCode as getFuncNames };

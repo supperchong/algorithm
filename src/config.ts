@@ -8,6 +8,15 @@ import { cache } from './cache';
 import { QuestionsProvider } from './provider/questionsProvider';
 import { CodeLang } from './common/langConfig'
 import * as cp from 'child_process'
+import * as fs from 'fs'
+import * as https from 'https'
+import * as compressing from "compressing";
+import axios from 'axios'
+import { promisify } from 'util'
+import { downloadNpm } from './common/util'
+const rename = promisify(fs.rename)
+const rmdir = promisify(fs.rmdir)
+const execFileAsync = promisify(cp.execFile)
 const customConfig = workspace.getConfiguration("algorithm");
 const defaultCodeLang = CodeLang.JavaScript
 const defaultNodeBinPath = 'node'
@@ -31,9 +40,16 @@ export interface Config extends BaseDir {
     dbDir: string;
     nodeBinPath: string;
     codeLang: CodeLang
-    algorithmPath: string
+    // algorithmPath: string
     debugOptionsFilePath: string
     autoImportStr: string
+    autoImportAlgm: boolean | undefined
+    cacheBaseDir: string
+    existAlgmModule: boolean,
+    //the node_module dir
+    moduleDir: string
+    // the node_module/algm dir
+    algmModuleDir: string
 }
 
 function initConfig(): Config {
@@ -43,6 +59,7 @@ function initConfig(): Config {
     const lang: Lang = customConfig.get("lang") || defaultLang
     const baseDir: string = customConfig.get("baseDir") || defaultBaseDir
     const algDir: string = path.join(baseDir, lang);
+    const cacheBaseDir: string = path.join(os.homedir(), '.algcache');
     const cacheDir: string = path.join(os.homedir(), '.algcache', lang);
     const questionDir = path.join(baseDir, lang, codeLang)
 
@@ -51,13 +68,18 @@ function initConfig(): Config {
     const tagPath: string = path.join(cacheDir, 'tag.json');
     const dbDir: string = path.join(cacheDir, 'db')
     const nodeBinPath: string = workspace.getConfiguration("algorithm").get("nodePath") || defaultNodeBinPath;
-    const algorithmPath = path.join(__dirname, '../node_modules/algm')
+    // const algorithmPath = path.join(__dirname, '../node_modules/algm')
+    // const algorithmPath = path.join(cacheDir, 'node_modules/algm')
     const debugOptionsFilePath = path.join(baseDir, '.vscode/debugParams.json')
-
+    const autoImportAlgm: boolean = customConfig.get('autoImportAlgm') || false
+    const moduleDir: string = path.join(baseDir, 'node_modules')
+    const algmModuleDir: string = path.join(moduleDir, 'algm')
+    const existAlgmModule = fs.existsSync(algmModuleDir)
     return {
         baseDir,
         lang,
         algDir,
+        cacheBaseDir,
         cacheDir,
         cookiePath,
         log,
@@ -65,16 +87,22 @@ function initConfig(): Config {
         tagPath,
         dbDir,
         nodeBinPath,
-        algorithmPath,
+        // algorithmPath,
         questionDir,
         codeLang,
         debugOptionsFilePath,
-        autoImportStr
+        autoImportStr,
+        autoImportAlgm,
+        moduleDir,
+        algmModuleDir,
+        existAlgmModule,
     }
 }
 function init() {
     checkNodePath()
     initDir()
+    checkAlgm()
+    checkEsbuildDir()
 }
 
 function initDir() {
@@ -153,6 +181,9 @@ function updateBaseDir() {
     config.algDir = path.join(baseDir, config.lang);
     config.questionDir = path.join(baseDir, config.lang, config.codeLang)
     config.debugOptionsFilePath = path.join(baseDir, '.vscode/debugParams.json')
+    config.moduleDir = path.join(baseDir, 'node_modules')
+    config.algmModuleDir = path.join(config.moduleDir, 'algm')
+    config.existAlgmModule = fs.existsSync(config.algmModuleDir)
 }
 function checkNodePath() {
     const { nodeBinPath } = config
@@ -163,5 +194,49 @@ function checkNodePath() {
     })
 }
 
+async function checkAlgm() {
+    if (config.autoImportAlgm) {
+        const moduleDir = config.moduleDir
+        const targetDir = config.algmModuleDir
+        const name = 'algm'
+        if (existsSync(targetDir)) {
+            return
+        }
+        log.appendLine('installing algm...')
+        log.show()
+        await downloadNpm(name, moduleDir)
+        log.appendLine('install algm success')
+    }
+}
+
+
+function checkEsbuildDir() {
+    const name = 'esbuild'
+    const moduleDir = path.join(__dirname, '..', 'node_modules')
+    const targetDir = path.join(moduleDir, name)
+    if (fs.existsSync(targetDir)) {
+        return
+    }
+    installEsbuild()
+}
+async function installEsbuild() {
+    const name = 'esbuild'
+    const moduleDir = path.join(__dirname, '..', 'node_modules')
+    const targetDir = path.join(moduleDir, name)
+    log.appendLine('installing esbuild...')
+    log.show()
+    await downloadNpm('esbuild', moduleDir)
+
+    const installFile = path.join(targetDir, 'install.js')
+    if (fs.existsSync(installFile)) {
+        const nodeBinPath = config.nodeBinPath
+        const { stderr } = await execFileAsync(nodeBinPath, [installFile])
+        if (stderr) {
+            log.appendLine(stderr)
+        } else {
+            log.appendLine('install esbuild success')
+        }
+    }
+}
 
 init()

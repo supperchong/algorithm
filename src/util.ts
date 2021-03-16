@@ -47,9 +47,9 @@ export function preprocessCode({ questionId, codeSnippets, metaData, content, ti
     let testCases = ParseContent.getTestCases(questionSourceContent || content);
     const langSlug = codeSnippet.langSlug;
     const langConfig = langMap[langSlug];
-    const algorithmPath = config.algorithmPath.replace(/\\/g, '\\\\')
+    const algorithmPath = config.algmModuleDir.replace(/\\/g, '\\\\')
     const weektag = weekname ? `weekname=${weekname}` : ''
-    const supportImport = ['JavaScript', 'TypeScript'].includes(langConfig.lang)
+    const supportImport = config.autoImportAlgm && ['JavaScript', 'TypeScript'].includes(langConfig.lang)
     const importStr = supportImport ? `import * as a from '${algorithmPath}'` : ''
     const autoImportStr = supportImport ? config.autoImportStr : ''
     const flag = tag`
