@@ -29,6 +29,9 @@ interface BaseDir {
     cacheDir: string;
     questionDir: string
 }
+interface AlgorithmEnv{
+    hasInstallEsbuild:boolean
+}
 type UpdateConfigKey = 'lang' | 'nodeBinPath' | 'codeLang'
 export interface Config extends BaseDir {
     baseDir: string
@@ -50,10 +53,11 @@ export interface Config extends BaseDir {
     moduleDir: string
     // the node_module/algm dir
     algmModuleDir: string
+    env:AlgorithmEnv
 }
 
 function initConfig(): Config {
-    const log = window.createOutputChannel('algorithm');
+    
     const codeLang: CodeLang = customConfig.get('codeLang') || defaultCodeLang
     const autoImportStr: string = customConfig.get('autoImportStr') || ''
     const lang: Lang = customConfig.get("lang") || defaultLang
@@ -75,6 +79,7 @@ function initConfig(): Config {
     const moduleDir: string = path.join(baseDir, 'node_modules')
     const algmModuleDir: string = path.join(moduleDir, 'algm')
     const existAlgmModule = fs.existsSync(algmModuleDir)
+    const env=getEnv(cacheBaseDir)
     return {
         baseDir,
         lang,
@@ -96,6 +101,7 @@ function initConfig(): Config {
         moduleDir,
         algmModuleDir,
         existAlgmModule,
+        env
     }
 }
 function init() {
@@ -114,7 +120,24 @@ function initDir() {
         }
     })
 }
-
+function getEnv(cacheBaseDir:string):AlgorithmEnv{
+    const envPath=path.join(cacheBaseDir,'env.json')
+    const defaultEnv={
+        hasInstallEsbuild:false
+    }
+    try{
+        const env= require(envPath)
+        return env
+    }catch(err){
+        return defaultEnv
+    }
+    
+}
+function updateEnv<T extends keyof AlgorithmEnv>(key:T,value:AlgorithmEnv[T]){
+    config.env[key]=value
+    const envPath=path.join(config.cacheBaseDir,'env.json')
+    fs.writeFileSync(envPath,JSON.stringify(config.env))
+}
 export const config = initConfig()
 
 
@@ -211,10 +234,7 @@ async function checkAlgm() {
 
 
 function checkEsbuildDir() {
-    const name = 'esbuild'
-    const moduleDir = path.join(__dirname, '..', 'node_modules')
-    const targetDir = path.join(moduleDir, name)
-    if (fs.existsSync(targetDir)) {
+    if (config.env.hasInstallEsbuild) {
         return
     }
     installEsbuild()
@@ -223,10 +243,12 @@ async function installEsbuild() {
     const name = 'esbuild'
     const moduleDir = path.join(__dirname, '..', 'node_modules')
     const targetDir = path.join(moduleDir, name)
-    log.appendLine('installing esbuild...')
+    log.appendLine('installing esbuild from npm...')
     log.show()
-    await downloadNpm('esbuild', moduleDir)
-
+    if(!fs.existsSync(targetDir)){
+        await downloadNpm('esbuild', moduleDir)
+    }
+    
     const installFile = path.join(targetDir, 'install.js')
     if (fs.existsSync(installFile)) {
         const nodeBinPath = config.nodeBinPath
@@ -234,6 +256,7 @@ async function installEsbuild() {
         if (stderr) {
             log.appendLine(stderr)
         } else {
+            updateEnv('hasInstallEsbuild',true)
             log.appendLine('install esbuild success')
         }
     }
