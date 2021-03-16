@@ -36,6 +36,10 @@ An excellent vscode extension for leetcode.
 
 Click the question in the `algorithm view`
 
+## Switch code lang
+
+press `ctrl+shift+p` and run the Command `algorithm:switch default language`
+
 ## shortcut buttons
 
 > Just click the shortcut button in the `view toolbar` to

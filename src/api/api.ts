@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosRequestConfig,AxiosError } from 'axios';
 import fs = require('fs');
 import { cache, ALLQUESTIONS } from '../cache';
 import { ChapterItemRes, ChaptersRes, ChapterRes, ConciseQuestion, MapIdConciseQuestion, CheckContestOptions, CheckOptions, SubmitContestOptions, CheckResponse, SubmitOptions, SubmitResponse, TagData, GraphqlResponse, QuestionTranslationData, TodayRecordData, DailyQuestionRecordData, DailyQuestionRecord, QuestionData, GraphqlRequestData, ContestData, ChaptersProgressRes } from '../model/question';
@@ -8,6 +8,8 @@ import { GraphRes, ErrorStatus } from '../model/common'
 import { showLoginMessage } from '../login/index'
 import { window } from 'vscode';
 import { signInCommand } from '../commands';
+import {log} from '../config'
+
 const MAPIDQUESTION = 'MapIdQuestion';
 const monthEns = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
 const categories: Category[] = [
@@ -60,12 +62,17 @@ async function request<T>(config: AxiosRequestConfig): Promise<T> {
             ...config.headers,
             ...headers
         }
-    }).then(res => res.data).catch(async err => {
-        if (err.response.status === ErrorStatus.Unlogin) {
-            showLoginMessage()
-
-        } else if (err.response.status === ErrorStatus.InvalidCookie) {
-            showLoginMessage()
+    }).then(res => res.data).catch(async  (err:AxiosError) => {
+        if(err.response){
+            if (err.response.status === ErrorStatus.Unlogin) {
+                showLoginMessage()
+    
+            } else if (err.response.status === ErrorStatus.InvalidCookie) {
+                showLoginMessage()
+            }
+        }
+        if(err.message){
+            log.appendLine(err.message)
         }
         return Promise.reject(err)
     });

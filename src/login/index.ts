@@ -54,7 +54,7 @@ function parseFormData(html: string) {
     const r = formRegExp.exec(html.replace(/\n/g, ""))
     if (!r) {
         return Promise.reject({
-            msg: 'the page of login github not found',
+            message: 'the page of login github not found',
             code: 3
         })
     }
@@ -96,7 +96,7 @@ async function githubAuth(html: string, request: RequestAsync, user) {
     let body = res.body
     if (/Incorrect username or password/.test(body)) {
         return Promise.reject({
-            msg: 'Incorrect username or password',
+            message: 'Incorrect username or password',
             code: 3
         })
     }
@@ -111,7 +111,7 @@ async function githubTwoFactorAuth(html: string, request: RequestAsync) {
     const authenticityTokenTwoFactor = html.match(/name="authenticity_token" value="(.*?)"/);
     if (authenticityTokenTwoFactor === null) {
         return Promise.reject({
-            msg: 'get GitHub two-factor page fail',
+            message: 'get GitHub two-factor page fail',
             code: 3
         })
     }
@@ -120,7 +120,7 @@ async function githubTwoFactorAuth(html: string, request: RequestAsync) {
     })
     if (!code) {
         return Promise.reject({
-            msg: 'cancel login',
+            message: 'cancel login',
             code: 2
         })
     }
@@ -145,7 +145,7 @@ async function githubRedirectBack(body: string, request: RequestAsync) {
     let redirectRes = redirectRegExp.exec(body)
     if (!redirectRes) {
         return Promise.reject({
-            msg: 'github login redirect fail',
+            message: 'github login redirect fail',
             code: 3
         })
     }
@@ -176,7 +176,7 @@ export async function githubLogin(user: User) {
     })
     if (res.statusCode !== 200) {
         return Promise.reject({
-            msg: 'github login fail',
+            message: 'github login fail',
             code: 3
         })
     }
@@ -209,7 +209,7 @@ export async function accountLogin(user: User) {
 
     if (res.statusCode !== 302) {
         return Promise.reject({
-            msg: 'invalid username or password',
+            message: 'invalid username or password',
             code: 3
         })
     }

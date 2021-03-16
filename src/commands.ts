@@ -1,10 +1,8 @@
 import * as path from 'path'
 import { parseTestCase, TestCase, TestResult, normalize, getResultType, getFuncNames, deserializeParam, QuestionMeta, retry } from './common/util';
-import { appendComment, execWithProgress, execWithProgress2, getDebugConfig } from './util';
+import { appendComment, checkBeforeDebug, execWithProgress, execWithProgress2, getDebugConfig } from './util';
 import { log, updateConfig } from './config';
 import { window, ExtensionContext } from 'vscode';
-import { Script } from 'vm';
-import vm = require('vm');
 import rollup = require('rollup');
 import resolve from '@rollup/plugin-node-resolve';
 import rollupBabelPlugin from '@rollup/plugin-babel';
@@ -24,7 +22,6 @@ import { config } from './config'
 import { githubInput, selectLogin } from './login/input'
 import { githubLogin } from './login';
 import presetTs = require('@babel/preset-typescript')
-import { debug } from 'console';
 import { getQuestionDescription } from './webview/questionPreview';
 import { CodeLang, getFileLang, langExtMap } from './common/langConfig';
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
@@ -84,6 +81,9 @@ export async function debugCodeCommand(filePath: string) {
     if (!breaks.find(b => b?.location?.uri.fsPath === filePath)) {
         console.log('breakpoint not found')
         window.showErrorMessage('please set breakpoint')
+        return
+    }
+    if (!checkBeforeDebug(filePath)) {
         return
     }
     const debugConfiguration = getDebugConfig()
@@ -357,7 +357,7 @@ export async function signInCommand() {
         await selectLogin()
     } catch (err) {
         if (err.code !== 2) {
-            window.showInformationMessage(err.msg)
+            window.showInformationMessage(err.message)
         }
     }
 
@@ -389,9 +389,9 @@ export async function switchEndpointCommand(questionsProvider: QuestionsProvider
     const [itemEN, itemCN] = items
     const result = await window.showQuickPick<LangItem>(items);
     if (result === itemEN) {
-        updateConfig('lang', 'en', questionsProvider)
+        updateConfig('lang', Lang.en)
     } else if (result === itemCN) {
-        updateConfig('lang', 'cn', questionsProvider)
+        updateConfig('lang', Lang.cn)
     }
 
 }
@@ -402,7 +402,7 @@ class CodeLangItem implements vscode.QuickPickItem {
     }
 }
 export async function switchCodeLangCommand(questionsProvider: QuestionsProvider) {
-    const langs = ['JavaScript', 'TypeScript']
+    const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript]
     const curLang = config.codeLang
     const langLabels = langs.map(lang => {
         if (lang === curLang) {
@@ -414,7 +414,7 @@ export async function switchCodeLangCommand(questionsProvider: QuestionsProvider
     const pickIndex = langLabels.findIndex(v => v === pickItem)
     if (pickIndex !== -1) {
         const pickLang = langs[pickIndex]
-        updateConfig('codeLang', pickLang, questionsProvider)
+        updateConfig('codeLang', pickLang)
     }
 }
 

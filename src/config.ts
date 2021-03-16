@@ -3,24 +3,46 @@ import { existsSync, mkdirSync } from 'fs';
 import os = require('os');
 import path = require('path');
 import { window, workspace, ConfigurationChangeEvent, OutputChannel, Uri, commands } from 'vscode';
-import { Lang } from './model/common'
+import { Lang, AskForImportState } from './model/common'
 import { cache } from './cache';
 import { QuestionsProvider } from './provider/questionsProvider';
 import { CodeLang } from './common/langConfig'
 import * as cp from 'child_process'
+import * as fs from 'fs'
+import * as https from 'https'
+import * as compressing from "compressing";
+import axios from 'axios'
+import { promisify } from 'util'
+import { downloadNpm } from './common/util'
+const rename = promisify(fs.rename)
+const rmdir = promisify(fs.rmdir)
+const execFileAsync = promisify(cp.execFile)
 const customConfig = workspace.getConfiguration("algorithm");
 const defaultCodeLang = CodeLang.JavaScript
 const defaultNodeBinPath = 'node'
 const defaultLang = Lang.en
 const defaultBaseDir = path.join(os.homedir(), '.alg')
 export const log = window.createOutputChannel('algorithm');
-
+export const InstallState = {
+    installEsbuild: false,
+    installAlgm: false
+}
 interface BaseDir {
     algDir: string;
     cacheDir: string;
     questionDir: string
 }
-type UpdateConfigKey = 'lang' | 'nodeBinPath' | 'codeLang'
+
+interface AlgorithmEnv {
+    hasInstallEsbuild: boolean
+    askForImportState: AskForImportState
+}
+
+// the esbuild install in the extension dir and the extension dir change with the version change 
+interface EnvFile {
+    askForImportState: AskForImportState
+    installEsbuildArr: string[]
+}
 export interface Config extends BaseDir {
     baseDir: string
     lang: Lang;
@@ -31,18 +53,28 @@ export interface Config extends BaseDir {
     dbDir: string;
     nodeBinPath: string;
     codeLang: CodeLang
-    algorithmPath: string
+    // algorithmPath: string
     debugOptionsFilePath: string
     autoImportStr: string
+    autoImportAlgm: boolean
+    cacheBaseDir: string
+    existAlgmModule: boolean,
+    //the node_module dir
+    moduleDir: string
+    // the node_module/algm dir
+    algmModuleDir: string
+    env: AlgorithmEnv
+    hasAskForImport: boolean
 }
-
+type UpdateConfigKey = keyof Pick<Config, 'lang' | 'nodeBinPath' | 'codeLang' | 'autoImportAlgm'>
 function initConfig(): Config {
-    const log = window.createOutputChannel('algorithm');
+
     const codeLang: CodeLang = customConfig.get('codeLang') || defaultCodeLang
     const autoImportStr: string = customConfig.get('autoImportStr') || ''
     const lang: Lang = customConfig.get("lang") || defaultLang
     const baseDir: string = customConfig.get("baseDir") || defaultBaseDir
     const algDir: string = path.join(baseDir, lang);
+    const cacheBaseDir: string = path.join(os.homedir(), '.algcache');
     const cacheDir: string = path.join(os.homedir(), '.algcache', lang);
     const questionDir = path.join(baseDir, lang, codeLang)
 
@@ -51,13 +83,20 @@ function initConfig(): Config {
     const tagPath: string = path.join(cacheDir, 'tag.json');
     const dbDir: string = path.join(cacheDir, 'db')
     const nodeBinPath: string = workspace.getConfiguration("algorithm").get("nodePath") || defaultNodeBinPath;
-    const algorithmPath = path.join(__dirname, '../node_modules/algm')
+    // const algorithmPath = path.join(__dirname, '../node_modules/algm')
+    // const algorithmPath = path.join(cacheDir, 'node_modules/algm')
     const debugOptionsFilePath = path.join(baseDir, '.vscode/debugParams.json')
-
+    const autoImportAlgm: boolean = customConfig.get('autoImportAlgm') || false
+    const moduleDir: string = path.join(baseDir, 'node_modules')
+    const algmModuleDir: string = path.join(moduleDir, 'algm')
+    const existAlgmModule = fs.existsSync(algmModuleDir)
+    const env = getEnv(cacheBaseDir)
+    const hasAskForImport = false
     return {
         baseDir,
         lang,
         algDir,
+        cacheBaseDir,
         cacheDir,
         cookiePath,
         log,
@@ -65,16 +104,24 @@ function initConfig(): Config {
         tagPath,
         dbDir,
         nodeBinPath,
-        algorithmPath,
+        // algorithmPath,
         questionDir,
         codeLang,
         debugOptionsFilePath,
-        autoImportStr
+        autoImportStr,
+        autoImportAlgm,
+        moduleDir,
+        algmModuleDir,
+        existAlgmModule,
+        env,
+        hasAskForImport
     }
 }
 function init() {
     checkNodePath()
     initDir()
+    checkAlgm()
+    checkEsbuildDir()
 }
 
 function initDir() {
@@ -86,7 +133,54 @@ function initDir() {
         }
     })
 }
+function getEnv(cacheBaseDir: string): AlgorithmEnv {
+    const envPath = path.join(cacheBaseDir, 'env.json')
+    const defaultEnv: AlgorithmEnv = {
+        hasInstallEsbuild: false,
+        askForImportState: AskForImportState.Later
+    }
+    try {
+        const env: EnvFile = require(envPath)
 
+        const dir = __dirname
+        const installEsbuild = env.installEsbuildArr.find(v => v === dir)
+        let askForImportState = env.askForImportState
+        const hasInstallEsbuild = !!installEsbuild
+        return {
+            ...defaultEnv,
+            hasInstallEsbuild,
+            askForImportState
+        }
+    } catch (err) {
+        return defaultEnv
+    }
+
+}
+export function updateEnv<T extends keyof AlgorithmEnv>(key: T, value: AlgorithmEnv[T]) {
+    config.env[key] = value
+    const envPath = path.join(config.cacheBaseDir, 'env.json')
+    const dir = __dirname
+    const hasInstallEsbuild = config.env.hasInstallEsbuild
+    let installEsbuildArr: string[] = []
+    if (hasInstallEsbuild) {
+        installEsbuildArr.push(dir)
+    }
+    let envFile: EnvFile = {
+        askForImportState: config.env.askForImportState,
+        installEsbuildArr: installEsbuildArr
+    }
+    try {
+        const data = fs.readFileSync(envPath, { encoding: 'utf8' })
+        const originEnvFile: EnvFile = JSON.parse(data)
+        envFile.askForImportState = originEnvFile.askForImportState || envFile.askForImportState
+        if (hasInstallEsbuild && !envFile.installEsbuildArr.includes(dir)) {
+            envFile.installEsbuildArr.push(dir)
+        }
+    } catch (err) {
+
+    }
+    fs.writeFileSync(envPath, JSON.stringify(envFile))
+}
 export const config = initConfig()
 
 
@@ -117,12 +211,17 @@ export function onChangeConfig(questionsProvider: QuestionsProvider, e: Configur
          * Check the dir when question file open instead.
          */
     }
+    if (e.affectsConfiguration('algorithm.autoImportAlgm')) {
+        updateAutoImportAlgm()
+    }
 }
 
-
-export function updateConfig(section: UpdateConfigKey, value: string, questionsProvider: QuestionsProvider) {
+export function updateConfig<T extends UpdateConfigKey>(section: T, value: Config[T], isSync: boolean = false) {
     if (config[section] !== value) {
         workspace.getConfiguration("algorithm").update(section, value, true)
+    }
+    if (isSync) {
+        config[section] = value
     }
 }
 function updateLang() {
@@ -153,6 +252,13 @@ function updateBaseDir() {
     config.algDir = path.join(baseDir, config.lang);
     config.questionDir = path.join(baseDir, config.lang, config.codeLang)
     config.debugOptionsFilePath = path.join(baseDir, '.vscode/debugParams.json')
+    config.moduleDir = path.join(baseDir, 'node_modules')
+    config.algmModuleDir = path.join(config.moduleDir, 'algm')
+    config.existAlgmModule = fs.existsSync(config.algmModuleDir)
+}
+function updateAutoImportAlgm() {
+    config.autoImportAlgm = workspace.getConfiguration("algorithm").get("autoImportAlgm") || false
+    checkAlgm()
 }
 function checkNodePath() {
     const { nodeBinPath } = config
@@ -163,5 +269,70 @@ function checkNodePath() {
     })
 }
 
+async function checkAlgm() {
+    if (config.autoImportAlgm) {
+        const moduleDir = config.moduleDir
+        const targetDir = config.algmModuleDir
+        const name = 'algm'
+        if (existsSync(targetDir)) {
+            return
+        }
+        if (!InstallState.installAlgm) {
+            InstallState.installAlgm = true
+            log.appendLine('installing algm...')
+            log.show()
+            try {
+                await downloadNpm(name, moduleDir)
+                log.appendLine('install algm success')
+            } catch (err) {
+                console.log(err)
+                log.appendLine('install algm fail')
+            }
+            InstallState.installAlgm = false
+        }
+
+    }
+}
+
+
+function checkEsbuildDir() {
+    if (config.env.hasInstallEsbuild) {
+        return
+    }
+    installEsbuild()
+}
+async function installEsbuild() {
+    const name = 'esbuild'
+    const moduleDir = path.join(__dirname, '..', 'node_modules')
+    const targetDir = path.join(moduleDir, name)
+    log.appendLine('installing esbuild from npm...')
+    log.show()
+    InstallState.installEsbuild = true
+    try {
+        if (!fs.existsSync(targetDir)) {
+            await downloadNpm('esbuild', moduleDir)
+        }
+
+        const installFile = path.join(targetDir, 'install.js')
+        if (fs.existsSync(installFile)) {
+            const nodeBinPath = config.nodeBinPath
+            const { stderr } = await execFileAsync(nodeBinPath, [installFile])
+            if (stderr) {
+                log.appendLine(stderr)
+                log.appendLine('install esbuild fail')
+            } else {
+                updateEnv('hasInstallEsbuild', true)
+                log.appendLine('install esbuild success')
+            }
+
+        }
+    } catch (err) {
+        log.appendLine(err)
+        log.appendLine('install esbuild fail')
+    }
+    InstallState.installEsbuild = false
+
+
+}
 
 init()

@@ -90,3 +90,9 @@ export enum ErrorStatus {
     Unlogin = 403,
     InvalidCookie = 499
 }
+
+export enum AskForImportState{
+    Yes='Yes',
+    No='No',
+    Later='Later'
+}

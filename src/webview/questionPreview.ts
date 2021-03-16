@@ -4,7 +4,7 @@ import { commands } from 'vscode';
 import { api, apiCn, apiEn } from '../api/index'
 import { config, log } from '../config';
 import { writeFile, isExist, parseHtml } from '../common/util';
-import { preprocessCode } from '../util'
+import { preprocessCode,shouldAskForImport,askForImport } from '../util'
 import { langMap } from '../common/langConfig';
 
 export const QuestionPreview = 'algorithm.questionPreview';
@@ -63,7 +63,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 			if (config.lang === 'cn') {
 				previewText = `# ${translatedTitle}\n` + translatedContent;
 			}
-			QuestionPreviewPanel.createOrShow(extensionPath, previewText);
+
 			const defaultLang = config.codeLang
 			let questionDir = config.questionDir
 			let codeSnippet = codeSnippets.find(codeSnippet => codeSnippet.lang === defaultLang);
@@ -84,10 +84,16 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 			const exist = await isExist(filePath);
 
 			if (!exist) {
+				const supportImport=['JavaScript', 'TypeScript'].includes(langConfig.lang)
+				if(supportImport&&shouldAskForImport()){
+					askForImport()
+				}
 				let code = preprocessCode(question, weekname, codeSnippet);
 				await writeFile(filePath, code);
 			}
-			await commands.executeCommand('vscode.open', vscode.Uri.file(filePath), 1);
+			const fileDocument = await vscode.workspace.openTextDocument(filePath)
+			await vscode.window.showTextDocument(fileDocument, vscode.ViewColumn.One)
+			QuestionPreviewPanel.createOrShow(extensionPath, previewText);
 		} else {
 			console.log('parse question error:', question);
 		}
