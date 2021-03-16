@@ -3,12 +3,12 @@ import { parse } from 'pretty-object-string';
 import fs = require('fs');
 import { promisify } from 'util';
 import vm = require('vm');
-import { Question, CodeSnippet } from '../model/question.cn';
+import { Question } from '../model/question.cn';
 import { ConciseQuestion } from '../model/common';
 import * as path from 'path'
 import axios from 'axios'
 import * as compressing from "compressing";
-
+const rimraf = require('rimraf')
 const cheerio = require('cheerio');
 const access = promisify(fs.access);
 const mkdir = promisify(fs.mkdir);
@@ -393,30 +393,34 @@ export function setLinePrefix(str: string, prefix: string) {
 export async function downloadNpm(name: string, moduleDir: string) {
     const url = 'https://registry.npmjs.org/' + name
 
+
+    const randomName = Math.random().toString(32).slice(2)
+    const targetDir = path.join(moduleDir, name)
+    const tempDir = path.join(moduleDir, '.temp', randomName)
+    const res = await axios.request({
+        url,
+    })
+    const data = res.data
+    const latestVersion = data["dist-tags"]["latest"]
+    const fileUrl = data["versions"][latestVersion]["dist"]["tarball"]
+
+    const res2 = await axios.get(fileUrl, { responseType: 'stream' })
+    const stream = res2.data
+
+
+
+    await compressing.tgz.uncompress(stream, tempDir)
     try {
-        const randomName = Math.random().toString(32).slice(2)
-        const targetDir = path.join(moduleDir, name)
-        const tempDir = path.join(moduleDir, '.temp', randomName)
-        const res = await axios.request({
-            url,
-        })
-        const data = res.data
-        const latestVersion = data["dist-tags"]["latest"]
-        const fileUrl = data["versions"][latestVersion]["dist"]["tarball"]
-
-        const res2 = await axios.get(fileUrl, { responseType: 'stream' })
-        const stream = res2.data
-
-
-
-        await compressing.tgz.uncompress(stream, tempDir)
         await rename(
             path.join(tempDir, "package"),
             path.join(targetDir),
         )
-        await rmdir(tempDir)
+
     } catch (err) {
-        console.log(err)
+
     }
+    rimraf(tempDir, err => {
+        console.log(err)
+    })
 }
 export { detectEnableExt, getTestCaseList, parseTestCase, parseCode as getFuncNames };
