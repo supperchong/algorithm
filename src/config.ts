@@ -38,6 +38,11 @@ interface AlgorithmEnv {
     askForImportState: AskForImportState
 }
 
+// the esbuild install in the extension dir and the extension dir change with the version change 
+interface EnvFile {
+    askForImportState: AskForImportState
+    installEsbuildArr: string[]
+}
 export interface Config extends BaseDir {
     baseDir: string
     lang: Lang;
@@ -135,10 +140,16 @@ function getEnv(cacheBaseDir: string): AlgorithmEnv {
         askForImportState: AskForImportState.Later
     }
     try {
-        const env = require(envPath)
+        const env: EnvFile = require(envPath)
+
+        const dir = __dirname
+        const installEsbuild = env.installEsbuildArr.find(v => v === dir)
+        let askForImportState = env.askForImportState
+        const hasInstallEsbuild = !!installEsbuild
         return {
             ...defaultEnv,
-            ...env
+            hasInstallEsbuild,
+            askForImportState
         }
     } catch (err) {
         return defaultEnv
@@ -148,7 +159,27 @@ function getEnv(cacheBaseDir: string): AlgorithmEnv {
 export function updateEnv<T extends keyof AlgorithmEnv>(key: T, value: AlgorithmEnv[T]) {
     config.env[key] = value
     const envPath = path.join(config.cacheBaseDir, 'env.json')
-    fs.writeFileSync(envPath, JSON.stringify(config.env))
+    const dir = __dirname
+    const hasInstallEsbuild = config.env.hasInstallEsbuild
+    let installEsbuildArr: string[] = []
+    if (hasInstallEsbuild) {
+        installEsbuildArr.push(dir)
+    }
+    let envFile: EnvFile = {
+        askForImportState: config.env.askForImportState,
+        installEsbuildArr: installEsbuildArr
+    }
+    try {
+        const data = fs.readFileSync(envPath, { encoding: 'utf8' })
+        const originEnvFile: EnvFile = JSON.parse(data)
+        envFile.askForImportState = originEnvFile.askForImportState || envFile.askForImportState
+        if (hasInstallEsbuild && !envFile.installEsbuildArr.includes(dir)) {
+            envFile.installEsbuildArr.push(dir)
+        }
+    } catch (err) {
+
+    }
+    fs.writeFileSync(envPath, JSON.stringify(envFile))
 }
 export const config = initConfig()
 
