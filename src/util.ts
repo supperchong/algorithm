@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { window } from 'vscode';
 import { transformAsync } from "@babel/core"
 import { generateAddTestCommentPlugin } from './babelPlugin'
-import { langMap, LangBase } from './common/langConfig';
+import { langMap, LangBase, getFileLang, CodeLang } from './common/langConfig';
 import { ParseContent } from './common/parseContent'
-import { config, updateConfig, updateEnv } from './config'
+import { config, updateConfig, updateEnv, InstallState, log } from './config'
 import { tag } from 'pretty-tag'
 import { Question, CodeSnippet } from './model/question.cn';
 import { cache } from './cache';
@@ -134,4 +134,15 @@ export function getDebugConfig() {
         ],
         "preLaunchTask": "algorithm: build"
     }
+}
+
+export function checkBeforeDebug(filePath: string): boolean {
+    const lang = getFileLang(filePath)
+    if (lang === CodeLang.TypeScript) {
+        if (InstallState.installEsbuild) {
+            log.appendLine('wait downloading esbuild')
+            return false
+        }
+    }
+    return true
 }

@@ -1,10 +1,8 @@
 import * as path from 'path'
 import { parseTestCase, TestCase, TestResult, normalize, getResultType, getFuncNames, deserializeParam, QuestionMeta, retry } from './common/util';
-import { appendComment, execWithProgress, execWithProgress2, getDebugConfig } from './util';
+import { appendComment, checkBeforeDebug, execWithProgress, execWithProgress2, getDebugConfig } from './util';
 import { log, updateConfig } from './config';
 import { window, ExtensionContext } from 'vscode';
-import { Script } from 'vm';
-import vm = require('vm');
 import rollup = require('rollup');
 import resolve from '@rollup/plugin-node-resolve';
 import rollupBabelPlugin from '@rollup/plugin-babel';
@@ -24,7 +22,6 @@ import { config } from './config'
 import { githubInput, selectLogin } from './login/input'
 import { githubLogin } from './login';
 import presetTs = require('@babel/preset-typescript')
-import { debug } from 'console';
 import { getQuestionDescription } from './webview/questionPreview';
 import { CodeLang, getFileLang, langExtMap } from './common/langConfig';
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
@@ -84,6 +81,9 @@ export async function debugCodeCommand(filePath: string) {
     if (!breaks.find(b => b?.location?.uri.fsPath === filePath)) {
         console.log('breakpoint not found')
         window.showErrorMessage('please set breakpoint')
+        return
+    }
+    if (!checkBeforeDebug(filePath)) {
         return
     }
     const debugConfiguration = getDebugConfig()
@@ -402,7 +402,7 @@ class CodeLangItem implements vscode.QuickPickItem {
     }
 }
 export async function switchCodeLangCommand(questionsProvider: QuestionsProvider) {
-    const langs:CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript]
+    const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript]
     const curLang = config.codeLang
     const langLabels = langs.map(lang => {
         if (lang === curLang) {
