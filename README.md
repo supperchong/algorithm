@@ -70,18 +70,18 @@ The way to login in referred to the official extension [vscode-leetcode](https:/
 
 ## Test in the file
 
-The code contains default testcase.
+The code contains default testcase from question preview.
 
-Click the test codelens hover in the vscode to run the test in **local**.
+By clicking the test codelens hover in the vscode to run the test in local.
 
-You can add customized testcase like `// @test(param)=result`
+You can add customized testcase in the code like `// @test(param)=result`.
 ![test](./images/test.png)
 
 ## Debug
 
-You can just set a breakpoint at the testcase line and set breakpoint for the code.
+You only need to set breakpoints on the testcase line and set breakpoints for the code.
 
-:tada: Then enjoying debug.
+:tada: Then enjoy debugging!
 
 ![debug](./images/debug.png)
 
@@ -119,7 +119,7 @@ This is useful in the weekly contest.
 ## Setting
 
 press `ctrl+,` or open `file->Preferences->Settings`, you will see User and Workspace setting. Workspace setting will override User setting.
-open Extensions->algorithm,you will see the settings:
+open `Extensions->algorithm`,you will see the settings:
 
 | Setting Name    | Description                                                                                       | Default Value |
 | --------------- | ------------------------------------------------------------------------------------------------- | ------------- |
