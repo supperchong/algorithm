@@ -7,9 +7,8 @@ import { ParseContent } from './common/parseContent'
 import { config, updateConfig, updateEnv, InstallState, log } from './config'
 import { tag } from 'pretty-tag'
 import { Question, CodeSnippet } from './model/question.cn';
-import { AskForImportState } from './model/common';
+import { AskForImportState, ConciseQuestion } from './model/common';
 import { MemoFile } from './model/memo';
-
 export async function execWithProgress(promise: Promise<any>, message: string) {
     return window.withProgress({ location: vscode.ProgressLocation.Notification }, (p) => {
         p.report({ message });
@@ -151,6 +150,23 @@ export function sortFiles(files: MemoFile[]) {
     files.sort((q1, q2) => {
         const fid1: string = q1.name;
         const fid2: string = q2.name;
+        const sortOrder = ['LCP', '剑指 Offer', '面试题']
+        let weight1 = sortOrder.findIndex(prefix => fid1.startsWith(prefix))
+        let weight2 = sortOrder.findIndex(prefix => fid2.startsWith(prefix))
+        if (weight1 !== weight2) {
+            return weight1 - weight2
+        } else {
+            if (weight1 !== -1) {
+                return fid1.localeCompare(fid2)
+            }
+            return parseInt(fid1) - parseInt(fid2)
+        }
+    });
+}
+export function sortQuestions(questions: ConciseQuestion[]) {
+    questions.sort((q1, q2) => {
+        const fid1: string = q1.fid;
+        const fid2: string = q2.fid;
         const sortOrder = ['LCP', '剑指 Offer', '面试题']
         let weight1 = sortOrder.findIndex(prefix => fid1.startsWith(prefix))
         let weight2 = sortOrder.findIndex(prefix => fid2.startsWith(prefix))
