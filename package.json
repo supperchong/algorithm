@@ -108,6 +108,10 @@
                     "command": "algorithm.search",
                     "when": "view == questions",
                     "group": "navigation"
+                },{
+                    "command": "algorithm.addFolder",
+                    "when": "view == memo",
+                    "group": "navigation"
                 }
             ],
             "commandPalette": [
@@ -122,8 +126,27 @@
                 {
                     "command": "algorithm.questionPreview",
                     "when": "never"
+                },{
+                    "command": "algorithm.addFolder",
+                    "when": "never"
+                },{
+                    "command": "algorithm.addMemoFile",
+                    "when": "never"
+                },{
+                    "command": "algorithm.memoFilePreview",
+                    "when": "never"
+                },{
+                    "command": "algorithm.removeMemoFile",
+                    "when": "never"
                 }
-            ]
+            ],
+            "view/item/context": [{
+                "command": "algorithm.addMemoFile",
+                "when": "view == questions && viewItem == memo"
+            },{
+                "command": "algorithm.removeMemoFile",
+                "when": "view == memo && viewItem == memoFile"
+            }]
         },
         "commands": [
             {
@@ -174,6 +197,25 @@
                 "command": "algorithm.switchCodeLang",
                 "title": "switch default language",
                 "category": "algorithm"
+            },{
+                "command": "algorithm.addFolder",
+                "title": "new folder",
+                "icon": "$(new-folder)",
+                "category": "algorithm"
+            },{
+                "command": "algorithm.addMemoFile",
+                "title": "add question in memo",
+                "icon":"$(add)",
+                "category": "algorithm"
+            },{
+                "command": "algorithm.memoFilePreview",
+                "title": "preview file",
+                "category": "algorithm"
+            },{
+                "command": "algorithm.removeMemoFile",
+                "title": "remove question in memo",
+                "icon":"$(discard)",
+                "category": "algorithm"
             }
         ],
         "viewsContainers": {
@@ -191,6 +233,10 @@
                     "id": "questions",
                     "name": "questions",
                     "contextualTitle": "Package Explorer"
+                },{
+                    "id": "memo",
+                    "name":"memo",
+                    "contextualTitle":"memo"
                 }
             ]
         },
