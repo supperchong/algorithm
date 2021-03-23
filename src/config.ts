@@ -15,6 +15,7 @@ import axios from 'axios'
 import { promisify } from 'util'
 import { downloadNpm } from './common/util'
 import { MemoFolders } from './model/memo'
+import { unionArr } from './util'
 const rename = promisify(fs.rename)
 const rmdir = promisify(fs.rmdir)
 const execFileAsync = promisify(cp.execFile)
@@ -181,8 +182,8 @@ export function updateEnv<T extends keyof AlgorithmEnv>(key: T, value: Algorithm
         const originEnvFile: EnvFile = JSON.parse(data)
         envFile.askForImportState = originEnvFile.askForImportState || envFile.askForImportState
         let originInstallEsbuildArr = originEnvFile.installEsbuildArr
-        if (hasInstallEsbuild && Array.isArray(originInstallEsbuildArr) && !originInstallEsbuildArr.includes(dir)) {
-            envFile.installEsbuildArr = [...originInstallEsbuildArr, dir]
+        if (Array.isArray(originInstallEsbuildArr)) {
+            envFile.installEsbuildArr = unionArr(installEsbuildArr, originInstallEsbuildArr)
         }
     } catch (err) {
 

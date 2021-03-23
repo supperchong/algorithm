@@ -5,6 +5,11 @@ import * as assert from 'assert';
 // import * as myExtension from '../../extension';
 import { getTestCaseList } from '../../common/util';
 import { addComment } from '../../common/transformCode'
+import { unionArr } from '../../util'
+interface UnionArrDemo<T> {
+    params: T[][],
+    result: T[]
+}
 const cases = [
     `// @algorithm @lc id=1576 lang=javascript weekname=weekly-contest-191
 // @title reorder-routes-to-make-all-paths-lead-to-the-city-zero
@@ -99,5 +104,22 @@ suite('Util Test Suite', () => {
         `
         let out = addComment(source, 'hhh', 'main')
         assert.deepStrictEqual(out, result)
+    })
+    test('test unionArr', () => {
+        const list: UnionArrDemo<string>[] = [{
+            params: [['xiao', 'li'], ['li', 'wang']],
+            result: ['xiao', 'li', 'wang']
+        }, {
+            params: [['xiao', 'li'], []],
+            result: ['xiao', 'li']
+        }, {
+            params: [[], []],
+            result: []
+        }, {
+            params: [[], ['abc']],
+            result: ['abc']
+        }
+        ]
+        list.forEach(({ params, result }) => assert.deepStrictEqual(unionArr(params[0], params[1]), result))
     })
 });
