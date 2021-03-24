@@ -7,7 +7,8 @@ import { showLoginMessage } from '../login/index'
 
 import { getDb } from '../db';
 import { GraphRes } from '../model/common'
-import {log} from '../config'
+import { log } from '../config'
+import { sortQuestions } from '../util'
 const MAPIDQUESTION = 'MapIdQuestion';
 const monthEns = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
 const categories: Category[] = [
@@ -68,19 +69,19 @@ async function request<T>(config: AxiosRequestConfig): Promise<T> {
             ...config.headers,
             ...headers
         }
-    }).then(res => res.data).catch(async (err:AxiosError) => {
-        if(err.response){
+    }).then(res => res.data).catch(async (err: AxiosError) => {
+        if (err.response) {
             if (err.response.status === ErrorStatus.Unlogin) {
                 showLoginMessage()
-    
+
             } else if (err.response.status === ErrorStatus.InvalidCookie) {
                 showLoginMessage()
             }
         }
-        if(err.message){
+        if (err.message) {
             log.appendLine(err.message)
         }
-        
+
         return Promise.reject(err)
     });
 }
@@ -258,21 +259,7 @@ export async function freshQuestions() {
     const data = await api.fetchCategorieQuestions('all');
     questions = handleCategorieQuestions(data);
     await setTranslations(questions);
-    questions.sort((q1, q2) => {
-        const fid1: string = q1.fid;
-        const fid2: string = q2.fid;
-        const sortOrder = ['LCP', '剑指 Offer', '面试题']
-        let weight1 = sortOrder.findIndex(prefix => fid1.startsWith(prefix))
-        let weight2 = sortOrder.findIndex(prefix => fid2.startsWith(prefix))
-        if (weight1 !== weight2) {
-            return weight1 - weight2
-        } else {
-            if (weight1 !== -1) {
-                return fid1.localeCompare(fid2)
-            }
-            return parseInt(fid1) - parseInt(fid2)
-        }
-    });
+    sortQuestions(questions)
     cache.setQuestions(questions);
 }
 async function getMapIdQuestion(): Promise<object> {

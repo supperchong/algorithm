@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig,AxiosError } from 'axios';
+import axios, { AxiosRequestConfig, AxiosError } from 'axios';
 import fs = require('fs');
 import { cache, ALLQUESTIONS } from '../cache';
 import { ChapterItemRes, ChaptersRes, ChapterRes, ConciseQuestion, MapIdConciseQuestion, CheckContestOptions, CheckOptions, SubmitContestOptions, CheckResponse, SubmitOptions, SubmitResponse, TagData, GraphqlResponse, QuestionTranslationData, TodayRecordData, DailyQuestionRecordData, DailyQuestionRecord, QuestionData, GraphqlRequestData, ContestData, ChaptersProgressRes } from '../model/question';
@@ -8,7 +8,8 @@ import { GraphRes, ErrorStatus } from '../model/common'
 import { showLoginMessage } from '../login/index'
 import { window } from 'vscode';
 import { signInCommand } from '../commands';
-import {log} from '../config'
+import { log } from '../config'
+import { sortQuestions } from '../util'
 
 const MAPIDQUESTION = 'MapIdQuestion';
 const monthEns = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
@@ -62,16 +63,16 @@ async function request<T>(config: AxiosRequestConfig): Promise<T> {
             ...config.headers,
             ...headers
         }
-    }).then(res => res.data).catch(async  (err:AxiosError) => {
-        if(err.response){
+    }).then(res => res.data).catch(async (err: AxiosError) => {
+        if (err.response) {
             if (err.response.status === ErrorStatus.Unlogin) {
                 showLoginMessage()
-    
+
             } else if (err.response.status === ErrorStatus.InvalidCookie) {
                 showLoginMessage()
             }
         }
-        if(err.message){
+        if (err.message) {
             log.appendLine(err.message)
         }
         return Promise.reject(err)
@@ -262,25 +263,7 @@ export async function freshQuestions() {
     let questions: ConciseQuestion[] = [];
     const data = await api.fetchCategorieQuestions('all');
     questions = handleCategorieQuestions(data);
-    // await setTranslations(questions);
-    questions.sort((q1, q2) => {
-        const fid1: string = q1.fid;
-        const fid2: string = q2.fid;
-        if (fid1.startsWith('LCP') && fid2.startsWith('LCP')) {
-            const rgx = /LCP (\d+)/;
-            const match1 = fid1.match(rgx);
-            const match2 = fid2.match(rgx);
-            if (match1 && match2) {
-                return parseInt(match1[1]) - parseInt(match2[1]);
-            }
-            return 0;
-        } else if (fid1.startsWith('LCP')) {
-            return 1;
-        } else if (fid2.startsWith('LCP')) {
-            return -1;
-        }
-        return parseInt(fid1) - parseInt(fid2);
-    });
+    sortQuestions(questions)
     cache.setQuestions(questions);
 }
 async function getMapIdQuestion(): Promise<object> {

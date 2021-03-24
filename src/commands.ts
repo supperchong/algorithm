@@ -13,7 +13,7 @@ import { api, freshQuestions } from './api/index'
 import * as vscode from 'vscode';
 import cp = require('child_process');
 import { execTestChildProcess } from './execTestCode';
-import { QuestionsProvider } from './provider/questionsProvider';
+import { QuestionsProvider, QuestionTree } from './provider/questionsProvider';
 import { cache } from './cache';
 import { CheckResponse, ErrorStatus, Lang } from './model/common';
 import { outBoundArrayPlugin } from './babelPlugin'
@@ -25,6 +25,10 @@ import presetTs = require('@babel/preset-typescript')
 import { getQuestionDescription } from './webview/questionPreview';
 import { CodeLang, getFileLang, langExtMap } from './common/langConfig';
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
+import { MemoFile } from './model/memo'
+import { addFolder, addFolderFile, addQuestion } from './memo/index'
+import { MemoProvider, MemoTree } from './provider/memoProvider';
+import { ResolverParam } from './provider/resolver'
 interface PlainObject {
     [key: string]: any
 }
@@ -430,5 +434,42 @@ export async function searchCommand() {
             titleSlug: question.slug
         }
         vscode.commands.executeCommand('algorithm.questionPreview', param)
+    }
+}
+export async function addFolderCommand(memoProvider: MemoProvider) {
+    const folderName = await window.showInputBox()
+    if (folderName) {
+        addFolder(folderName)
+        memoProvider.refresh()
+    }
+}
+
+export async function memoFilePreviewCommand(memoFile: MemoFile) {
+    if (memoFile.type === 'question') {
+        vscode.commands.executeCommand('algorithm.questionPreview', memoFile.param)
+
+    } else if (memoFile.type === 'other') {
+
+    }
+}
+
+export async function addMemoFileCommand(memoProvider: MemoProvider, questionTree: QuestionTree) {
+    const folderNames = config.env.memo.map(v => v.name)
+    const folderName = await window.showQuickPick(folderNames)
+    if (folderName) {
+        try {
+            addQuestion(folderName, questionTree.label, questionTree.param as Partial<ResolverParam>)
+            memoProvider.refresh()
+        } catch (err) {
+            log.appendLine(err)
+            log.show()
+        }
+    }
+}
+
+export async function removeMemoFileCommand(memoProvider: MemoProvider, param: MemoTree) {
+    const isRemove = await MemoProvider.remove(param)
+    if (isRemove) {
+        memoProvider.refresh()
     }
 }

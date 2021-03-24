@@ -14,6 +14,7 @@ import * as compressing from "compressing";
 import axios from 'axios'
 import { promisify } from 'util'
 import { downloadNpm } from './common/util'
+import { MemoFolders } from './model/memo'
 const rename = promisify(fs.rename)
 const rmdir = promisify(fs.rmdir)
 const execFileAsync = promisify(cp.execFile)
@@ -36,12 +37,14 @@ interface BaseDir {
 interface AlgorithmEnv {
     hasInstallEsbuild: boolean
     askForImportState: AskForImportState
+    memo: MemoFolders[]
 }
 
 // the esbuild install in the extension dir and the extension dir change with the version change 
 interface EnvFile {
     askForImportState: AskForImportState
     installEsbuildArr: string[]
+    memo?: MemoFolders[]
 }
 export interface Config extends BaseDir {
     baseDir: string
@@ -137,7 +140,8 @@ function getEnv(cacheBaseDir: string): AlgorithmEnv {
     const envPath = path.join(cacheBaseDir, 'env.json')
     const defaultEnv: AlgorithmEnv = {
         hasInstallEsbuild: false,
-        askForImportState: AskForImportState.Later
+        askForImportState: AskForImportState.Later,
+        memo: []
     }
     try {
         const env: EnvFile = require(envPath)
@@ -145,11 +149,13 @@ function getEnv(cacheBaseDir: string): AlgorithmEnv {
         const dir = __dirname
         const installEsbuild = env.installEsbuildArr.find(v => v === dir)
         let askForImportState = env.askForImportState
+        let memo = env.memo || []
         const hasInstallEsbuild = !!installEsbuild
         return {
             ...defaultEnv,
             hasInstallEsbuild,
-            askForImportState
+            askForImportState,
+            memo
         }
     } catch (err) {
         return defaultEnv
@@ -167,14 +173,16 @@ export function updateEnv<T extends keyof AlgorithmEnv>(key: T, value: Algorithm
     }
     let envFile: EnvFile = {
         askForImportState: config.env.askForImportState,
-        installEsbuildArr: installEsbuildArr
+        installEsbuildArr: installEsbuildArr,
+        memo: config.env.memo
     }
     try {
         const data = fs.readFileSync(envPath, { encoding: 'utf8' })
         const originEnvFile: EnvFile = JSON.parse(data)
         envFile.askForImportState = originEnvFile.askForImportState || envFile.askForImportState
-        if (hasInstallEsbuild && !envFile.installEsbuildArr.includes(dir)) {
-            envFile.installEsbuildArr.push(dir)
+        let originInstallEsbuildArr = originEnvFile.installEsbuildArr
+        if (hasInstallEsbuild && Array.isArray(originInstallEsbuildArr) && !originInstallEsbuildArr.includes(dir)) {
+            envFile.installEsbuildArr = [...originInstallEsbuildArr, dir]
         }
     } catch (err) {
 

@@ -36,7 +36,7 @@ export class QuestionsProvider implements vscode.TreeDataProvider<QuestionTree> 
       }
       return Promise.resolve(fn(param))
         .then(arr => {
-          if (!arr.length) {return []}
+          if (!arr.length) { return [] }
           const isLastChild = arr[0].isLast
           if (isLastChild) {
             return arr.map(v => {
@@ -48,7 +48,7 @@ export class QuestionsProvider implements vscode.TreeDataProvider<QuestionTree> 
                 // dep.iconPath = v.isAC ? new vscode.ThemeIcon('check') : ''
                 dep.iconPath = v.isAC ? path.join(__dirname, '..', '..', 'media', 'ac.svg') : ''
               }
-
+              dep.contextValue = 'memo'
               return dep;
             }
             );
