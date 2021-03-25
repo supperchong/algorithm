@@ -5,6 +5,7 @@ import * as assert from 'assert';
 // import * as myExtension from '../../extension';
 import { getTestCaseList, unionArr } from '../../common/util';
 import { addComment } from '../../common/transformCode'
+
 interface UnionArrDemo<T> {
     params: T[][],
     result: T[]

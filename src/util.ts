@@ -180,6 +180,3 @@ export function sortQuestions(questions: ConciseQuestion[]) {
         }
     });
 }
-
-
-
