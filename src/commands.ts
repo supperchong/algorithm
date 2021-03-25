@@ -439,8 +439,14 @@ export async function searchCommand() {
 export async function addFolderCommand(memoProvider: MemoProvider) {
     const folderName = await window.showInputBox()
     if (folderName) {
-        addFolder(folderName)
-        memoProvider.refresh()
+        try {
+            addFolder(folderName)
+            memoProvider.refresh()
+        } catch (err) {
+            log.appendLine(err)
+            log.show()
+        }
+
     }
 }
 

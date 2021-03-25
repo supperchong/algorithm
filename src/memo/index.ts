@@ -3,6 +3,9 @@ import { config, updateEnv } from '../config'
 import * as path from 'path'
 import { ResolverParam } from '../provider/resolver'
 export function addFolder(name: string) {
+    if (config.env.memo.find(v => v.name === name)) {
+        throw new Error('folder already exists')
+    }
     config.env.memo.push({
         name,
         children: []
