@@ -11,7 +11,7 @@ interface MemoOtherFile {
     param: string
 }
 export type MemoFile = MemoQuestionFile | MemoOtherFile
-export interface MemoFolders {
+export interface MemoFolder {
     name: string
     children: MemoFile[]
 }

@@ -423,4 +423,21 @@ export async function downloadNpm(name: string, moduleDir: string) {
         console.log(err)
     })
 }
+export function uniqueArrByKey<Obj extends Record<Key, string>, Key extends keyof Obj>(arr: Obj[], key: Key) {
+    if (arr.length <= 1) {return}
+    arr.sort((x, y) => x[key].localeCompare(y[key]))
+    let i = 0
+
+    for (let j = 1; j < arr.length; j++) {
+        if (arr[j][key] !== arr[j - 1][key]) {
+            arr[++i] = arr[j]
+        }
+    }
+    arr.length = i + 1
+}
+export function unionArr<T>(arr1: T[], arr2: T[]) {
+    let set = new Set(arr1)
+    arr2.forEach(v => set.add(v))
+    return [...set]
+}
 export { detectEnableExt, getTestCaseList, parseTestCase, parseCode as getFuncNames };

@@ -3,9 +3,8 @@ import * as assert from 'assert';
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 // import * as myExtension from '../../extension';
-import { getTestCaseList } from '../../common/util';
+import { getTestCaseList, unionArr } from '../../common/util';
 import { addComment } from '../../common/transformCode'
-import { unionArr } from '../../util'
 interface UnionArrDemo<T> {
     params: T[][],
     result: T[]

@@ -13,9 +13,8 @@ import * as https from 'https'
 import * as compressing from "compressing";
 import axios from 'axios'
 import { promisify } from 'util'
-import { downloadNpm } from './common/util'
-import { MemoFolders } from './model/memo'
-import { unionArr } from './util'
+import { downloadNpm, unionArr, uniqueArrByKey } from './common/util'
+import { MemoFile, MemoFolder } from './model/memo'
 const rename = promisify(fs.rename)
 const rmdir = promisify(fs.rmdir)
 const execFileAsync = promisify(cp.execFile)
@@ -38,14 +37,14 @@ interface BaseDir {
 interface AlgorithmEnv {
     hasInstallEsbuild: boolean
     askForImportState: AskForImportState
-    memo: MemoFolders[]
+    memo: MemoFolder[]
 }
 
 // the esbuild install in the extension dir and the extension dir change with the version change 
 interface EnvFile {
     askForImportState: AskForImportState
     installEsbuildArr: string[]
-    memo?: MemoFolders[]
+    memo?: MemoFolder[]
 }
 export interface Config extends BaseDir {
     baseDir: string
@@ -137,6 +136,11 @@ function initDir() {
         }
     })
 }
+function ensureMemoUnique(folders: MemoFolder[]) {
+    if (folders.length <= 1) {return}
+    uniqueArrByKey(folders, 'name')
+    folders.forEach(folder => uniqueArrByKey(folder.children, 'name'))
+}
 function getEnv(cacheBaseDir: string): AlgorithmEnv {
     const envPath = path.join(cacheBaseDir, 'env.json')
     const defaultEnv: AlgorithmEnv = {
@@ -151,6 +155,7 @@ function getEnv(cacheBaseDir: string): AlgorithmEnv {
         const installEsbuild = env.installEsbuildArr.find(v => v === dir)
         let askForImportState = env.askForImportState
         let memo = env.memo || []
+        ensureMemoUnique(memo)
         const hasInstallEsbuild = !!installEsbuild
         return {
             ...defaultEnv,

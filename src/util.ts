@@ -180,8 +180,6 @@ export function sortQuestions(questions: ConciseQuestion[]) {
         }
     });
 }
-export function unionArr<T>(arr1: T[], arr2: T[]) {
-    let set = new Set(arr1)
-    arr2.forEach(v => set.add(v))
-    return [...set]
-}
+
+
+
