@@ -58,7 +58,8 @@
                     "default": "JavaScript",
                     "enum": [
                         "JavaScript",
-                        "TypeScript"
+                        "TypeScript",
+                        "Python3"
                     ],
                     "scope": "window"
                 },

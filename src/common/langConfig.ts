@@ -6,122 +6,142 @@ const langsConfig = {
             "lang": "C++",
             "langSlug": "cpp",
             "ext": ".cpp",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "Java",
             "langSlug": "java",
             "ext": ".java",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "Python",
             "langSlug": "python",
             "ext": ".py",
-            comment: '#'
+            comment: '#',
+            fileNameSep: '_'
         },
         {
             "lang": "Python3",
             "langSlug": "python3",
             "ext": ".py",
-            comment: '#'
+            comment: '#',
+            fileNameSep: '_'
         },
         {
             "lang": "C",
             "langSlug": "c",
             "ext": ".c",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "C#",
             "langSlug": "csharp",
             "ext": ".cs",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "JavaScript",
             "langSlug": "javascript",
             "ext": ".js",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "Ruby",
             "langSlug": "ruby",
             "ext": ".rb",
-            comment: '#'
+            comment: '#',
+            fileNameSep: '.'
 
         },
         {
             "lang": "Swift",
             "langSlug": "swift",
             "ext": ".swift",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "Go",
             "langSlug": "golang",
             "ext": ".go",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "Scala",
             "langSlug": "scala",
             "ext": ".scala",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "Kotlin",
             "langSlug": "kotlin",
             "ext": ".kt",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "Rust",
             "langSlug": "rust",
             "ext": ".rs",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "PHP",
             "langSlug": "php",
             "ext": ".php",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
         {
             "lang": "TypeScript",
             "langSlug": "typescript",
             "ext": ".ts",
-            comment: '//'
+            comment: '//',
+            fileNameSep: '.'
         },
     ],
     database: [{
         lang: 'MySQL',
         langSlug: 'mysql',
         ext: '.sql',
-        comment: '#'
+        comment: '#',
+        fileNameSep: '.'
     }, {
         lang: 'MS SQL Server',
         langSlug: 'mssql',
         ext: '.sql',
-        comment: '#'
+        comment: '#',
+        fileNameSep: '.'
     }, {
         lang: 'Oracle',
         langSlug: 'oraclesql',
         ext: '.sql',
-        comment: '#'
+        comment: '#',
+        fileNameSep: '.'
     }],
     shell: [{
         "lang": "Bash",
         "langSlug": "bash",
         "ext": ".sh",
-        comment: '#'
+        comment: '#',
+        fileNameSep: '.'
     }],
 };
 export interface LangBase {
     lang: CodeLang
     langSlug: string
     ext: string
-    comment: string
+    comment: '#' | '//',
+    fileNameSep: '.' | '_'
 }
 export interface LangMap {
     [langSlug: string]: LangBase
@@ -157,4 +177,20 @@ export function getFileLang(filePath: string) {
         throw new Error('file extname invalid')
     }
     return langItem.lang
+}
+export function getFileComment(filePath: string) {
+    const ext = path.extname(filePath)
+    const langItem = langExtMap[ext]
+    if (!langItem) {
+        throw new Error('file extname invalid')
+    }
+    return langItem.comment
+}
+export function getPreImport(codeLang: CodeLang) {
+    if (codeLang === CodeLang.Python3) {
+        return 'from typing import List'
+    } else {
+        return ''
+    }
+
 }

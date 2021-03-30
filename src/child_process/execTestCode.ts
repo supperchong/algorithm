@@ -16,7 +16,7 @@ import {
 } from "../common/util";
 import { outBoundArrayPlugin } from '../babelPlugin'
 import { Script } from "vm";
-import { Args } from '../common/util'
+import { handleMsg } from '../common/util'
 import { langExtMap, LangBase, CodeLang, getFileLang } from '../common/langConfig'
 import presetTs = require('@babel/preset-typescript')
 const defaultTimeout = 10000;
@@ -144,28 +144,7 @@ function formatCodeOutput(code: string, funcName: string, rt: string, args: stri
     const finalCode = code + `;${funExecExpression}`;
     return finalCode
 }
-function handleMsg(testResultList: TestResult[], caseList: Args[]) {
-    const success = testResultList.every(
-        (v) => (v.expect && v.expect.trim()) === (v.result && v.result.trim())
-    );
-    let msg = "";
-    if (success) {
-        msg = `✓ ${caseList.length} tests complete`;
-    } else {
-        msg =
-            testResultList
-                .map((v) => {
-                    if (v.expect === v.result) {
-                        return `✓ @test(${v.args})\n`;
-                    } else {
-                        return `× @test(${v.args})  result: ${v.result} ,expect: ${v.expect}\n`;
-                    }
-                })
-                .join("") + "\n";
 
-    }
-    return msg;
-}
 async function handleErrPosition(err: Error, map: sourceMap.RawSourceMap, args: string[]) {
     const consumer = await new sourceMap.SourceMapConsumer(map)
 

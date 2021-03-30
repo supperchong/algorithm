@@ -29,6 +29,7 @@ import { MemoFile } from './model/memo'
 import { addFolder, addFolderFile, addQuestion } from './memo/index'
 import { MemoProvider, MemoTree } from './provider/memoProvider';
 import { ResolverParam } from './provider/resolver'
+import { PythonParse } from './parse/python'
 interface PlainObject {
     [key: string]: any
 }
@@ -45,13 +46,21 @@ function checkParams<T, R extends keyof T>(obj: T, attrs: R[]): asserts obj is R
 }
 export async function testCodeCommand(line: number, testCase: TestCase, funcName: string, paramsTypes: string[], resultType: string, filepath: string) {
     try {
+        const codeLang = getFileLang(filepath)
+        if (codeLang === CodeLang.JavaScript || codeLang === CodeLang.TypeScript) {
+            const promise = execTestChildProcess({
+                line, testCase, funcName, paramsTypes, resultType, filepath
+            });
+            const msg = await execWithProgress(promise, 'wait test');
+            log.appendLine(msg);
+            log.show()
+        } else if (codeLang === CodeLang.Python3) {
+            const promise = PythonParse.execTest(testCase, filepath)
+            const msg = await execWithProgress(promise, 'wait test');
+            log.appendLine(msg);
+            log.show()
+        }
 
-        const promise = execTestChildProcess({
-            line, testCase, funcName, paramsTypes, resultType, filepath
-        });
-        const msg = await execWithProgress(promise, 'wait test');
-        log.appendLine(msg);
-        log.show()
     } catch (err) {
         console.log(err);
         window.showInformationMessage(`parse params err: ${err}`);
@@ -90,6 +99,14 @@ export async function debugCodeCommand(filePath: string) {
     if (!checkBeforeDebug(filePath)) {
         return
     }
+    const lang = getFileLang(filePath)
+    if (lang === CodeLang.Python3) {
+        if (p) {
+            PythonParse.debugCodeCommand(p, filePath, breaks)
+        }
+        return
+    }
+
     const debugConfiguration = getDebugConfig()
 
     vscode.debug.startDebugging(p, debugConfiguration)
@@ -203,7 +220,8 @@ async function submitAsync(code: string, questionMeta: QuestionMeta): Promise<an
     const res = await api.submit({
         titleSlug: titleSlug,
         question_id: id,
-        typed_code: code
+        typed_code: code,
+        lang: questionMeta.lang
     });
     if (!res.submission_id) {
         console.log('submit res', res);
@@ -236,10 +254,13 @@ export async function buildCode(text: string, filePath: string): Promise<BuildCo
     const lang = getFileLang(filePath)
 
     if (lang === CodeLang.JavaScript) {
-        return buildJsCode(text)
+        return buildJsCode(text, filePath)
     }
     if (lang === CodeLang.TypeScript) {
         return buildTsCode(text, filePath)
+    }
+    if (lang === CodeLang.Python3) {
+        return PythonParse.buildCode(text, filePath)
     }
     const msg = 'Currently, only JS and TS are supported'
     window.showInformationMessage(msg)
@@ -247,9 +268,9 @@ export async function buildCode(text: string, filePath: string): Promise<BuildCo
 
 }
 
-export async function buildJsCode(text: string) {
+export async function buildJsCode(text: string, filePath: string) {
     try {
-        const { funcNames, questionMeta } = getFuncNames(text);
+        const { funcNames, questionMeta } = getFuncNames(text, filePath);
         const funcRunStr = 'console.log(' + funcNames.map(f => f + '()').join('+') + ')';
         // The rollup will not transform code in virtual entry
         let entry: any = await babel.transformAsync(text, {
@@ -294,7 +315,7 @@ export async function buildJsCode(text: string) {
 }
 export async function buildTsCode(text: string, filePath: string) {
     try {
-        const { funcNames, questionMeta } = getFuncNames(text);
+        const { funcNames, questionMeta } = getFuncNames(text, filePath);
         const funcRunStr = 'console.log(' + funcNames.map(f => f + '()').join('+') + ')';
         // The rollup will not transform code in virtual entry
         let entry: any = await babel.transformAsync(text, {
@@ -342,7 +363,7 @@ export async function buildTsCode(text: string, filePath: string) {
 }
 
 export async function getDescriptionCommand(extensionPath: string, text: string, filePath: string) {
-    const { questionMeta } = getFuncNames(text);
+    const { questionMeta } = getFuncNames(text, filePath);
     getQuestionDescription(extensionPath, {
         questionId: questionMeta.id,
         titleSlug: questionMeta.titleSlug,
@@ -406,7 +427,7 @@ class CodeLangItem implements vscode.QuickPickItem {
     }
 }
 export async function switchCodeLangCommand(questionsProvider: QuestionsProvider) {
-    const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript]
+    const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript, CodeLang.Python3]
     const curLang = config.codeLang
     const langLabels = langs.map(lang => {
         if (lang === curLang) {

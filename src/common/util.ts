@@ -8,11 +8,14 @@ import { ConciseQuestion } from '../model/common';
 import * as path from 'path'
 import axios from 'axios'
 import * as compressing from "compressing";
+import { CodeLang, getFileLang } from './langConfig';
+import { getFileComment } from './langConfig'
 const rimraf = require('rimraf')
 const cheerio = require('cheerio');
 const access = promisify(fs.access);
 const mkdir = promisify(fs.mkdir);
 const writeFileAsync = promisify(fs.writeFile);
+const readFileAsync = promisify(fs.readFile)
 const rename = promisify(fs.rename)
 const rmdir = promisify(fs.rmdir)
 const isSpace = (s: string) => /\s/.test(s);
@@ -25,7 +28,7 @@ const lcToken = /^\/\/ @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-
 const titleSlugToken = /^\/\/ @title ([\w-]+)/;
 const funcNameRegExp = /^(?:\s*function\s*([\w]+)\s*|\s*(?:(?:var|let|const)\s+([\w]+)\s*=\s*)?function)/;
 export type TestCase = string[];
-export { writeFileAsync };
+export { writeFileAsync, readFileAsync };
 export interface TestCaseParam {
     line: number
     testCase: TestCase
@@ -69,7 +72,10 @@ export function normalizeQuestions(questions: ConciseQuestion[], type: string) {
     }
     );
 }
-function detectEnableExt(text: string): boolean {
+
+function detectEnableExt(text: string, filePath: string): boolean {
+    const commentToken = getFileComment(filePath)
+    const algorithmToken = `${commentToken} @algorithm`;
     let point = 0;
     while (isSpace(text[point])) {
         point++;
@@ -138,9 +144,13 @@ interface FunNamesMeta {
     funcNames: string[],
     questionMeta: QuestionMeta
 }
-function parseCode(text: string): FunNamesMeta {
+function parseCode(text: string, filePath: string): FunNamesMeta {
     const lines = text.split(/\n/);
     const funcNames: string[] = [];
+    const comment = getFileComment(filePath)
+    let lcToken = comment === '//' ? /^\/\/ @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-]+))?/ :
+        /^# @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-]+))?/
+    let titleSlugToken = comment === '//' ? /^\/\/ @title ([\w-]+)/ : /^# @title ([\w-]+)/
     let questionMeta: QuestionMeta = {};
     for (let i = 0; i < lines.length; i++) {
         if (lcToken.test(lines[i])) {
@@ -424,7 +434,7 @@ export async function downloadNpm(name: string, moduleDir: string) {
     })
 }
 export function uniqueArrByKey<Obj extends Record<Key, string>, Key extends keyof Obj>(arr: Obj[], key: Key) {
-    if (arr.length <= 1) {return}
+    if (arr.length <= 1) { return }
     arr.sort((x, y) => x[key].localeCompare(y[key]))
     let i = 0
 
@@ -439,5 +449,27 @@ export function unionArr<T>(arr1: T[], arr2: T[]) {
     let set = new Set(arr1)
     arr2.forEach(v => set.add(v))
     return [...set]
+}
+export function handleMsg(testResultList: TestResult[], caseList: Args[]) {
+    const success = testResultList.every(
+        (v) => (v.expect && v.expect.trim()) === (v.result && v.result.trim())
+    );
+    let msg = "";
+    if (success) {
+        msg = `✓ ${caseList.length} tests complete`;
+    } else {
+        msg =
+            testResultList
+                .map((v) => {
+                    if (v.expect === v.result) {
+                        return `✓ @test(${v.args})\n`;
+                    } else {
+                        return `× @test(${v.args})  result: ${v.result} ,expect: ${v.expect}\n`;
+                    }
+                })
+                .join("") + "\n";
+
+    }
+    return msg;
 }
 export { detectEnableExt, getTestCaseList, parseTestCase, parseCode as getFuncNames };

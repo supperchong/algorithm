@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { window } from 'vscode';
 import { transformAsync } from "@babel/core"
 import { generateAddTestCommentPlugin } from './babelPlugin'
-import { langMap, LangBase, getFileLang, CodeLang } from './common/langConfig';
+import { langMap, LangBase, getFileLang, CodeLang, getPreImport } from './common/langConfig';
 import { ParseContent } from './common/parseContent'
 import { config, updateConfig, updateEnv, InstallState, log } from './config'
 import { tag } from 'pretty-tag'
@@ -36,7 +36,7 @@ interface Param {
 interface ReturnType {
     type: string
 }
-interface MetaData {
+export interface MetaData {
     name: string,
     params: Param[],
     return: ReturnType
@@ -81,11 +81,13 @@ export function preprocessCode({ questionId, codeSnippets, metaData, content, ti
     const shouldImport = supportImport && config.autoImportAlgm
     const importStr = shouldImport ? `import * as a from '${algorithmPath}'` : ''
     const autoImportStr = config.autoImportStr || ''
+    const preImport = getPreImport(langConfig.lang)
     const flag = tag`
             ${langConfig.comment} @algorithm @lc id=${questionId} lang=${langSlug} ${weektag}
             ${langConfig.comment} @title ${titleSlug}
             ${importStr}
             ${autoImportStr}
+            ${preImport}
         `;
     const metaDataParse: MetaData = JSON.parse(metaData);
     let codeTestSnippet = '';
