@@ -82,3 +82,20 @@ function serializeBreaks(breaks: SourceBreakpoint[]): string {
     }
     return JSON.stringify(r)
 }
+export function tranfromToCustomBreakpoint(breaks: SourceBreakpoint[]) {
+    let pathMap = new Map<string, number[]>()
+    breaks.forEach(b => {
+        const p = b.location.uri.fsPath
+        const line = b.location.range.start.line
+        if (!pathMap.has(p)) {
+            pathMap.set(p, [line])
+        } else {
+            pathMap.get(p)!.push(line)
+        }
+    })
+    let r: CustomBreakpoint[] = []
+    for (const key of pathMap.keys()) {
+        r.push({ path: key, lines: pathMap.get(key)! })
+    }
+    return r
+}

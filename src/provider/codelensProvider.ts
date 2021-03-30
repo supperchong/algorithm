@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { detectEnableExt, getTestCaseList, TestCaseParam } from '../common/util';
-
-
+import { CodeLang, getFileLang } from '../common/langConfig'
+import * as path from 'path'
+import { PythonParse } from '../parse/python'
 export class CodelensProvider implements vscode.CodeLensProvider {
 
 	private codeLenses: vscode.CodeLens[] = [];
@@ -84,21 +85,38 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 		this.codeLenses = [];
 		const text = document.getText();
 		const filePath = document.fileName
-		const enableExt = detectEnableExt(text);
+		const enableExt = detectEnableExt(text, filePath);
+
 		if (enableExt) {
-			const buildCodeLenses = this.getBuildCodeLenses(text, filePath);
-			const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
-			const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
-			this.codeLenses.push(buildCodeLenses);
-			this.codeLenses.push(submitCodeLenses);
-			this.codeLenses.push(desCodeLenses)
-			const testCaseList = getTestCaseList(text);
-			testCaseList.forEach((testCaseParam) => {
-				const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
-				const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)
-				this.codeLenses.push(testCodeLenses);
-				this.codeLenses.push(debugCodeLenses);
-			});
+			const codeLang = getFileLang(filePath)
+			if ([CodeLang.JavaScript, CodeLang.TypeScript].includes(codeLang)) {
+				const buildCodeLenses = this.getBuildCodeLenses(text, filePath);
+				const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
+				const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
+				this.codeLenses.push(buildCodeLenses);
+				this.codeLenses.push(submitCodeLenses);
+				this.codeLenses.push(desCodeLenses)
+				const testCaseList = getTestCaseList(text);
+				testCaseList.forEach((testCaseParam) => {
+					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
+					const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)
+					this.codeLenses.push(testCodeLenses);
+					this.codeLenses.push(debugCodeLenses);
+				});
+			} else if (codeLang === CodeLang.Python3) {
+				const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
+				const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
+				this.codeLenses.push(submitCodeLenses);
+				this.codeLenses.push(desCodeLenses)
+				const testCaseList = PythonParse.getTestCaseList(text)
+				testCaseList.forEach((testCaseParam) => {
+					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
+					const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)
+					this.codeLenses.push(testCodeLenses);
+					this.codeLenses.push(debugCodeLenses);
+				});
+			}
+
 
 
 			return this.codeLenses;
