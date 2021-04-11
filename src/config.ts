@@ -124,7 +124,6 @@ function init() {
     checkNodePath()
     initDir()
     checkAlgm()
-    checkEsbuildDir()
 }
 
 function initDir() {
@@ -137,7 +136,7 @@ function initDir() {
     })
 }
 function ensureMemoUnique(folders: MemoFolder[]) {
-    if (folders.length <= 1) {return}
+    if (folders.length <= 1) { return }
     uniqueArrByKey(folders, 'name')
     folders.forEach(folder => uniqueArrByKey(folder.children, 'name'))
 }
@@ -309,11 +308,12 @@ async function checkAlgm() {
 }
 
 
-function checkEsbuildDir() {
+export function checkEsbuildDir() {
     if (config.env.hasInstallEsbuild) {
-        return
+        return true
     }
     installEsbuild()
+    return false
 }
 async function installEsbuild() {
     const name = 'esbuild'
@@ -333,7 +333,7 @@ async function installEsbuild() {
             const { stderr } = await execFileAsync(nodeBinPath, [installFile])
             if (stderr) {
                 log.appendLine(stderr)
-                log.appendLine('install esbuild fail')
+                // log.appendLine('install esbuild fail')
             } else {
                 updateEnv('hasInstallEsbuild', true)
                 log.appendLine('install esbuild success')
