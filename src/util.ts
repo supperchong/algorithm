@@ -4,7 +4,7 @@ import { transformAsync } from "@babel/core"
 import { generateAddTestCommentPlugin } from './babelPlugin'
 import { langMap, LangBase, getFileLang, CodeLang } from './common/langConfig';
 import { ParseContent } from './common/parseContent'
-import { config, updateConfig, updateEnv, InstallState, log } from './config'
+import { config, updateConfig, updateEnv, InstallState, log, checkEsbuildDir } from './config'
 import { tag } from 'pretty-tag'
 import { Question, CodeSnippet } from './model/question.cn';
 import { AskForImportState, ConciseQuestion } from './model/common';
@@ -141,7 +141,7 @@ export function getDebugConfig() {
 export function checkBeforeDebug(filePath: string): boolean {
     const lang = getFileLang(filePath)
     if (lang === CodeLang.TypeScript) {
-        if (InstallState.installEsbuild) {
+        if (InstallState.installEsbuild || !checkEsbuildDir()) {
             log.appendLine('wait downloading esbuild')
             return false
         }

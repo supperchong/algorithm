@@ -101,14 +101,14 @@ export async function debugCodeCommand(filePath: string) {
     if (!checkBeforeDebug(filePath)) {
         return
     }
+    const codeLang = getFileLang(filePath)
 
-    const service = new Service(filePath)
-    if (service.codeLang === CodeLang.JavaScript || service.codeLang === CodeLang.TypeScript) {
+    if (codeLang === CodeLang.JavaScript || codeLang === CodeLang.TypeScript) {
         const debugConfiguration = getDebugConfig()
 
         vscode.debug.startDebugging(p, debugConfiguration)
     } else {
-        const lang = getFileLang(filePath)
+        const service = new Service(filePath)
         service.debugCodeCommand(p!, breaks)
     }
 
