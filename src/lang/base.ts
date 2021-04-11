@@ -106,14 +106,7 @@ export abstract class BaseLang {
         const funcRegExp = this.funcRegExp
         let testCase: TestCase = [];
         const lines = text.split(/\n/);
-        let index: number
-        lines.forEach((line, i) => {
-            if (testRegExp.test(line)) {
-                testCase.push(line)
-            } else if (funcRegExp.test(line)) {
-                index = i
-            }
-        })
+
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i]
             if (testRegExp.test(line)) {
