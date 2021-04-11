@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import { detectEnableExt, getTestCaseList, TestCaseParam } from '../common/util';
 import { CodeLang, getFileLang } from '../common/langConfig'
 import * as path from 'path'
-import { PythonParse } from '../parse/python'
+import { PythonParse } from '../lang/python'
+import { Service } from '../lang/common'
 export class CodelensProvider implements vscode.CodeLensProvider {
 
 	private codeLenses: vscode.CodeLens[] = [];
@@ -89,13 +90,14 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 
 		if (enableExt) {
 			const codeLang = getFileLang(filePath)
+			const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
+			const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
+			this.codeLenses.push(submitCodeLenses);
+			this.codeLenses.push(desCodeLenses)
 			if ([CodeLang.JavaScript, CodeLang.TypeScript].includes(codeLang)) {
+
 				const buildCodeLenses = this.getBuildCodeLenses(text, filePath);
-				const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
-				const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
 				this.codeLenses.push(buildCodeLenses);
-				this.codeLenses.push(submitCodeLenses);
-				this.codeLenses.push(desCodeLenses)
 				const testCaseList = getTestCaseList(text);
 				testCaseList.forEach((testCaseParam) => {
 					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
@@ -103,12 +105,11 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 					this.codeLenses.push(testCodeLenses);
 					this.codeLenses.push(debugCodeLenses);
 				});
-			} else if (codeLang === CodeLang.Python3) {
-				const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
-				const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
-				this.codeLenses.push(submitCodeLenses);
-				this.codeLenses.push(desCodeLenses)
-				const testCaseList = PythonParse.getTestCaseList(text)
+			} else {
+				const lang = new Service(filePath, text)
+
+
+				const testCaseList = lang.getTestCaseList(text)
 				testCaseList.forEach((testCaseParam) => {
 					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
 					const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)

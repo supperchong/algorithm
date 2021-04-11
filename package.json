@@ -109,7 +109,8 @@
                     "command": "algorithm.search",
                     "when": "view == questions",
                     "group": "navigation"
-                },{
+                },
+                {
                     "command": "algorithm.addFolder",
                     "when": "view == memo",
                     "group": "navigation"
@@ -127,27 +128,34 @@
                 {
                     "command": "algorithm.questionPreview",
                     "when": "never"
-                },{
+                },
+                {
                     "command": "algorithm.addFolder",
                     "when": "never"
-                },{
+                },
+                {
                     "command": "algorithm.addMemoFile",
                     "when": "never"
-                },{
+                },
+                {
                     "command": "algorithm.memoFilePreview",
                     "when": "never"
-                },{
+                },
+                {
                     "command": "algorithm.removeMemoFile",
                     "when": "never"
                 }
             ],
-            "view/item/context": [{
-                "command": "algorithm.addMemoFile",
-                "when": "view == questions && viewItem == memo"
-            },{
-                "command": "algorithm.removeMemoFile",
-                "when": "view == memo && viewItem == memoFile"
-            }]
+            "view/item/context": [
+                {
+                    "command": "algorithm.addMemoFile",
+                    "when": "view == questions && viewItem == memo"
+                },
+                {
+                    "command": "algorithm.removeMemoFile",
+                    "when": "view == memo && viewItem == memoFile"
+                }
+            ]
         },
         "commands": [
             {
@@ -198,24 +206,28 @@
                 "command": "algorithm.switchCodeLang",
                 "title": "switch default language",
                 "category": "algorithm"
-            },{
+            },
+            {
                 "command": "algorithm.addFolder",
                 "title": "new folder",
                 "icon": "$(new-folder)",
                 "category": "algorithm"
-            },{
+            },
+            {
                 "command": "algorithm.addMemoFile",
                 "title": "add question in memo",
-                "icon":"$(add)",
+                "icon": "$(add)",
                 "category": "algorithm"
-            },{
+            },
+            {
                 "command": "algorithm.memoFilePreview",
                 "title": "preview file",
                 "category": "algorithm"
-            },{
+            },
+            {
                 "command": "algorithm.removeMemoFile",
                 "title": "remove question in memo",
-                "icon":"$(discard)",
+                "icon": "$(discard)",
                 "category": "algorithm"
             }
         ],
@@ -234,10 +246,11 @@
                     "id": "questions",
                     "name": "questions",
                     "contextualTitle": "Package Explorer"
-                },{
+                },
+                {
                     "id": "memo",
-                    "name":"memo",
-                    "contextualTitle":"memo"
+                    "name": "memo",
+                    "contextualTitle": "memo"
                 }
             ]
         },
@@ -287,6 +300,7 @@
         "axios": "^0.21.1",
         "cheerio": "^1.0.0-rc.3",
         "compressing": "^1.5.1",
+        "fs-extra": "^9.1.0",
         "markdown-it": "^10.0.0",
         "pretty-object-string": "2.0.0-beta.3",
         "pretty-tag": "^0.1.1",

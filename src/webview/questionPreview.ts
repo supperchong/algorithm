@@ -3,10 +3,11 @@ import * as vscode from 'vscode';
 import { commands } from 'vscode';
 import { api, apiCn, apiEn } from '../api/index'
 import { config, log } from '../config';
-import { writeFile, isExist, parseHtml } from '../common/util';
+import { writeFile, parseHtml } from '../common/util';
 import { preprocessCode, shouldAskForImport, askForImport } from '../util'
 import { langMap } from '../common/langConfig';
-
+import { Service } from '../lang/common';
+import { pathExists } from 'fs-extra'
 export const QuestionPreview = 'algorithm.questionPreview';
 const defaultLang = 'JavaScript';
 const md = require('markdown-it')({
@@ -81,7 +82,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 			}
 
 			const filePath = path.join(questionDir, filename);
-			const exist = await isExist(filePath);
+			const exist = await pathExists(filePath);
 
 			if (!exist) {
 				const supportImport = ['JavaScript', 'TypeScript'].includes(langConfig.lang)
@@ -89,6 +90,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 					askForImport()
 				}
 				let code = preprocessCode(question, weekname, codeSnippet);
+				await Service.handlePreImport(filePath)
 				await writeFile(filePath, code);
 			}
 			const fileDocument = await vscode.workspace.openTextDocument(filePath)

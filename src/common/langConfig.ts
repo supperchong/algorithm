@@ -186,11 +186,11 @@ export function getFileComment(filePath: string) {
     }
     return langItem.comment
 }
-export function getPreImport(codeLang: CodeLang) {
-    if (codeLang === CodeLang.Python3) {
-        return 'from typing import List'
-    } else {
-        return ''
-    }
+// export function getPreImport(codeLang: CodeLang) {
+//     if (codeLang === CodeLang.Python3) {
+//         return 'from mod.preImport import *'
+//     } else {
+//         return ''
+//     }
 
-}
+// }

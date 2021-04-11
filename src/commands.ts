@@ -29,7 +29,8 @@ import { MemoFile } from './model/memo'
 import { addFolder, addFolderFile, addQuestion } from './memo/index'
 import { MemoProvider, MemoTree } from './provider/memoProvider';
 import { ResolverParam } from './provider/resolver'
-import { PythonParse } from './parse/python'
+import { Service } from './lang/common'
+
 interface PlainObject {
     [key: string]: any
 }
@@ -55,7 +56,8 @@ export async function testCodeCommand(line: number, testCase: TestCase, funcName
             log.appendLine(msg);
             log.show()
         } else if (codeLang === CodeLang.Python3) {
-            const promise = PythonParse.execTest(testCase, filepath)
+            const service = new Service(filepath)
+            const promise = service.execTest(testCase)
             const msg = await execWithProgress(promise, 'wait test');
             log.appendLine(msg);
             log.show()
@@ -99,17 +101,18 @@ export async function debugCodeCommand(filePath: string) {
     if (!checkBeforeDebug(filePath)) {
         return
     }
-    const lang = getFileLang(filePath)
-    if (lang === CodeLang.Python3) {
-        if (p) {
-            PythonParse.debugCodeCommand(p, filePath, breaks)
-        }
-        return
+
+    const service = new Service(filePath)
+    if (service.codeLang === CodeLang.JavaScript || service.codeLang === CodeLang.TypeScript) {
+        const debugConfiguration = getDebugConfig()
+
+        vscode.debug.startDebugging(p, debugConfiguration)
+    } else {
+        const lang = getFileLang(filePath)
+        service.debugCodeCommand(p!, breaks)
     }
 
-    const debugConfiguration = getDebugConfig()
 
-    vscode.debug.startDebugging(p, debugConfiguration)
 }
 export async function buildCodeCommand(context: ExtensionContext, text: string, filePath: string) {
     const { code } = await buildCode(text, filePath)
@@ -259,13 +262,9 @@ export async function buildCode(text: string, filePath: string): Promise<BuildCo
     if (lang === CodeLang.TypeScript) {
         return buildTsCode(text, filePath)
     }
-    if (lang === CodeLang.Python3) {
-        return PythonParse.buildCode(text, filePath)
-    }
-    const msg = 'Currently, only JS and TS are supported'
-    window.showInformationMessage(msg)
-    throw new Error(msg)
+    const service = new Service(filePath, text)
 
+    return service.buildCode()
 }
 
 export async function buildJsCode(text: string, filePath: string) {
