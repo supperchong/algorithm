@@ -38,13 +38,13 @@ export class PythonParse extends BaseLang {
             self.next = next
     def serializeListNode(head:ListNode):
         if(head==None):
-            return '[]'
+            return []
         node=head
         arr=[]
         while(node!=None):
             arr.append(node.val)
             node=node.next
-        return json.dumps(arr,separators=(',', ':'))
+        return arr
     def deserializeListNode(originData:str)->ListNode:
         arr=json.loads(originData)
         header=ListNode()
@@ -54,9 +54,9 @@ export class PythonParse extends BaseLang {
             node=node.next
         return header.next
 
-    def serializeTreeNode(root:TreeNode)->str:
+    def serializeTreeNode(root:TreeNode):
         if(root==None):
-            return '[]'
+            return []
         arr=[]
         queue=[root]
         while(len(queue)>0):
@@ -71,7 +71,7 @@ export class PythonParse extends BaseLang {
         while(arr[i]==None):
             i=i-1
             arr.pop()
-        return json.dumps(arr,separators=(',', ':'))
+        return arr
     def deserializeTreeNode(originData:str)->TreeNode:
         arr=json.loads(originData)
         if(len(arr)==0):
@@ -122,7 +122,7 @@ export class PythonParse extends BaseLang {
 
         const importFilePath = path.join(config.algDir, 'Python3')
 
-        const funExecExpression = await this.handleArgsType(args, funcName)
+        const funExecExpression = await this.handleArgsType([...args], funcName)
         const preImport = tag`
         import json
         import sys
