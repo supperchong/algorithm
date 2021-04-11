@@ -2,6 +2,8 @@
 
 An excellent vscode extension for leetcode.
 
+## Document | [中文文档](./docs/README_zh-CN.md)
+
 ## Quick Start
 
 ![Quick Start](./images/debug.gif)
@@ -14,7 +16,9 @@ An excellent vscode extension for leetcode.
 
 - debug the testcase
 
-- support import module, bundle code and copy the build code
+- memo
+
+- support import module, bundle code and copy the build code.(only support js/ts)
 
 - contain contest (Do not submit directly when you attending weekly contest,
   copy the code and submit in browser instead.)
@@ -37,6 +41,7 @@ An excellent vscode extension for leetcode.
 - python3
 
   - python3
+  - install the official Python extension
 
 ## Pick a question
 
@@ -96,6 +101,11 @@ You only need to set breakpoints on the testcase line and set breakpoints for th
 Click the submit hover to submit your code.
 
 ![build.png](./images/build.png)
+
+## Memo
+
+You can create different folders and add questions to them.
+![memo](./images/memo.gif)
 
 ## Weekly Contest
 
