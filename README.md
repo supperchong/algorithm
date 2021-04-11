@@ -8,7 +8,7 @@ An excellent vscode extension for leetcode.
 
 ## Main Features
 
-**currently only support javascript and typescript,will support other language soon**
+**currently only support javascript,typescript,python3 ,will support other language soon**
 
 - write testcase in the file and run test in local, support link list and tree
 
@@ -27,10 +27,16 @@ An excellent vscode extension for leetcode.
 
 ## Requirements
 
-- Nodejs 12+
+- javascript/typescript
 
-> The `test` and `debug` will use `node` to execute.
-> Make sure that `node` is in your PATH environment variable.If you're using nvm, you may need to set the `algorithm.nodePath` in the VS Code settings.
+  - Nodejs 12+
+
+    > The `test` and `debug` will use `node` to execute.
+    > Make sure that `node` is in your PATH environment variable.If you're using nvm, you may need to set the `algorithm.nodePath` in the VS Code settings.
+
+- python3
+
+  - python3
 
 ## Pick a question
 

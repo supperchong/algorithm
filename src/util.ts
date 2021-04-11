@@ -2,13 +2,14 @@ import * as vscode from 'vscode';
 import { window } from 'vscode';
 import { transformAsync } from "@babel/core"
 import { generateAddTestCommentPlugin } from './babelPlugin'
-import { langMap, LangBase, getFileLang, CodeLang, getPreImport } from './common/langConfig';
+import { langMap, LangBase, getFileLang, CodeLang } from './common/langConfig';
 import { ParseContent } from './common/parseContent'
 import { config, updateConfig, updateEnv, InstallState, log } from './config'
 import { tag } from 'pretty-tag'
 import { Question, CodeSnippet } from './model/question.cn';
 import { AskForImportState, ConciseQuestion } from './model/common';
 import { MemoFile } from './model/memo';
+import { Service } from './lang/common'
 export async function execWithProgress(promise: Promise<any>, message: string) {
     return window.withProgress({ location: vscode.ProgressLocation.Notification }, (p) => {
         p.report({ message });
@@ -81,7 +82,7 @@ export function preprocessCode({ questionId, codeSnippets, metaData, content, ti
     const shouldImport = supportImport && config.autoImportAlgm
     const importStr = shouldImport ? `import * as a from '${algorithmPath}'` : ''
     const autoImportStr = config.autoImportStr || ''
-    const preImport = getPreImport(langConfig.lang)
+    const preImport = Service.getPreImport(langConfig.lang)
     const flag = tag`
             ${langConfig.comment} @algorithm @lc id=${questionId} lang=${langSlug} ${weektag}
             ${langConfig.comment} @title ${titleSlug}

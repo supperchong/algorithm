@@ -10,6 +10,7 @@ import axios from 'axios'
 import * as compressing from "compressing";
 import { CodeLang, getFileLang } from './langConfig';
 import { getFileComment } from './langConfig'
+import * as cp from 'child_process'
 const rimraf = require('rimraf')
 const cheerio = require('cheerio');
 const access = promisify(fs.access);
@@ -18,6 +19,7 @@ const writeFileAsync = promisify(fs.writeFile);
 const readFileAsync = promisify(fs.readFile)
 const rename = promisify(fs.rename)
 const rmdir = promisify(fs.rmdir)
+const execFileAsync = promisify(cp.execFile)
 const isSpace = (s: string) => /\s/.test(s);
 const algorithmToken = '// @algorithm';
 const testRegExp = /^\/\/\s*@test\([^\)]*\)/;
@@ -28,7 +30,6 @@ const lcToken = /^\/\/ @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-
 const titleSlugToken = /^\/\/ @title ([\w-]+)/;
 const funcNameRegExp = /^(?:\s*function\s*([\w]+)\s*|\s*(?:(?:var|let|const)\s+([\w]+)\s*=\s*)?function)/;
 export type TestCase = string[];
-export { writeFileAsync, readFileAsync };
 export interface TestCaseParam {
     line: number
     testCase: TestCase
@@ -216,20 +217,7 @@ export async function existFile(filepath: string): Promise<boolean> {
         throw err;
     }
 }
-export function existFileSync() {
 
-}
-export async function isExist(filepath: string): Promise<boolean> {
-    try {
-        await access(filepath, fs.constants.F_OK | fs.constants.W_OK);
-        return true;
-    } catch (err) {
-        if (err.code === 'ENOENT') {
-            return false;
-        }
-        throw err;
-    }
-}
 
 export function parseHtml(html: string): Question | null {
     const $ = cheerio.load(html, { decodeEntities: false });
@@ -303,7 +291,7 @@ function parseTestCase(testCase: TestCase): Args[] {
     }
     return caseList;
 }
-function parseCommentTest(testComment: string): Args {
+export function parseCommentTest(testComment: string): Args {
     let index = testComment.indexOf("@test") + 4;
     let params: any[] = [];
     let result = '';
@@ -472,4 +460,4 @@ export function handleMsg(testResultList: TestResult[], caseList: Args[]) {
     }
     return msg;
 }
-export { detectEnableExt, getTestCaseList, parseTestCase, parseCode as getFuncNames };
+export { detectEnableExt, getTestCaseList, parseTestCase, parseCode as getFuncNames, writeFileAsync, readFileAsync, execFileAsync };
