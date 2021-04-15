@@ -37,6 +37,11 @@ interface Param {
 interface ReturnType {
     type: string
 }
+enum extraType {
+    ListNode = 'ListNode',
+    TreeNode = 'TreeNode'
+}
+const extraTypeValues = [extraType.ListNode, extraType.TreeNode]
 export interface MetaData {
     name: string,
     params: Param[],
@@ -69,6 +74,27 @@ export async function askForImport() {
 
 
 }
+function getImportStr(metaData: MetaData) {
+    const arr: Set<extraType> = new Set()
+    const params = metaData.params
+    const r = metaData.return
+    params.forEach(p => {
+        extraTypeValues.forEach(e => {
+            if (p.type.includes(e)) {
+                arr.add(e)
+            }
+        })
+    })
+    extraTypeValues.forEach(e => {
+        if (r.type.includes(e)) {
+            arr.add(e)
+        }
+    })
+    if (arr.size) {
+        return `import { ${[...arr].join(', ')} } from 'algm'`
+    }
+
+}
 export function preprocessCode({ questionId, codeSnippets, metaData, content, titleSlug, questionSourceContent }: Question, weekname: string = '', codeSnippet: CodeSnippet) {
 
     const { codeLang } = config
@@ -80,7 +106,8 @@ export function preprocessCode({ questionId, codeSnippets, metaData, content, ti
     const weektag = weekname ? `weekname=${weekname}` : ''
     const supportImport = ['JavaScript', 'TypeScript'].includes(langConfig.lang)
     const shouldImport = supportImport && config.autoImportAlgm
-    const importStr = shouldImport ? `import * as a from '${algorithmPath}'` : ''
+    const metaDataParse: MetaData = JSON.parse(metaData);
+    const importStr = shouldImport ? `import * as a from 'algm'\n` + getImportStr(metaDataParse) : ''
     const autoImportStr = config.autoImportStr || ''
     const preImport = Service.getPreImport(langConfig.lang)
     const flag = tag`
@@ -90,7 +117,7 @@ export function preprocessCode({ questionId, codeSnippets, metaData, content, ti
             ${autoImportStr}
             ${preImport}
         `;
-    const metaDataParse: MetaData = JSON.parse(metaData);
+
     let codeTestSnippet = '';
     try {
         codeTestSnippet = testCases.map(testCase => {
