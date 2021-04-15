@@ -41,6 +41,18 @@ export interface Args {
     args: string[]
     result: string
 }
+export function isVersionGte(v1: string, v2: string) {
+    const arr1 = v1.split('.')
+    const arr2 = v2.split('.')
+    for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] > arr2[i]) {
+            return true
+        } else if (arr1[i] < arr2[i]) {
+            return false
+        }
+    }
+    return true
+}
 export async function writeFile(filepath: string, data: any) {
     const dir = path.dirname(filepath)
     await fs.promises.mkdir(dir, { recursive: true })
