@@ -13,7 +13,7 @@ import * as https from 'https'
 import * as compressing from "compressing";
 import axios from 'axios'
 import { promisify } from 'util'
-import { downloadNpm, unionArr, uniqueArrByKey } from './common/util'
+import { downloadNpm, unionArr, uniqueArrByKey, isVersionGte } from './common/util'
 import { MemoFile, MemoFolder } from './model/memo'
 const rename = promisify(fs.rename)
 const rmdir = promisify(fs.rmdir)
@@ -23,6 +23,8 @@ const defaultCodeLang = CodeLang.JavaScript
 const defaultNodeBinPath = 'node'
 const defaultLang = Lang.en
 const defaultBaseDir = path.join(os.homedir(), '.alg')
+const algmVersion = '0.1.6'
+const ESBUILD = 'esbuild'
 export const log = window.createOutputChannel('algorithm');
 export const InstallState = {
     installEsbuild: false,
@@ -281,13 +283,23 @@ function checkNodePath() {
         }
     })
 }
+function checkAlgmVersion() {
+    const targetDir = config.algmModuleDir
+    try {
+        let a = require(path.join(targetDir, 'package.json'))
+        return isVersionGte(a.version, algmVersion)
+    } catch (err) {
+        return false
+    }
 
+}
 async function checkAlgm() {
     if (config.autoImportAlgm) {
         const moduleDir = config.moduleDir
         const targetDir = config.algmModuleDir
         const name = 'algm'
-        if (existsSync(targetDir)) {
+
+        if (existsSync(targetDir) && checkAlgmVersion()) {
             return
         }
         if (!InstallState.installAlgm) {
@@ -309,14 +321,18 @@ async function checkAlgm() {
 
 
 export function checkEsbuildDir() {
-    if (config.env.hasInstallEsbuild) {
+    try {
+        require.resolve(ESBUILD)
         return true
+    } catch (err) {
+        installEsbuild()
+        return false
     }
-    installEsbuild()
-    return false
+
+
 }
 async function installEsbuild() {
-    const name = 'esbuild'
+    const name = ESBUILD
     const moduleDir = path.join(__dirname, '..', 'node_modules')
     const targetDir = path.join(moduleDir, name)
     log.appendLine('installing esbuild from npm...')

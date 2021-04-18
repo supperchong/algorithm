@@ -32,10 +32,12 @@ export class Service {
         return Parse.preImport
     }
     static handlePreImport(filePath: string) {
-        const service = new Service(filePath)
-        if (['JavaScript', 'TypeScript'].includes(service.codeLang)) {
+
+        const codeLang = getFileLang(filePath)
+        if (['JavaScript', 'TypeScript'].includes(codeLang)) {
             return
         }
+        const service = new Service(filePath)
         return service.ctx.handlePreImport()
     }
     public isSupport() {

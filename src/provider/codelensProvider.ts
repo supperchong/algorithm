@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { detectEnableExt, getTestCaseList, TestCaseParam } from '../common/util';
+import { detectEnableExt, getTestCaseList, getTsTestCaseList, TestCaseParam } from '../common/util';
 import { CodeLang, getFileLang } from '../common/langConfig'
 import * as path from 'path'
 import { PythonParse } from '../lang/python'
@@ -98,7 +98,12 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 
 				const buildCodeLenses = this.getBuildCodeLenses(text, filePath);
 				this.codeLenses.push(buildCodeLenses);
-				const testCaseList = getTestCaseList(text);
+				let testCaseList: TestCaseParam[] = []
+				if (codeLang === CodeLang.JavaScript) {
+					testCaseList = getTestCaseList(text);
+				} else {
+					testCaseList = getTsTestCaseList(text)
+				}
 				testCaseList.forEach((testCaseParam) => {
 					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
 					const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)

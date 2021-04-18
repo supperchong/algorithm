@@ -7,7 +7,8 @@ import * as path from 'path'
 import babel = require('@babel/core');
 import presetTs = require('@babel/preset-typescript')
 import virtual = require('@rollup/plugin-virtual');
-import { getFuncNames } from '../common/util'
+import { getFuncNames, parseCommentTest, returnRegExp, paramMetaRegExp, deserializeParam, funcNameRegExp, tsFunctionRegExp, parseTsFunctionType } from '../common/util'
+import { CodeLang, getFileLang } from '../common/langConfig';
 interface DebugOption {
     path: string
     lines: number[]
@@ -18,6 +19,11 @@ async function main() {
     const debugOptionsFilePath = process.argv[3]
     const file = readFileSync(debugOptionsFilePath, { encoding: 'utf8' })
     const outputDir = path.join(dir, 'out')
+    const codeLang = getFileLang(mainFilePath)
+    if (![CodeLang.JavaScript, CodeLang.TypeScript].includes(codeLang)) {
+        console.log('only support JavaScript and TypeScript')
+        return
+    }
     await promises.mkdir(outputDir, { recursive: true })
     const codePath = path.join(outputDir, 'code.js')
     const codeMapPath = path.join(outputDir, 'code.js.map')
@@ -33,21 +39,42 @@ async function main() {
     const mainFileCode = readFileSync(mainFilePath, { encoding: 'utf8' })
     let codeLines = mainFileCode.split('\n')
     const testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
-    const funcNameRegExp = /^(?:\s*function\s*([\w]+)\s*|\s*(?:(?:var|let|const)\s+([\w]+)\s*=\s*)?function)/;
-
+    // const funcNameRegExp = /^(?:\s*function\s*([\w]+)\s*|\s*(?:(?:var|let|const)\s+([\w]+)\s*=\s*)?function)/;
+    // const tsFunctionRegExp = /function\s+(\w+)\((?:\s*\w+\s*:([^,]+),)*\s*\w+\s*:([^,]+)\):\s*(\w+)/
     const line = lines.find(num => testRegExp.test(codeLines[num]))
     let funName = ''
-    let testCase = ''
+    let args: string[] = []
+    let paramsTypes: string[] = [];
+    let resultType: string = '';
     if (Number.isInteger(line)) {
-        let match = codeLines[(line as number)].match(testRegExp)
-        if (match) {
-            testCase = match[1]
-        }
+        args = parseCommentTest(codeLines[(line as number)]).args
         for (let i = (line as number) + 1; i < codeLines.length; i++) {
-            let match = codeLines[i].match(funcNameRegExp);
-            if (match) {
-                funName = match[1] || match[2];
-                break
+
+            if (codeLang === CodeLang.JavaScript) {
+                let match = codeLines[i].match(funcNameRegExp);
+                if (match) {
+                    funName = match[1] || match[2];
+                    break
+                } else if (paramMetaRegExp.test(codeLines[i])) {
+                    let match = codeLines[i].match(paramMetaRegExp);
+                    if (match) {
+                        paramsTypes.push(match[1]);
+                    }
+                } else if (returnRegExp.test(codeLines[i])) {
+                    let match = codeLines[i].match(returnRegExp);
+                    if (match) {
+                        resultType = match[1];
+                    }
+                }
+
+            } else if (codeLang === CodeLang.TypeScript) {
+                const tsFunctionType = parseTsFunctionType(codeLines[i])
+                if (tsFunctionType) {
+                    funName = tsFunctionType.funcName
+                    paramsTypes = tsFunctionType.paramsTypes
+                    resultType = tsFunctionType.resultType
+                    break
+                }
             }
 
         }
@@ -63,13 +90,22 @@ async function main() {
         console.log('funName not found')
         return
     }
-    // console.log('funName', funName)
-    console.log('testCase', testCase)
-    if (mainFilePath.endsWith('.ts')) {
+
+    if (paramsTypes.length === args.length) {
+        if (codeLang === CodeLang.TypeScript) {
+            deserializeParam(args, paramsTypes, true)
+        } else {
+            deserializeParam(args, paramsTypes, false)
+        }
+
+    }
+    if (codeLang === CodeLang.TypeScript) {
+        const testCase = args.join(',')
         const finalCode = mainFileCode + '\n' + `${funName}(${testCase})`
         return buildTsCode(finalCode, mainFilePath, path.join(dir, 'out'))
     }
 
+    const testCase = args.join(',')
     const bundle = await rollup.rollup({
         input: mainFilePath,
 

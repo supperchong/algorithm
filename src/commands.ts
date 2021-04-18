@@ -269,6 +269,7 @@ export async function buildCode(text: string, filePath: string): Promise<BuildCo
 
 export async function buildJsCode(text: string, filePath: string) {
     try {
+        const dir = path.parse(filePath).dir
         const { funcNames, questionMeta } = getFuncNames(text, filePath);
         const funcRunStr = 'console.log(' + funcNames.map(f => f + '()').join('+') + ')';
         // The rollup will not transform code in virtual entry
@@ -287,7 +288,7 @@ export async function buildJsCode(text: string, filePath: string) {
                 virtual({
                     entry: entry
                 }),
-                resolve(),
+                resolve({ rootDir: dir }),
                 rollupBabelPlugin({
                     babelHelpers: 'bundled',
                     comments: false,
@@ -314,6 +315,7 @@ export async function buildJsCode(text: string, filePath: string) {
 }
 export async function buildTsCode(text: string, filePath: string) {
     try {
+        const dir = path.parse(filePath).dir
         const { funcNames, questionMeta } = getFuncNames(text, filePath);
         const funcRunStr = 'console.log(' + funcNames.map(f => f + '()').join('+') + ')';
         // The rollup will not transform code in virtual entry
@@ -334,7 +336,7 @@ export async function buildTsCode(text: string, filePath: string) {
                 virtual({
                     entry: entry
                 }),
-                resolve(),
+                resolve({ rootDir: dir, modulesOnly: true }),
                 rollupBabelPlugin({
                     babelHelpers: 'bundled',
                     comments: false,

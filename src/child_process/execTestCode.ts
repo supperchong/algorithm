@@ -3,7 +3,6 @@ import resolve from "@rollup/plugin-node-resolve";
 import rollupBabelPlugin from "@rollup/plugin-babel";
 import { transformSync } from '@babel/core'
 import virtual = require('@rollup/plugin-virtual');
-
 import * as path from 'path'
 import * as fs from 'fs'
 import sourceMap = require("source-map")
@@ -52,10 +51,9 @@ async function execTestCase(options) {
     const list: TestResult[] = [];
     for (const { args, result: expect } of caseList) {
         const originArgs = [...args]
-        const { hasTree, hasList } = deserializeParam(args, paramsTypes);
+        const { hasTree, hasList } = deserializeParam(args, paramsTypes, false);
         const rt = getResultType(resultType);
         const finalCode = formatCodeOutput(code, funcName, rt, args)
-
         const script = new Script(finalCode, {});
         try {
             const result = script.runInNewContext(
@@ -113,21 +111,24 @@ async function buildJsCode(filepath: string) {
 
 async function buildTsCode(filepath: string) {
     const code = fs.readFileSync(filepath, { encoding: 'utf8' })
+    const fileDir = path.parse(filepath).dir
     const entry = transformSync(code, {
         filename: filepath,
         comments: false,
-        presets: [presetTs],
+        cwd: fileDir,
+        presets: [[presetTs, { onlyRemoveTypeImports: true }]],
         plugins: [outBoundArrayPlugin]
     })
+
     const bundle = await rollup.rollup({
         input: 'entry',
-
         treeshake: false,
         plugins: [
             virtual({
-                entry: entry
+                entry: entry?.code
             }),
-            resolve(),
+            resolve({ rootDir: fileDir, browser: false }),
+
         ]
     });
     const { output } = await bundle.generate({});
