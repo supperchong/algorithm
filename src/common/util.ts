@@ -22,13 +22,16 @@ const rmdir = promisify(fs.rmdir)
 const execFileAsync = promisify(cp.execFile)
 const isSpace = (s: string) => /\s/.test(s);
 const algorithmToken = '// @algorithm';
-const testRegExp = /^\/\/\s*@test\([^\)]*\)/;
+const testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/;
 const funcRegExp = /^(?:(\s*function)|(.*=\s*function))/;
 const paramMetaRegExp = /@param {([^}]+)}/;
 const returnRegExp = /@return {([^}]+)}/;
 const lcToken = /^\/\/ @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-]+))?/;
 const titleSlugToken = /^\/\/ @title ([\w-]+)/;
-const funcNameRegExp = /^(?:\s*function\s*([\w]+)\s*|\s*(?:(?:var|let|const)\s+([\w]+)\s*=\s*)?function)/;
+export const funcNameRegExp = /^(?:\s*function\s*([\w]+)\s*|\s*(?:(?:var|let|const)\s+([\w]+)\s*=\s*)?function)/;
+export const tsFunctionRegExp = /function\s+(\w+)\((.*)\)\s*(?:\:(.+))?{/
+export const isTreeNode = (str: string) => /^TreeNode\s*(\|\s*null)?$/.test(str)
+export const isListNode = (str: string) => /^ListNode\s*(\|\s*null)?$/.test(str)
 export type TestCase = string[];
 export interface TestCaseParam {
     line: number
@@ -101,7 +104,7 @@ function detectEnableExt(text: string, filePath: string): boolean {
     return true;
 
 }
-function getTestCaseList(text: string): Array<TestCaseParam> {
+function getJsTestCaseList(text: string): Array<TestCaseParam> {
     let testCaseList: TestCaseParam[] = [];
     const lines = text.split(/\n/);
     let isTest = false;
@@ -109,6 +112,7 @@ function getTestCaseList(text: string): Array<TestCaseParam> {
     let paramsTypes: string[] = [];
     let resultType: string = '';
     for (let i = 0; i < lines.length; i++) {
+
         if (testRegExp.test(lines[i])) {
             isTest = true;
             testCase.push(lines[i]);
@@ -146,6 +150,55 @@ function getTestCaseList(text: string): Array<TestCaseParam> {
         }
     }
     return testCaseList;
+}
+function trimParams(param: string) {
+    return param.split(',').map(v => v.split(':')[1]).map(str => str && str.trim())
+}
+function trimResultType(resultType: string | undefined) {
+    return resultType && resultType.trim()
+}
+export function parseTsFunctionType(line: string) {
+    let match = line.match(tsFunctionRegExp);
+    if (match) {
+        return {
+            funcName: match[1],
+            paramsTypes: trimParams(match[2]),
+            resultType: trimResultType(match[3]) || ''
+
+        }
+    }
+    return null
+}
+function getTsTestCaseList(text: string) {
+    let testCaseList: TestCaseParam[] = [];
+    let testCase: TestCase = [];
+    let isTest = false;
+    const lines = text.split(/\n/);
+    for (let i = 0; i < lines.length; i++) {
+        if (testRegExp.test(lines[i])) {
+            isTest = true;
+            testCase.push(lines[i]);
+        } else {
+            if (isTest) {
+                const tsFunctionType = parseTsFunctionType(lines[i])
+                if (tsFunctionType) {
+                    const { funcName, paramsTypes, resultType } = tsFunctionType
+                    testCaseList.push({
+                        line: i,
+                        testCase,
+                        funcName,
+                        paramsTypes: [...paramsTypes],
+                        resultType: resultType
+                    });
+                    isTest = false
+                    testCase = [];
+                }
+
+            }
+
+        }
+    }
+    return testCaseList
 }
 export interface QuestionMeta {
     id?: string,
@@ -359,20 +412,36 @@ export function normalize(result: any, returnType: string) {
 export function parseLink() {
 
 }
-export function deserializeParam(args: string[], paramsTypes: string[]) {
+/**
+ * 
+ * @param args the params of function
+ * @param paramsTypes the type of params
+ * @param includeFunctionCall whether the building step contains function call
+ */
+export function deserializeParam(args: string[], paramsTypes: string[], includeFunctionCall: boolean) {
     let hasTree = false;
     let hasList = false;
     for (let i = 0; i < paramsTypes.length; i++) {
         let paramType = paramsTypes[i];
-        if (paramType === 'TreeNode') {
+        if (isTreeNode(paramType)) {
             hasTree = true;
-            args[i] = `treeNode.deserialize("${args[i]}")`;
-        } else if (/TreeNode/.test(args[i])) {
+            if (includeFunctionCall) {
+                args[i] = `a.treeNode.deserialize("${args[i]}")`;
+            } else {
+                args[i] = `treeNode.deserialize("${args[i]}")`;
+            }
+
+        } else if (/TreeNode/.test(paramType)) {
             console.warn('deserialize param meeting problem,args:', args[i]);
-        } else if (paramType === 'ListNode') {
+        } else if (isListNode(paramType)) {
             hasList = true;
-            args[i] = `listNode.deserialize("${args[i]}")`;
-        } else if (/ListNode/.test(args[i])) {
+            if (includeFunctionCall) {
+                args[i] = `a.listNode.deserialize("${args[i]}")`;
+            } else {
+                args[i] = `listNode.deserialize("${args[i]}")`;
+            }
+
+        } else if (/ListNode/.test(paramType)) {
             console.warn('deserialize param meeting problem,args:', args[i]);
         }
     }
@@ -383,9 +452,9 @@ export function deserializeParam(args: string[], paramsTypes: string[]) {
     };
 }
 export function getResultType(resultType: string): string {
-    if (resultType === 'TreeNode') {
+    if (isTreeNode(resultType)) {
         return 'TreeNode';
-    } else if (resultType === 'ListNode') {
+    } else if (isListNode(resultType)) {
         return 'ListNode';
     } else if (/TreeNode|ListNode/.test(resultType)) {
         console.warn('deserialize result meeting problem,resultType:', resultType);
@@ -472,4 +541,4 @@ export function handleMsg(testResultList: TestResult[], caseList: Args[]) {
     }
     return msg;
 }
-export { detectEnableExt, getTestCaseList, parseTestCase, parseCode as getFuncNames, writeFileAsync, readFileAsync, execFileAsync };
+export { detectEnableExt, getJsTestCaseList as getTestCaseList, getTsTestCaseList, parseTestCase, parseCode as getFuncNames, writeFileAsync, readFileAsync, execFileAsync, paramMetaRegExp, returnRegExp };

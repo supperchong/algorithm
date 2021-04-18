@@ -93,6 +93,7 @@ function getImportStr(metaData: MetaData) {
     if (arr.size) {
         return `import { ${[...arr].join(', ')} } from 'algm'`
     }
+    return ''
 
 }
 export function preprocessCode({ questionId, codeSnippets, metaData, content, titleSlug, questionSourceContent }: Question, weekname: string = '', codeSnippet: CodeSnippet) {
