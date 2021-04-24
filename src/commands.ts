@@ -55,7 +55,7 @@ export async function testCodeCommand(line: number, testCase: TestCase, funcName
             const msg = await execWithProgress(promise, 'wait test');
             log.appendLine(msg);
             log.show()
-        } else if (codeLang === CodeLang.Python3) {
+        } else if ([CodeLang.Python3, CodeLang.Go].includes(codeLang)) {
             const service = new Service(filepath)
             const promise = service.execTest(testCase)
             const msg = await execWithProgress(promise, 'wait test');
@@ -428,7 +428,7 @@ class CodeLangItem implements vscode.QuickPickItem {
     }
 }
 export async function switchCodeLangCommand(questionsProvider: QuestionsProvider) {
-    const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript, CodeLang.Python3]
+    const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript, CodeLang.Python3, CodeLang.Go]
     const curLang = config.codeLang
     const langLabels = langs.map(lang => {
         if (lang === curLang) {

@@ -19,13 +19,12 @@ import * as path from 'path'
 import { getFileComment } from '../common/langConfig'
 import { BaseLang } from './base'
 import { parseCommentTest } from '../common/util'
-const testRegExp = /^#\s*@test\([^\)]*\)/;
-const funcRegExp = /^(\s*class Solution)/;
 const execFileAsync = promisify(cp.execFile)
 
 export class PythonParse extends BaseLang {
     static preImport: string = 'from mod.preImport import *'
     funcRegExp = /^(\s*class Solution)/
+    testRegExp = /#\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
     handleTypeCode = tag`
     class TreeNode:
         def __init__(self, val=0, left=None, right=None):
@@ -198,8 +197,7 @@ export class PythonParse extends BaseLang {
         let codeLines = originCode.split('\n')
 
         const lines = customBreakPoint.lines
-        const testRegExp = /#\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
-        const line = lines.find(num => testRegExp.test(codeLines[num]))
+        const line = lines.find(num => this.testRegExp.test(codeLines[num]))
         if (!Number.isInteger(line)) {
             throw new Error('please select the test case')
         }

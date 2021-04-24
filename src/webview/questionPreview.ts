@@ -5,7 +5,7 @@ import { api, apiCn, apiEn } from '../api/index'
 import { config, log } from '../config';
 import { writeFile, parseHtml } from '../common/util';
 import { preprocessCode, shouldAskForImport, askForImport } from '../util'
-import { langMap } from '../common/langConfig';
+import { CodeLang, langMap } from '../common/langConfig';
 import { Service } from '../lang/common';
 import { pathExists } from 'fs-extra'
 export const QuestionPreview = 'algorithm.questionPreview';
@@ -81,7 +81,11 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 				filename = questionFrontendId + langConfig.fileNameSep + translatedTitle + langConfig.ext;
 			}
 
-			const filePath = path.join(questionDir, filename);
+			let filePath = path.join(questionDir, filename);
+			if (langConfig.lang === CodeLang.Go) {
+				const name = path.parse(filename).name
+				filePath = path.join(questionDir, name, "solution.go");
+			}
 			const exist = await pathExists(filePath);
 
 			if (!exist) {
