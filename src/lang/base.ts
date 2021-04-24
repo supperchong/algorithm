@@ -24,6 +24,7 @@ export abstract class BaseLang {
     public originCode?: string
     public commentToken: '#' | '//'
     public abstract funcRegExp: RegExp
+    public abstract testRegExp: RegExp
     public abstract runInNewContext(args: string[], originCode: string, funcName: string): Promise<string>
     public abstract getDebugConfig(): any
     public abstract beforeDebug(breaks: vscode.SourceBreakpoint[]): Promise<void>

@@ -59,7 +59,8 @@
                     "enum": [
                         "JavaScript",
                         "TypeScript",
-                        "Python3"
+                        "Python3",
+                        "Go"
                     ],
                     "scope": "window"
                 },
