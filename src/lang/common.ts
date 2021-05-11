@@ -1,16 +1,18 @@
 import { EROFS } from "constants";
-import { CodeLang, getFileLang } from "../common/langConfig";
+import { CodeLang, getFileLang, ExtraType } from "../common/langConfig";
 import { BaseLang } from "./base";
 import { PythonParse } from './python'
 import { GoParse } from './golang'
+import { JavaParse } from './java'
 import { log } from '../config'
 import { readFileAsync, TestCase, TestCaseParam, writeFileAsync, execFileAsync } from '../common/util'
 import * as vscode from 'vscode'
 import * as path from 'path'
-const enableLang = [CodeLang.JavaScript, CodeLang.TypeScript, CodeLang.Python3, CodeLang.Go]
+import { enableLang } from '../common/langConfig'
 const langMap = {
     [CodeLang.Python3]: PythonParse,
-    [CodeLang.Go]: GoParse
+    [CodeLang.Go]: GoParse,
+    [CodeLang.Java]: JavaParse
 }
 export class Service {
     public codeLang: CodeLang
@@ -25,10 +27,10 @@ export class Service {
         }
         this.ctx = new Parse(filePath, text)
     }
-    static getPreImport(codeLang: CodeLang): string {
+    static getPreImport(codeLang: CodeLang, name: string, extraTypeSet: Set<ExtraType>): string {
         const Parse = langMap[codeLang]
         if (!Parse) return ''
-        return Parse.preImport
+        return Parse.getPreImport(name, extraTypeSet)
     }
     static handlePreImport(filePath: string) {
 
@@ -49,8 +51,7 @@ export class Service {
         return this.ctx.debugCodeCommand(folder, breaks)
     }
     public buildCode() {
-        const preImport = Service.getPreImport(this.codeLang)
-        return this.ctx.buildCode(preImport)
+        return this.ctx.buildCode()
     }
     public getTestCaseList(text: string) {
         return this.ctx.getTestCaseList(text)

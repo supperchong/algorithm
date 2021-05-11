@@ -23,7 +23,7 @@ import { githubInput, selectLogin } from './login/input'
 import { githubLogin } from './login';
 import presetTs = require('@babel/preset-typescript')
 import { getQuestionDescription } from './webview/questionPreview';
-import { CodeLang, getFileLang, langExtMap } from './common/langConfig';
+import { builtInLang, CodeLang, enableLang, getFileLang, langExtMap, otherLang } from './common/langConfig';
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
 import { MemoFile } from './model/memo'
 import { addFolder, addFolderFile, addQuestion } from './memo/index'
@@ -48,14 +48,14 @@ function checkParams<T, R extends keyof T>(obj: T, attrs: R[]): asserts obj is R
 export async function testCodeCommand(line: number, testCase: TestCase, funcName: string, paramsTypes: string[], resultType: string, filepath: string) {
     try {
         const codeLang = getFileLang(filepath)
-        if (codeLang === CodeLang.JavaScript || codeLang === CodeLang.TypeScript) {
+        if (builtInLang.includes(codeLang)) {
             const promise = execTestChildProcess({
                 line, testCase, funcName, paramsTypes, resultType, filepath
             });
             const msg = await execWithProgress(promise, 'wait test');
             log.appendLine(msg);
             log.show()
-        } else if ([CodeLang.Python3, CodeLang.Go].includes(codeLang)) {
+        } else if (otherLang.includes(codeLang)) {
             const service = new Service(filepath)
             const promise = service.execTest(testCase)
             const msg = await execWithProgress(promise, 'wait test');
@@ -428,9 +428,9 @@ class CodeLangItem implements vscode.QuickPickItem {
     }
 }
 export async function switchCodeLangCommand(questionsProvider: QuestionsProvider) {
-    const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript, CodeLang.Python3, CodeLang.Go]
+    // const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript, CodeLang.Python3, CodeLang.Go]
     const curLang = config.codeLang
-    const langLabels = langs.map(lang => {
+    const langLabels = enableLang.map(lang => {
         if (lang === curLang) {
             return new CodeLangItem(lang, '$(check)')
         }
@@ -439,7 +439,7 @@ export async function switchCodeLangCommand(questionsProvider: QuestionsProvider
     const pickItem = await window.showQuickPick(langLabels)
     const pickIndex = langLabels.findIndex(v => v === pickItem)
     if (pickIndex !== -1) {
-        const pickLang = langs[pickIndex]
+        const pickLang = enableLang[pickIndex]
         updateConfig('codeLang', pickLang)
     }
 }

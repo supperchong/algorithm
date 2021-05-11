@@ -77,14 +77,19 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 
 			//generate code
 			let filename = questionFrontendId + langConfig.fileNameSep + title + langConfig.ext;
-			if (config.lang === 'cn') {
+			if (config.lang === 'cn' && langConfig.lang != CodeLang.Java) {
 				filename = questionFrontendId + langConfig.fileNameSep + translatedTitle + langConfig.ext;
 			}
 
+
 			let filePath = path.join(questionDir, filename);
+			let name = path.parse(filename).name
 			if (langConfig.lang === CodeLang.Go) {
-				const name = path.parse(filename).name
 				filePath = path.join(questionDir, name, "solution.go");
+			} else if (langConfig.lang == CodeLang.Java) {
+				name = '_' + name.replace(/\./, '_')
+				name = name.replace(/[^\w]/g, '_')
+				filePath = path.join(questionDir, name, "Solution.java");
 			}
 			const exist = await pathExists(filePath);
 
@@ -93,7 +98,10 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 				if (supportImport && shouldAskForImport()) {
 					askForImport()
 				}
-				let code = preprocessCode(question, weekname, codeSnippet);
+				let code = preprocessCode(question, weekname, codeSnippet, name);
+				if (langConfig.lang === CodeLang.Java) {
+					code = code.replace('class Solution', 'public class Solution');
+				}
 				await Service.handlePreImport(filePath)
 				await writeFile(filePath, code);
 			}

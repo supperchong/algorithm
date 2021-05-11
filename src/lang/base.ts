@@ -1,6 +1,6 @@
 import * as cp from 'child_process'
 import * as fs from 'fs'
-import { readFileAsync, TestCase, TestCaseParam, writeFileAsync, execFileAsync } from '../common/util'
+import { readFileAsync, TestCase, TestCaseParam, writeFileAsync, execFileAsync, CaseList } from '../common/util'
 import { tag } from 'pretty-tag'
 import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/util'
 import { log, config } from '../config'
@@ -19,16 +19,16 @@ import * as path from 'path'
 import { getFileComment } from '../common/langConfig'
 
 export abstract class BaseLang {
-    public preImport: string = ''
     public log: OutputChannel
     public originCode?: string
     public commentToken: '#' | '//'
     public abstract funcRegExp: RegExp
     public abstract testRegExp: RegExp
     public abstract runInNewContext(args: string[], originCode: string, funcName: string): Promise<string>
-    public abstract getDebugConfig(): any
+    public abstract getDebugConfig(breaks?: vscode.SourceBreakpoint[]): any
     public abstract beforeDebug(breaks: vscode.SourceBreakpoint[]): Promise<void>
     public abstract handlePreImport(): any
+    public abstract shouldRemoveInBuild(line: string): boolean
     constructor(public filePath: string, public text?: string) {
         this.log = log
         if (!filePath) {
@@ -47,7 +47,7 @@ export abstract class BaseLang {
         this.originCode = originCode
         return this.originCode
     }
-    public async getQuestionMeta() {
+    public async getQuestionMeta(): Promise<MetaData | undefined> {
         const originCode = await this.getOriginCode()
         const { questionMeta } = getFuncNames(originCode, this.filePath)
         const id = questionMeta.id
@@ -62,6 +62,42 @@ export abstract class BaseLang {
         }
         const metaData: MetaData = JSON.parse(question.metaData)
         return metaData
+    }
+    handleResult(stdout: string, caseList) {
+        let testResultList: TestResult[] = caseList.map(v => {
+            return {
+                args: v.args,
+                expect: v.result,
+            }
+        })
+        let regexp = /resultabc(\d+):(.+?)resultend/g
+        let r
+        while ((r = regexp.exec(stdout))) {
+            let index = r[1]
+            let result = r[2]
+            testResultList[index].result = result
+        }
+        return testResultList
+    }
+    runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+        let testResultList: TestResult[] = []
+        return new Promise(async (resolve, reject) => {
+            for (const { args, result: expect } of caseList) {
+                try {
+                    let result = await this.runInNewContext(args, originCode, funcName)
+                    testResultList.push({
+                        args: args.join(','),
+                        expect: expect,
+                        result
+                    })
+                } catch (err) {
+                    let msg = `× @test(${args.join(',')})\n`
+                    resolve(msg + err.stderr)
+                    return
+                }
+            }
+            resolve(handleMsg(testResultList))
+        })
     }
     public async execTest(testCase: TestCase) {
         const filePath = this.filePath
@@ -81,25 +117,7 @@ export abstract class BaseLang {
         const metaData: MetaData = JSON.parse(question.metaData)
         const funcName = metaData.name
         if (!caseList.length) return
-        let testResultList: TestResult[] = []
-        return new Promise(async (resolve, reject) => {
-            for (const { args, result: expect } of caseList) {
-                try {
-                    let result = await this.runInNewContext(args, originCode, funcName)
-                    testResultList.push({
-                        args: args.join(','),
-                        expect: expect,
-                        result
-                    })
-                } catch (err) {
-                    let msg = `× @test(${args.join(',')})\n`
-                    resolve(msg + err.stderr)
-                    return
-                }
-            }
-            resolve(handleMsg(testResultList, caseList))
-        })
-
+        return this.runMultiple(caseList, originCode, funcName)
     }
 
     public getTestCaseList(text: string) {
@@ -132,21 +150,22 @@ export abstract class BaseLang {
             return
         }
 
-        const debugConfiguration = this.getDebugConfig()
+        const debugConfiguration = await this.getDebugConfig(breaks)
 
         vscode.debug.startDebugging(folder, debugConfiguration)
     }
-    public async buildCode(preImport: string) {
+    public async buildCode() {
         const originCode = await this.getOriginCode()
         const { questionMeta } = getFuncNames(originCode, this.filePath);
         const commentToken = getFileComment(this.filePath)
 
-        const code = originCode.split('\n').filter(line => !isComment(line, commentToken) && !isPreImport(line, preImport)).join('\n')
+        const code = originCode.split('\n').filter(line => !isComment(line, commentToken) && !this.shouldRemoveInBuild(line)).join('\n')
         return {
             code,
             questionMeta
         }
     }
+
 
 }
 

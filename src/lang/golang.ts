@@ -7,14 +7,13 @@ import { log, config } from '../config'
 import { getDb } from '../db';
 import { api } from '../api/index'
 import { MetaData } from '../util'
-import { resolve } from 'path'
-import { rejects } from 'assert'
-import { runInNewContext } from 'vm'
+
+
 import { promisify } from 'util'
-import { OutputChannel } from 'vscode'
+
 import * as vscode from 'vscode'
 import { tranfromToCustomBreakpoint } from '../debug/launch'
-import { stdout } from 'process'
+
 import * as path from 'path'
 import { getFileComment } from '../common/langConfig'
 import { BaseLang } from './base'
@@ -22,7 +21,9 @@ import { parseCommentTest } from '../common/util'
 const execFileAsync = promisify(cp.execFile)
 
 export class GoParse extends BaseLang {
-    static preImport: string = 'package main'
+    static getPreImport() {
+        return 'package main'
+    }
     funcRegExp = /^(\s*func)/
     testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
 
@@ -505,5 +506,8 @@ export class GoParse extends BaseLang {
             "program": dir
         }
     }
-
+    shouldRemoveInBuild(line: string): boolean {
+        const preImportStr = GoParse.getPreImport();
+        return line.trim().startsWith(preImportStr)
+    }
 }

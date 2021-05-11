@@ -76,7 +76,7 @@ async function execTestCase(options) {
         }
 
     }
-    return handleMsg(list, caseList)
+    return handleMsg(list)
 }
 
 async function buildCode(filepath: string, lang: CodeLang) {
