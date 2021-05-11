@@ -6,9 +6,17 @@ An excellent vscode extension for leetcode.
 
 ![Quick Start](../images/debug.gif)
 
+## Support
+
+- javascript
+- typescript
+- python3
+- golang
+- java
+
 ## Main Features
 
-**目前仅支持 javascript,typescript,python3 ,正在加班支持其它语言**
+**将会很快支持其它语言**
 
 - 代码里包含默认测试用例，也可以添加自定义的测试用例，点击测试按钮 自动在本地运行，支持链表和二叉树。
 
@@ -37,7 +45,16 @@ An excellent vscode extension for leetcode.
 - python3
 
   - python3
-  - 安装官方 Python 插件
+  - 安装官方 Python 插件(https://code.visualstudio.com/docs/python/python-tutorial)
+
+- golang
+
+  - 确保 `go` 在环境变量里
+  - 安装 golang 官方插件
+
+- java
+  - 确保`java`,`javac`在环境变量里，或者[设置 javaPath 和 javacPath](#Setting).
+  - 安装 java 官方插件(https://code.visualstudio.com/docs/java/java-tutorial)
 
 ## 选择题目
 
@@ -84,11 +101,13 @@ An excellent vscode extension for leetcode.
 ## Debug
 
 只需要在一个测试用例前设置断点，然后给函数添加断点，点击 debug 按钮，便可以运行 debug。
-支持 javascript,typescript,python3。
+支持 javascript,typescript,python3，golang,java。
 
 :tada:
 
 ![debug](../images/debug.png)
+
+> Note: 如果你正在调试 java,确保已经打开的问题没有语法错误，否则将会编译失败，因为所有问题在同一个目录下，而 java 相关插件只支持一个目录一个项目。比如你打开了问题 1，但是没有补全代码，然后开始 debug 问题 2，这时候会报语法错误，因为问题 1 应该返回一个值。如果语法正确后编译仍然失败尝试按住 `ctrl+shift+p` ，然后执行命令 `Java:Clean Java Language Server Workspace`.
 
 ## 提交
 
@@ -129,6 +148,8 @@ An excellent vscode extension for leetcode.
 | Code Lang       | 使用的语言                                       | JavaScript    |
 | Lang            | 使用指定的终端                                   | leetcode.com  |
 | Node Path       | nodejs 可执行文件的路径. eg: /usr/local/bin/node | node          |
+| javaPath        | java 可执行文件的路径.                           | java          |
+| javacPath       | javac 可执行文件的路径.                          | javac         |
 
 ## 感谢
 

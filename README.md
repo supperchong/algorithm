@@ -8,9 +8,17 @@ An excellent vscode extension for leetcode.
 
 ![Quick Start](./images/debug.gif)
 
+## Support
+
+- javascript
+- typescript
+- python3
+- golang
+- java
+
 ## Main Features
 
-**currently only support javascript,typescript,python3 ,will support other language soon**
+**will support other language soon**
 
 - write testcase in the file and run test in local, support link list and tree
 
@@ -40,8 +48,17 @@ An excellent vscode extension for leetcode.
 
 - python3
 
-  - python3
-  - install the official Python extension
+  - Make sure that `python3` is in your PATH environment variable.
+  - install the official Python extension(https://code.visualstudio.com/docs/python/python-tutorial)
+
+- golang
+
+  - Make sure that `go` is in your PATH environment variable.
+  - install the official golang extension
+
+- java
+  - Make sure that `java`,`javac` is in your PATH environment variable.Or [set javaPath and javacPath](#setting)
+  - install the official java extension(https://code.visualstudio.com/docs/java/java-tutorial)
 
 ## Pick a question
 
@@ -96,6 +113,8 @@ You only need to set breakpoints on the testcase line and set breakpoints for th
 
 ![debug](./images/debug.png)
 
+> Note:If you are debugging java, ensure that all problems are free of grammatical errors,because the Java extension only support one project in the directory. For example,if you open question one and skip it,then debug question two, you should return a value in question one. If you still build error when debugging,press `ctrl+shift+p` and run the Command `Java:Clean Java Language Server Workspace`.
+
 ## Submit
 
 Click the submit hover to submit your code.
@@ -144,6 +163,8 @@ open `Extensions->algorithm`,you will see the settings:
 | Code Lang       | default code language                                                                             | JavaScript    |
 | Lang            | Specify the active endpoint.support leetcode.com and leetcode-cn.com                              | leetcode.com  |
 | Node Path       | The absolute pathname of the executable that started the Node.js process. eg: /usr/local/bin/node | node          |
+| javaPath        | The absolute pathname of java                                                                     | java          |
+| javacPath       | The absolute pathname of javac                                                                    | javac         |
 
 ## Thanks
 
