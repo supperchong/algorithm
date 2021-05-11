@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { window } from 'vscode';
 import { transformAsync } from "@babel/core"
 import { generateAddTestCommentPlugin } from './babelPlugin'
-import { langMap, LangBase, getFileLang, CodeLang } from './common/langConfig';
+import { langMap, LangBase, getFileLang, CodeLang, ExtraType } from './common/langConfig';
 import { ParseContent } from './common/parseContent'
 import { config, updateConfig, updateEnv, InstallState, log, checkEsbuildDir } from './config'
 import { tag } from 'pretty-tag'
@@ -37,11 +37,8 @@ interface Param {
 interface ReturnType {
     type: string
 }
-enum extraType {
-    ListNode = 'ListNode',
-    TreeNode = 'TreeNode'
-}
-const extraTypeValues = [extraType.ListNode, extraType.TreeNode]
+
+const extraTypeValues = [ExtraType.ListNode, ExtraType.TreeNode]
 export interface MetaData {
     name: string,
     params: Param[],
@@ -74,8 +71,8 @@ export async function askForImport() {
 
 
 }
-function getImportStr(metaData: MetaData) {
-    const arr: Set<extraType> = new Set()
+function getExtraTypeSet(metaData: MetaData) {
+    const arr: Set<ExtraType> = new Set()
     const params = metaData.params
     const r = metaData.return
     params.forEach(p => {
@@ -90,13 +87,17 @@ function getImportStr(metaData: MetaData) {
             arr.add(e)
         }
     })
+    return arr
+}
+function getImportStr(metaData: MetaData) {
+    const arr = getExtraTypeSet(metaData)
     if (arr.size) {
         return `import { ${[...arr].join(', ')} } from 'algm'`
     }
     return ''
 
 }
-export function preprocessCode({ questionId, codeSnippets, metaData, content, titleSlug, questionSourceContent }: Question, weekname: string = '', codeSnippet: CodeSnippet) {
+export function preprocessCode({ questionId, codeSnippets, metaData, content, titleSlug, questionSourceContent }: Question, weekname: string = '', codeSnippet: CodeSnippet, name: string) {
 
     const { codeLang } = config
 
@@ -110,7 +111,7 @@ export function preprocessCode({ questionId, codeSnippets, metaData, content, ti
     const metaDataParse: MetaData = JSON.parse(metaData);
     const importStr = shouldImport ? `import * as a from 'algm'\n` + getImportStr(metaDataParse) : ''
     const autoImportStr = config.autoImportStr || ''
-    const preImport = Service.getPreImport(langConfig.lang)
+    const preImport = Service.getPreImport(langConfig.lang, name, getExtraTypeSet(metaDataParse))
     const flag = tag`
             ${langConfig.comment} @algorithm @lc id=${questionId} lang=${langSlug} ${weektag}
             ${langConfig.comment} @title ${titleSlug}

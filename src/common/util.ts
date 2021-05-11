@@ -44,6 +44,7 @@ export interface Args {
     args: string[]
     result: string
 }
+export type CaseList = Args[]
 export function isVersionGte(v1: string, v2: string) {
     const arr1 = v1.split('.')
     const arr2 = v2.split('.')
@@ -349,8 +350,8 @@ export async function retry({ fn, time = 1, delay = 1000, verifyFn }) {
 }
 
 
-function parseTestCase(testCase: TestCase): Args[] {
-    let caseList: Args[] = [];
+function parseTestCase(testCase: TestCase): CaseList {
+    let caseList: CaseList = [];
     for (const argsLiteral of testCase) {
         caseList.push(parseCommentTest(argsLiteral));
     }
@@ -519,13 +520,13 @@ export function unionArr<T>(arr1: T[], arr2: T[]) {
     arr2.forEach(v => set.add(v))
     return [...set]
 }
-export function handleMsg(testResultList: TestResult[], caseList: Args[]) {
+export function handleMsg(testResultList: TestResult[]) {
     const success = testResultList.every(
         (v) => (v.expect && v.expect.trim()) === (v.result && v.result.trim())
     );
     let msg = "";
     if (success) {
-        msg = `✓ ${caseList.length} tests complete`;
+        msg = `✓ ${testResultList.length} tests complete`;
     } else {
         msg =
             testResultList

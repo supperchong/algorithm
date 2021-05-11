@@ -23,6 +23,8 @@ const defaultCodeLang = CodeLang.JavaScript
 const defaultNodeBinPath = 'node'
 const defaultLang = Lang.en
 const defaultBaseDir = path.join(os.homedir(), '.alg')
+const defaultJavacPath = 'javac'
+const defaultJavaPath = 'java'
 const algmVersion = '0.1.6'
 const ESBUILD = 'esbuild'
 export const log = window.createOutputChannel('algorithm');
@@ -70,6 +72,8 @@ export interface Config extends BaseDir {
     algmModuleDir: string
     env: AlgorithmEnv
     hasAskForImport: boolean
+    javacPath: string
+    javaPath: string
 }
 type UpdateConfigKey = keyof Pick<Config, 'lang' | 'nodeBinPath' | 'codeLang' | 'autoImportAlgm'>
 function initConfig(): Config {
@@ -88,6 +92,8 @@ function initConfig(): Config {
     const tagPath: string = path.join(cacheDir, 'tag.json');
     const dbDir: string = path.join(cacheDir, 'db')
     const nodeBinPath: string = workspace.getConfiguration("algorithm").get("nodePath") || defaultNodeBinPath;
+    const javacPath: string = customConfig.get("javacPath") || defaultJavacPath
+    const javaPath: string = customConfig.get("javaPath") || defaultJavaPath
     // const algorithmPath = path.join(__dirname, '../node_modules/algm')
     // const algorithmPath = path.join(cacheDir, 'node_modules/algm')
     const debugOptionsFilePath = path.join(baseDir, '.vscode/debugParams.json')
@@ -119,7 +125,9 @@ function initConfig(): Config {
         algmModuleDir,
         existAlgmModule,
         env,
-        hasAskForImport
+        hasAskForImport,
+        javaPath,
+        javacPath
     }
 }
 function init() {
@@ -203,6 +211,12 @@ export function onChangeConfig(questionsProvider: QuestionsProvider, e: Configur
     if (e.affectsConfiguration('algorithm.nodePath')) {
         updateNodePath()
     }
+    if (e.affectsConfiguration('algorithm.javacPath')) {
+        updateJavacPath()
+    }
+    if (e.affectsConfiguration('algorithm.javaPath')) {
+        updateJavaPath()
+    }
     if (e.affectsConfiguration('algorithm.lang')) {
         updateLang()
         initDir()
@@ -257,6 +271,14 @@ function updateCodeLang() {
 }
 function updateNodePath() {
     config.nodeBinPath = workspace.getConfiguration("algorithm").get("nodePath") || defaultNodeBinPath;
+}
+function updateJavacPath() {
+    config.javacPath = workspace.getConfiguration("algorithm").get("javacPath") || defaultJavacPath;
+
+}
+function updateJavaPath() {
+    config.javaPath = workspace.getConfiguration("algorithm").get("javaPath") || defaultJavaPath;
+
 }
 function updateAutoImportStr() {
     config.autoImportStr = workspace.getConfiguration("algorithm").get("autoImportStr") || ''

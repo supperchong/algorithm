@@ -22,7 +22,9 @@ import { parseCommentTest } from '../common/util'
 const execFileAsync = promisify(cp.execFile)
 
 export class PythonParse extends BaseLang {
-    static preImport: string = 'from mod.preImport import *'
+    static getPreImport() {
+        return 'from mod.preImport import *'
+    }
     funcRegExp = /^(\s*class Solution)/
     testRegExp = /#\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
     handleTypeCode = tag`
@@ -96,6 +98,10 @@ export class PythonParse extends BaseLang {
                 queue.append(right)
         return root
     `
+    shouldRemoveInBuild(line: string): boolean {
+        const preImportStr = PythonParse.getPreImport()
+        return line.trimLeft().startsWith(preImportStr)
+    }
     async handleArgsType(args: string[], funcName: string) {
         const meta = await this.getQuestionMeta()
         const params = meta?.params || []

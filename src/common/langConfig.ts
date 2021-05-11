@@ -186,6 +186,13 @@ export function getFileComment(filePath: string) {
     }
     return langItem.comment
 }
+export const builtInLang = [CodeLang.JavaScript, CodeLang.TypeScript]
+export const otherLang = [CodeLang.Python3, CodeLang.Go, CodeLang.Java]
+export const enableLang = [...builtInLang, ...otherLang]
+export enum ExtraType {
+    ListNode = 'ListNode',
+    TreeNode = 'TreeNode'
+}
 // export function getPreImport(codeLang: CodeLang) {
 //     if (codeLang === CodeLang.Python3) {
 //         return 'from mod.preImport import *'

@@ -40,6 +40,18 @@
                     "description": "The absolute pathname of the executable that started the Node.js process. eg: /usr/local/bin/node",
                     "scope": "window"
                 },
+                "algorithm.javacPath": {
+                    "type": "string",
+                    "default": "javac",
+                    "description": "The absolute pathname of the executable that started the javac process.",
+                    "scope": "window"
+                },
+                "algorithm.javaPath": {
+                    "type": "string",
+                    "default": "java",
+                    "description": "The absolute pathname of the executable that started the java process.",
+                    "scope": "window"
+                },
                 "algorithm.lang": {
                     "type": "string",
                     "default": "en",
@@ -60,7 +72,8 @@
                         "JavaScript",
                         "TypeScript",
                         "Python3",
-                        "Go"
+                        "Go",
+                        "Java"
                     ],
                     "scope": "window"
                 },
