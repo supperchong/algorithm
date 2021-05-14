@@ -13,10 +13,11 @@ An excellent vscode extension for leetcode.
 - python3
 - golang
 - java
-
-## Main Features
+- c++
 
 **将会很快支持其它语言**
+
+## Main Features
 
 - 代码里包含默认测试用例，也可以添加自定义的测试用例，点击测试按钮 自动在本地运行，支持链表和二叉树。
 
@@ -53,8 +54,14 @@ An excellent vscode extension for leetcode.
   - 安装 golang 官方插件
 
 - java
+
   - 确保`java`,`javac`在环境变量里，或者[设置 javaPath 和 javacPath](#Setting).
   - 安装 java 官方插件(https://code.visualstudio.com/docs/java/java-tutorial)
+
+- c++
+
+  - 安装 GCC C++编译器(g++).确保`g++`在环境变量里.
+  - 安装 c++插件.(https://code.visualstudio.com/docs/cpp/config-linux)
 
 ## 选择题目
 

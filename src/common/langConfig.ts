@@ -187,8 +187,9 @@ export function getFileComment(filePath: string) {
     return langItem.comment
 }
 export const builtInLang = [CodeLang.JavaScript, CodeLang.TypeScript]
-export const otherLang = [CodeLang.Python3, CodeLang.Go, CodeLang.Java]
+export const otherLang = [CodeLang.Python3, CodeLang.Go, CodeLang.Java, CodeLang["C++"]]
 export const enableLang = [...builtInLang, ...otherLang]
+export const enNameLangs = [CodeLang.Java, CodeLang["C++"]]
 export enum ExtraType {
     ListNode = 'ListNode',
     TreeNode = 'TreeNode'

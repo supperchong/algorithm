@@ -5,11 +5,12 @@ import { api, apiCn, apiEn } from '../api/index'
 import { config, log } from '../config';
 import { writeFile, parseHtml } from '../common/util';
 import { preprocessCode, shouldAskForImport, askForImport } from '../util'
-import { CodeLang, langMap } from '../common/langConfig';
+import { CodeLang, enNameLangs, langMap } from '../common/langConfig';
 import { Service } from '../lang/common';
 import { pathExists } from 'fs-extra'
 export const QuestionPreview = 'algorithm.questionPreview';
 const defaultLang = 'JavaScript';
+
 const md = require('markdown-it')({
 	html: true,
 	inkify: true,
@@ -77,7 +78,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 
 			//generate code
 			let filename = questionFrontendId + langConfig.fileNameSep + title + langConfig.ext;
-			if (config.lang === 'cn' && langConfig.lang != CodeLang.Java) {
+			if (config.lang === 'cn' && !enNameLangs.includes(langConfig.lang)) {
 				filename = questionFrontendId + langConfig.fileNameSep + translatedTitle + langConfig.ext;
 			}
 
@@ -90,6 +91,9 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 				name = '_' + name.replace(/\./, '_')
 				name = name.replace(/[^\w]/g, '_')
 				filePath = path.join(questionDir, name, "Solution.java");
+			} else if (langConfig.lang === CodeLang["C++"]) {
+				name = name.replace(/[^\w]/g, '_')
+				filePath = path.join(questionDir, 'question', name + ".cpp");
 			}
 			const exist = await pathExists(filePath);
 
