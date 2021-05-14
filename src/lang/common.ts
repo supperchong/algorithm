@@ -4,6 +4,7 @@ import { BaseLang } from "./base";
 import { PythonParse } from './python'
 import { GoParse } from './golang'
 import { JavaParse } from './java'
+import { CppParse } from './cpp'
 import { log } from '../config'
 import { readFileAsync, TestCase, TestCaseParam, writeFileAsync, execFileAsync } from '../common/util'
 import * as vscode from 'vscode'
@@ -12,7 +13,8 @@ import { enableLang } from '../common/langConfig'
 const langMap = {
     [CodeLang.Python3]: PythonParse,
     [CodeLang.Go]: GoParse,
-    [CodeLang.Java]: JavaParse
+    [CodeLang.Java]: JavaParse,
+    [CodeLang["C++"]]: CppParse
 }
 export class Service {
     public codeLang: CodeLang

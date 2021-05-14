@@ -15,10 +15,11 @@ An excellent vscode extension for leetcode.
 - python3
 - golang
 - java
-
-## Main Features
+- c++
 
 **will support other language soon**
+
+## Main Features
 
 - write testcase in the file and run test in local, support link list and tree
 
@@ -57,8 +58,15 @@ An excellent vscode extension for leetcode.
   - install the official golang extension
 
 - java
+
   - Make sure that `java`,`javac` is in your PATH environment variable.Or [set javaPath and javacPath](#setting)
   - install the official java extension(https://code.visualstudio.com/docs/java/java-tutorial)
+
+- c++
+
+  - Install GCC C++ compiler (g++).And make sure that `g++` is in your PATH environment variable.
+  - Install the C++ extension for VS Code.
+    more detail in the website (https://code.visualstudio.com/docs/cpp/config-linux)
 
 ## Pick a question
 

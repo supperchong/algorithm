@@ -73,7 +73,8 @@
                         "TypeScript",
                         "Python3",
                         "Go",
-                        "Java"
+                        "Java",
+                        "C++"
                     ],
                     "scope": "window"
                 },
