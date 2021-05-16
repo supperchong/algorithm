@@ -20,6 +20,7 @@ import { ExtraType } from '../common/langConfig'
 import { BaseLang } from './base'
 import { parseCommentTest } from '../common/util'
 const execFileAsync = promisify(cp.execFile)
+const GCC = 'g++'
 const langTypeMap: Record<string, string> = {
     'integer': 'int',
     'string': 'string',
@@ -215,7 +216,7 @@ export class CppParse extends BaseLang {
     }
 
 
-    async handleArgsType() {
+    async handleArgsType(argsStr: string) {
         const meta = await this.getQuestionMeta()
         if (!meta) {
             throw new Error('question meta not found')
@@ -241,11 +242,10 @@ export class CppParse extends BaseLang {
         #include "algm/parse.h"
         int main(int argc, char *argv[])
         {
-            string str = argv[1];
+            string str = "${argsStr}";
             vector<vector<string>> arr = parseStringArrArr(str);
             for (int i = 0; i < arr.size(); i++)
             {
-              // cout<<arr[i][0]<<endl;
               vector<string> args = arr[i];
               Solution *s = new Solution();
               ${argExpression}
@@ -276,12 +276,18 @@ export class CppParse extends BaseLang {
 
         }))
     }
+    private getExecProgram() {
+        const cwd = this.cwd
+        return path.join(cwd, 'main', 'main')
+    }
     async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
         const argsArr = caseList.map(v => v.args)
-        await this.buildMainFile()
+        const argsStr = JSON.stringify(argsArr)
+        await this.buildMainFile(argsStr)
         const cwd = this.cwd
         try {
-            const { stdout, stderr } = await execFileAsync('./main/main', [JSON.stringify(argsArr).replace(/"|\\|\s/g, (s) => `\\${s}`)], { timeout: 10000, cwd: cwd, shell: true })
+            const execProgram = this.getExecProgram()
+            const { stdout, stderr } = await execFileAsync(execProgram, { cwd: cwd, shell: true })
             let testResultList = this.handleResult(stdout, caseList)
             return handleMsg(testResultList)
         } catch (err) {
@@ -299,30 +305,6 @@ export class CppParse extends BaseLang {
 
     // do some thing before debug,eg. get testcase 
     async beforeDebug(breaks: vscode.SourceBreakpoint[]) {
-        await this.buildMainFile()
-    }
-    async buildMainFile() {
-        await this.writeTestCase()
-        const cppPath = 'g++'
-        const dir = path.parse(this.filePath).dir
-        const dirParse = path.parse(dir)
-        const cwd = dirParse.dir
-        const mainFilePath = this.mainFilePath
-        await execFileAsync(cppPath, ['-I', '.', '-g', mainFilePath, '-o', 'main/main'], { timeout: 10000, cwd: cwd, shell: true })
-    }
-    private getTestFilePath() {
-        const testFilePath = path.join(this.filePath, '..', '..', 'main', 'main.cpp')
-        return testFilePath
-    }
-    async writeTestCase() {
-
-        await this.ensureCommonModuleFile()
-        const finalCode = await this.handleArgsType()
-        const testFilePath = this.getTestFilePath()
-        await ensureFile(testFilePath)
-        await writeFileAsync(testFilePath, finalCode)
-    }
-    async getDebugConfig(breaks: vscode.SourceBreakpoint[]) {
         const filePath = this.filePath
         const customBreakpoints = tranfromToCustomBreakpoint(breaks)
         const customBreakPoint = customBreakpoints.find(c => c.path === filePath)
@@ -343,13 +325,38 @@ export class CppParse extends BaseLang {
             throw new Error('please select the test case')
         }
         const { args } = parseCommentTest(codeLines[(line as number)])
+        const str = JSON.stringify([args])
+        await this.buildMainFile(str)
+    }
+    async buildMainFile(argsStr: string) {
+        argsStr = argsStr.replace(/\\|"/g, s => `\\${s}`)
+        await this.writeTestCase(argsStr)
         const cwd = this.cwd
+        const mainFilePath = this.mainFilePath
+        await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '-o', 'main/main'], { cwd: cwd, shell: true })
+    }
+    private getTestFilePath() {
+        const cwd = this.cwd
+        const testFilePath = path.join(cwd, 'main', 'main.cpp')
+        return testFilePath
+    }
+    async writeTestCase(argsStr: string) {
+
+        await this.ensureCommonModuleFile()
+        const finalCode = await this.handleArgsType(argsStr)
+        const testFilePath = this.getTestFilePath()
+        await ensureFile(testFilePath)
+        await writeFileAsync(testFilePath, finalCode)
+    }
+    async getDebugConfig(breaks: vscode.SourceBreakpoint[]) {
+        const cwd = this.cwd
+        const execProgram = this.getExecProgram()
         return {
             "name": "g++ - Build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": path.join(cwd, 'main/main'),
-            "args": [JSON.stringify([args]).replace(/"|\\|\s/g, (s) => `\\${s}`)],
+            "program": execProgram,
+            "args": [],
             "stopAtEntry": false,
             "cwd": cwd,
             "environment": [],
