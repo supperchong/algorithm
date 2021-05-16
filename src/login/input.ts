@@ -1,7 +1,10 @@
 import { title } from 'process';
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri } from 'vscode';
 import { accountLogin, cookieLogin, githubLogin } from '.';
+import { freshQuestions } from '../api/index';
+import { cache } from '../cache';
 import { config } from '../config';
+import { QuestionsProvider } from '../provider/questionsProvider';
 import { execWithProgress } from '../util';
 class InputFlowAction {
     static back = new InputFlowAction();
@@ -48,7 +51,13 @@ function validUser(user: Partial<User>): user is User {
 function validCookie(cookie: string) {
     return cookie.includes('LEETCODE_SESSION') && cookie.includes('csrftoken')
 }
-export async function selectLogin() {
+async function fresh(questionsProvider: QuestionsProvider) {
+    cache.removeCache()
+    const freshPromise = freshQuestions()
+    execWithProgress(freshPromise, 'fresh questions')
+    questionsProvider.refresh()
+}
+export async function selectLogin(questionsProvider: QuestionsProvider) {
     const githubItem = {
         label: 'Third-Party:GitHub',
         detail: 'Use GitHub account to login'
@@ -84,7 +93,9 @@ export async function selectLogin() {
             return
         }
         await cookieLogin(cookie)
-        window.showInformationMessage('save cookie success')
+        config.log.appendLine('save cookie success')
+        // window.showInformationMessage('save cookie success')
+        await fresh(questionsProvider)
         return
     } else if (result === accountItem) {
         const user = await accountInput()
@@ -92,7 +103,9 @@ export async function selectLogin() {
             return
         }
         await accountLogin(user)
-        window.showInformationMessage('login success')
+        config.log.appendLine('login success')
+        // window.showInformationMessage('login success')
+        await fresh(questionsProvider)
     }
 }
 export async function githubInput() {

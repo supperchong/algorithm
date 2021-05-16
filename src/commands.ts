@@ -91,7 +91,6 @@ export async function debugCodeCommand(filePath: string) {
     if (!workspaceFolders?.find(w => w.uri === p?.uri)) {
         return openFolder()
     }
-    console.log(filePath)
     const breaks = vscode.debug.breakpoints as vscode.SourceBreakpoint[]
     if (!breaks.find(b => b?.location?.uri.fsPath === filePath)) {
         console.log('breakpoint not found')
@@ -378,9 +377,9 @@ export async function freshCommand(questionsProvider: QuestionsProvider) {
     questionsProvider.refresh();
 }
 
-export async function signInCommand() {
+export async function signInCommand(questionsProvider: QuestionsProvider) {
     try {
-        await selectLogin()
+        await selectLogin(questionsProvider)
     } catch (err) {
         if (err.code !== 2) {
             window.showInformationMessage(err.message)

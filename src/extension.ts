@@ -20,6 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	languages.registerCodeLensProvider("*", codelensProvider);
 	const questionsProvider = new QuestionsProvider(vscode.workspace.workspaceFolders, context.extensionPath);
+	config.questionsProvider = questionsProvider
 	const memoProvider = new MemoProvider()
 	subscriptions.push(commands.registerCommand("algorithm.testCode", testCodeCommand));
 	subscriptions.push(commands.registerCommand('algorithm.debugCode', debugCodeCommand))
@@ -29,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 	subscriptions.push(commands.registerCommand('algorithm.questionPreview', createQuestionPanelCommand.bind(null, context.extensionPath)))
 	subscriptions.push(commands.registerCommand("algorithm.refreshQuestions", freshCommand.bind(null, questionsProvider)))
 	subscriptions.push(commands.registerCommand('algorithm.switchEndpoint', switchEndpointCommand.bind(null, questionsProvider)))
-	subscriptions.push(commands.registerCommand('algorithm.signIn', signInCommand))
+	subscriptions.push(commands.registerCommand('algorithm.signIn', signInCommand.bind(null, questionsProvider)))
 	subscriptions.push(commands.registerCommand('algorithm.switchCodeLang', switchCodeLangCommand.bind(null, questionsProvider)))
 	subscriptions.push(commands.registerCommand("algorithm.search", searchCommand))
 	subscriptions.push(commands.registerCommand('algorithm.memoFilePreview', memoFilePreviewCommand))

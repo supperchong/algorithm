@@ -74,6 +74,7 @@ export interface Config extends BaseDir {
     hasAskForImport: boolean
     javacPath: string
     javaPath: string
+    questionsProvider?: QuestionsProvider
 }
 type UpdateConfigKey = keyof Pick<Config, 'lang' | 'nodeBinPath' | 'codeLang' | 'autoImportAlgm'>
 function initConfig(): Config {

@@ -222,6 +222,9 @@ export async function showLoginMessage() {
     const LOGIN = 'login'
     const r = await window.showInformationMessage('please login in', LOGIN)
     if (r === LOGIN) {
-        signInCommand()
+        if (config.questionsProvider) {
+            signInCommand(config.questionsProvider)
+        }
+
     }
 }
