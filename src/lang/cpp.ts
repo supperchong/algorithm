@@ -373,7 +373,7 @@ export class CppParse extends BaseLang {
 
     }
     shouldRemoveInBuild(line: string): boolean {
-        return line.trim().startsWith('package')
+        return line.trim().startsWith('#include "algm/algm.h"')
     }
 
 }

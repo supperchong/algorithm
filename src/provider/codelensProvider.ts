@@ -91,13 +91,15 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 		if (enableExt) {
 			const codeLang = getFileLang(filePath)
 			const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
+			const buildCodeLenses = this.getBuildCodeLenses(text, filePath);
 			const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
 			this.codeLenses.push(submitCodeLenses);
+			this.codeLenses.push(buildCodeLenses);
 			this.codeLenses.push(desCodeLenses)
 			if ([CodeLang.JavaScript, CodeLang.TypeScript].includes(codeLang)) {
 
-				const buildCodeLenses = this.getBuildCodeLenses(text, filePath);
-				this.codeLenses.push(buildCodeLenses);
+
+
 				let testCaseList: TestCaseParam[] = []
 				if (codeLang === CodeLang.JavaScript) {
 					testCaseList = getTestCaseList(text);
@@ -120,6 +122,7 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 					const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)
 					this.codeLenses.push(testCodeLenses);
 					this.codeLenses.push(debugCodeLenses);
+
 				});
 			}
 

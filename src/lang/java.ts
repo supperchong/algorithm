@@ -354,7 +354,8 @@ export class JavaParse extends BaseLang {
         }
     }
     shouldRemoveInBuild(line: string): boolean {
-        return line.trim().startsWith('package')
+        line = line.trim()
+        return line.startsWith('package') || line.startsWith('import algm')
     }
 
 }
