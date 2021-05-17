@@ -56,7 +56,11 @@ export class JavaParse extends BaseLang {
     }
     funcRegExp = /^(\s*(public)? class Solution)/
     testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
-
+    private cwd: string
+    constructor(public filePath: string, public text?: string) {
+        super(filePath, text)
+        this.cwd = path.join(filePath, '..', '..')
+    }
 
     handleParam(index: number, paramType: string): string {
         const langType = langTypeMap[paramType]
@@ -212,7 +216,7 @@ export class JavaParse extends BaseLang {
         throw new Error(`returnType ${returnType} not support`)
     }
 
-    async handleArgsType() {
+    async handleArgsType(argsStr: string) {
         const meta = await this.getQuestionMeta()
         // let meta = JSON.parse("{\n  \"name\": \"twoSum\",\n  \"params\": [\n    {\n      \"name\": \"nums\",\n      \"type\": \"integer[]\"\n    },\n    {\n      \"name\": \"target\",\n      \"type\": \"integer\"\n    }\n  ],\n  \"return\": {\n    \"type\": \"integer[]\",\n    \"size\": 2\n  },\n  \"manual\": false\n}")
         if (!meta) {
@@ -240,7 +244,7 @@ export class JavaParse extends BaseLang {
             import java.util.List;
             public class Test {
                 public static void main(String[] args){
-                    String str=args[0];
+                    String str="${argsStr}";
                     String[][] arr = Util.parseStringArrArr(str);
                   
                     for(int i=0;i<arr.length;i++){
@@ -276,20 +280,12 @@ export class JavaParse extends BaseLang {
     }
     async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
         const argsArr = caseList.map(v => v.args)
-        await this.writeTestCase()
-        // await this.ensureCommonModuleFile()
-        // const finalCode = await this.handleArgsType()
-        const dir = path.parse(this.filePath).dir
-        const dirParse = path.parse(dir)
-        const dirname = 'test'
-        // const filePath = path.join(dir, 'Test.java')
-        // await writeFileAsync(filePath, finalCode)
+        const argsStr = JSON.stringify(argsArr)
+        await this.buildMainFile(argsStr)
         const javaPath = config.javaPath
-        const javacPath = config.javacPath
-        const cwd = dirParse.dir
+        const cwd = this.cwd
         try {
-            const { stdout: stdout1, stderr: stderr1 } = await execFileAsync(javacPath, [`${dirname}/Test.java`], { timeout: 10000, cwd: cwd, shell: true })
-            const { stdout, stderr } = await execFileAsync(javaPath, [`${dirname}/Test`, JSON.stringify(argsArr).replace(/"|\\|\s/g, (s) => `\\${s}`)], { timeout: 10000, cwd: cwd, shell: true })
+            const { stdout, stderr } = await execFileAsync(javaPath, [`test/Test`], { cwd: cwd, shell: true })
             let testResultList = this.handleResult(stdout, caseList)
             return handleMsg(testResultList)
         } catch (err) {
@@ -305,25 +301,6 @@ export class JavaParse extends BaseLang {
     }
     // do some thing before debug,eg. get testcase 
     async beforeDebug(breaks: vscode.SourceBreakpoint[]) {
-        await this.writeTestCase()
-    }
-    private getTestFilePath() {
-        const dir = path.parse(this.filePath).dir
-        const testDir = path.join(path.parse(dir).dir, 'test')
-        const testFilePath = path.join(testDir, 'Test.java')
-        return testFilePath
-    }
-    async writeTestCase() {
-
-        await this.ensureCommonModuleFile()
-        const finalCode = await this.handleArgsType()
-        const testFilePath = this.getTestFilePath()
-        await ensureFile(testFilePath)
-        await writeFileAsync(testFilePath, finalCode)
-    }
-    async getDebugConfig(breaks: vscode.SourceBreakpoint[]) {
-        const dir = path.parse(this.filePath).dir
-        const testFilePath = this.getTestFilePath()
         const filePath = this.filePath
         const customBreakpoints = tranfromToCustomBreakpoint(breaks)
         const customBreakPoint = customBreakpoints.find(c => c.path === filePath)
@@ -344,13 +321,39 @@ export class JavaParse extends BaseLang {
             throw new Error('please select the test case')
         }
         const { args } = parseCommentTest(codeLines[(line as number)])
+        const str = JSON.stringify([args])
+        await this.writeTestCase(str)
+    }
+    private getTestFilePath() {
+        const cwd = this.cwd
+        const testFilePath = path.join(cwd, 'test', 'Test.java')
+        return testFilePath
+    }
+    async writeTestCase(argsStr: string) {
+        argsStr = argsStr.replace(/\\|"/g, s => `\\${s}`)
+        await this.ensureCommonModuleFile()
+        const finalCode = await this.handleArgsType(argsStr)
+        const testFilePath = this.getTestFilePath()
+        await ensureFile(testFilePath)
+        await writeFileAsync(testFilePath, finalCode)
+    }
+    async buildMainFile(argsStr: string) {
+        await this.writeTestCase(argsStr)
+        const javacPath = config.javacPath
+        const cwd = this.cwd
+        await execFileAsync(javacPath, [`test/Test.java`], { cwd: cwd, shell: true })
+
+    }
+    async getDebugConfig(breaks: vscode.SourceBreakpoint[]) {
+        const testFilePath = this.getTestFilePath()
+        const cwd = this.cwd
         return {
             "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": testFilePath,
-            "cwd": path.parse(dir).dir,
-            "args": JSON.stringify([args]).replace(/"|\\|\s/g, (s) => `\\${s}`),
+            "cwd": cwd,
+            "args": "",
         }
     }
     shouldRemoveInBuild(line: string): boolean {
