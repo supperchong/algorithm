@@ -1,6 +1,7 @@
 
 import { parse } from 'pretty-object-string';
 import fs = require('fs');
+import fse = require('fs-extra')
 import { promisify } from 'util';
 import vm = require('vm');
 import { Question } from '../model/question.cn';
@@ -490,15 +491,8 @@ export async function downloadNpm(name: string, moduleDir: string) {
 
 
     await compressing.tgz.uncompress(stream, tempDir)
-    try {
-        await rename(
-            path.join(tempDir, "package"),
-            path.join(targetDir),
-        )
+    await fse.copy(path.join(tempDir, "package"), path.join(targetDir))
 
-    } catch (err) {
-
-    }
     rimraf(tempDir, err => {
         console.log(err)
     })
