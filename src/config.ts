@@ -333,7 +333,7 @@ async function checkAlgm() {
                 await downloadNpm(name, moduleDir)
                 log.appendLine('install algm success')
             } catch (err) {
-                console.log(err)
+                log.appendLine(err)
                 log.appendLine('install algm fail')
             }
             InstallState.installAlgm = false
