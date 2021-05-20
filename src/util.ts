@@ -212,3 +212,7 @@ export function sortQuestions(questions: ConciseQuestion[]) {
         }
     });
 }
+export function reRequire(moduleName: string) {
+    delete require.cache[moduleName]
+    return require(moduleName)
+}

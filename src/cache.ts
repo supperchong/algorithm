@@ -1,6 +1,7 @@
 import { ConciseQuestion } from './model/common';
 import fs = require('fs');
 import { config, Config, log } from './config'
+import { reRequire } from './util'
 const COOKIE = 'cookie';
 const TAG = 'tag';
 export const ALLQUESTIONS = 'allQuestions';
@@ -28,7 +29,7 @@ class Cache {
             return this.get(COOKIE);
         }
         try {
-            const cookie = require(cookiePath);
+            const cookie = reRequire(cookiePath);
             this.set(COOKIE, cookie);
             return this.get(COOKIE);
         } catch (err) {
@@ -41,7 +42,8 @@ class Cache {
             return this.get(ALLQUESTIONS);
         }
         try {
-            const allQuestions = require(questionPath);
+
+            const allQuestions = reRequire(questionPath);
             const filterPrivilegeQuestions = allQuestions.filter(v => !v.paid_only);
             this.set(ALLQUESTIONS, filterPrivilegeQuestions);
             return this.get(ALLQUESTIONS);
@@ -80,7 +82,7 @@ class Cache {
             return this.get(TAG);
         }
         try {
-            const tags = require(tagPath);
+            const tags = reRequire(tagPath);
             this.set(TAG, tags);
             return this.get(TAG);
         } catch (err) {
