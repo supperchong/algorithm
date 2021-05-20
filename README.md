@@ -60,7 +60,8 @@ An excellent vscode extension for leetcode.
 - java
 
   - Make sure that `java`,`javac` is in your PATH environment variable.Or [set javaPath and javacPath](#setting)
-  - install the official java extension(https://code.visualstudio.com/docs/java/java-tutorial)
+  - install the official java extension (https://code.visualstudio.com/docs/java/java-tutorial)
+    > ensure the extension `Debugger for Java`>=v0.33.1 or the extension `Java Extension Pack`>=v0.14.0
 
 - c++
 
@@ -121,7 +122,7 @@ You only need to set breakpoints on the testcase line and set breakpoints for th
 
 ![debug](./images/debug.png)
 
-> Note:If you are debugging java, ensure that all problems are free of grammatical errors,because the Java extension only support one project in the directory. For example,if you open question one and skip it,then debug question two, you should return a value in question one. If you still build error when debugging,press `ctrl+shift+p` and run the Command `Java:Clean Java Language Server Workspace`.
+> Note:If you are debugging java,ensure the extension `Debugger for Java`>=v0.33.1 or the extension `Java Extension Pack`>=v0.14.0. If you build error when debugging,press `ctrl+shift+p` and run the Command `Java:Clean Java Language Server Workspace`.
 
 ## Submit
 
