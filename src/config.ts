@@ -344,15 +344,12 @@ async function checkAlgm() {
 
 
 export function checkEsbuildDir() {
-    try {
-        require.resolve(ESBUILD)
+
+    if (config.env.hasInstallEsbuild) {
         return true
-    } catch (err) {
-        installEsbuild()
-        return false
     }
-
-
+    installEsbuild()
+    return false
 }
 async function installEsbuild() {
     const name = ESBUILD
