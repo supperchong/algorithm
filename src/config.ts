@@ -6,7 +6,7 @@ import { window, workspace, ConfigurationChangeEvent, OutputChannel, Uri, comman
 import { Lang, AskForImportState } from './model/common'
 import { cache } from './cache';
 import { QuestionsProvider } from './provider/questionsProvider';
-import { CodeLang } from './common/langConfig'
+import { CodeLang, DataBase } from './common/langConfig'
 import * as cp from 'child_process'
 import * as fs from 'fs'
 import * as https from 'https'
@@ -27,6 +27,7 @@ const defaultJavacPath = 'javac'
 const defaultJavaPath = 'java'
 const algmVersion = '0.1.6'
 const ESBUILD = 'esbuild'
+const defaultDataBase = DataBase.MySQL
 export const log = window.createOutputChannel('algorithm');
 export const InstallState = {
     installEsbuild: false,
@@ -52,20 +53,21 @@ interface EnvFile {
 }
 export interface Config extends BaseDir {
     baseDir: string
-    lang: Lang;
-    cookiePath: string;
-    log: OutputChannel;
-    questionPath: string;
-    tagPath: string;
-    dbDir: string;
-    nodeBinPath: string;
+    lang: Lang
+    cookiePath: string
+    log: OutputChannel
+    questionPath: string
+    tagPath: string
+    dbDir: string
+    nodeBinPath: string
     codeLang: CodeLang
+    database: DataBase
     // algorithmPath: string
     debugOptionsFilePath: string
     autoImportStr: string
     autoImportAlgm: boolean
     cacheBaseDir: string
-    existAlgmModule: boolean,
+    existAlgmModule: boolean
     //the node_module dir
     moduleDir: string
     // the node_module/algm dir
@@ -76,7 +78,7 @@ export interface Config extends BaseDir {
     javaPath: string
     questionsProvider?: QuestionsProvider
 }
-type UpdateConfigKey = keyof Pick<Config, 'lang' | 'nodeBinPath' | 'codeLang' | 'autoImportAlgm'>
+type UpdateConfigKey = keyof Pick<Config, 'lang' | 'nodeBinPath' | 'codeLang' | 'autoImportAlgm' | 'database'>
 function initConfig(): Config {
 
     const codeLang: CodeLang = customConfig.get('codeLang') || defaultCodeLang
@@ -87,7 +89,7 @@ function initConfig(): Config {
     const cacheBaseDir: string = path.join(os.homedir(), '.algcache');
     const cacheDir: string = path.join(os.homedir(), '.algcache', lang);
     const questionDir = path.join(baseDir, lang, codeLang)
-
+    const database: DataBase = customConfig.get('database') || defaultDataBase
     const cookiePath: string = path.join(cacheDir, 'cookie.json');
     const questionPath: string = path.join(cacheDir, 'question.json');
     const tagPath: string = path.join(cacheDir, 'tag.json');
@@ -128,7 +130,8 @@ function initConfig(): Config {
         env,
         hasAskForImport,
         javaPath,
-        javacPath
+        javacPath,
+        database
     }
 }
 function init() {
@@ -228,6 +231,9 @@ export function onChangeConfig(questionsProvider: QuestionsProvider, e: Configur
         updateCodeLang()
         initDir()
     }
+    if (e.affectsConfiguration('algorithm.database')) {
+        updateDataBaseLang()
+    }
     if (e.affectsConfiguration('algorithm.autoImportStr')) {
         updateAutoImportStr()
     }
@@ -269,6 +275,9 @@ function updateCodeLang() {
     const baseDir = config.baseDir
     config.codeLang = workspace.getConfiguration("algorithm").get('codeLang') || defaultCodeLang
     config.questionDir = path.join(baseDir, config.lang, config.codeLang)
+}
+function updateDataBaseLang() {
+    config.database = workspace.getConfiguration("algorithm").get('database') || defaultDataBase
 }
 function updateNodePath() {
     config.nodeBinPath = workspace.getConfiguration("algorithm").get("nodePath") || defaultNodeBinPath;

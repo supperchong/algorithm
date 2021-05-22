@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import path = require('path');
 import { workspace, languages, window, commands, ExtensionContext, Disposable, debug } from 'vscode';
 import { CodelensProvider } from './provider/codelensProvider';
-import { testCodeCommand, buildCodeCommand, submitCommand, freshCommand, switchEndpointCommand, signInCommand, switchCodeLangCommand, debugCodeCommand, getDescriptionCommand, searchCommand, memoFilePreviewCommand, addFolderCommand, addMemoFileCommand, removeMemoFileCommand } from './commands';
+import { testCodeCommand, buildCodeCommand, submitCommand, freshCommand, switchEndpointCommand, signInCommand, switchCodeLangCommand, debugCodeCommand, getDescriptionCommand, searchCommand, memoFilePreviewCommand, addFolderCommand, addMemoFileCommand, removeMemoFileCommand, switchDataBaseCommand } from './commands';
 import { QuestionsProvider } from './provider/questionsProvider';
 import { createQuestionPanelCommand } from './webview/questionPreview';
 import { config, onChangeConfig } from './config';
@@ -37,6 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
 	subscriptions.push(commands.registerCommand('algorithm.addFolder', addFolderCommand.bind(null, memoProvider)))
 	subscriptions.push(commands.registerCommand('algorithm.addMemoFile', addMemoFileCommand.bind(null, memoProvider)))
 	subscriptions.push(commands.registerCommand('algorithm.removeMemoFile', removeMemoFileCommand.bind(null, memoProvider)))
+	subscriptions.push(commands.registerCommand("algorithm.switchDataBase", switchDataBaseCommand))
 	vscode.window.createTreeView('questions', { treeDataProvider: questionsProvider, showCollapseAll: true })
 	vscode.window.createTreeView('memo', { treeDataProvider: memoProvider, showCollapseAll: true })
 	subscriptions.push(vscode.workspace.onDidChangeConfiguration(onChangeConfig.bind(null, questionsProvider)));

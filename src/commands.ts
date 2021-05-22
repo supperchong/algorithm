@@ -23,13 +23,14 @@ import { githubInput, selectLogin } from './login/input'
 import { githubLogin } from './login';
 import presetTs = require('@babel/preset-typescript')
 import { getQuestionDescription } from './webview/questionPreview';
-import { builtInLang, CodeLang, enableLang, getFileLang, langExtMap, otherLang } from './common/langConfig';
+import { builtInLang, CodeLang, databases, enableLang, getFileLang, isDataBase, langExtMap, otherLang } from './common/langConfig';
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
 import { MemoFile } from './model/memo'
 import { addFolder, addFolderFile, addQuestion } from './memo/index'
 import { MemoProvider, MemoTree } from './provider/memoProvider';
 import { ResolverParam } from './provider/resolver'
 import { Service } from './lang/common'
+import { DataBaseParse } from './lang/database';
 
 interface PlainObject {
     [key: string]: any
@@ -261,6 +262,10 @@ export async function buildCode(text: string, filePath: string): Promise<BuildCo
     if (lang === CodeLang.TypeScript) {
         return buildTsCode(text, filePath)
     }
+    if (isDataBase(filePath)) {
+        const parse = new DataBaseParse(filePath, text)
+        return parse.buildCode()
+    }
     const service = new Service(filePath, text)
 
     return service.buildCode()
@@ -440,6 +445,22 @@ export async function switchCodeLangCommand(questionsProvider: QuestionsProvider
     if (pickIndex !== -1) {
         const pickLang = enableLang[pickIndex]
         updateConfig('codeLang', pickLang)
+    }
+}
+
+export async function switchDataBaseCommand() {
+    const curDataBase = config.database
+    const langLabels = databases.map(lang => {
+        if (lang === curDataBase) {
+            return new CodeLangItem(lang, '$(check)')
+        }
+        return new CodeLangItem(lang, '')
+    })
+    const pickItem = await window.showQuickPick(langLabels)
+    const pickIndex = langLabels.findIndex(v => v === pickItem)
+    if (pickIndex !== -1) {
+        const pickLang = databases[pickIndex]
+        updateConfig('database', pickLang)
     }
 }
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { detectEnableExt, getTestCaseList, getTsTestCaseList, TestCaseParam } from '../common/util';
-import { CodeLang, getFileLang } from '../common/langConfig'
+import { CodeLang, getFileLang, isAlgorithm, isDataBase, isShell } from '../common/langConfig'
 import * as path from 'path'
 import { PythonParse } from '../lang/python'
 import { Service } from '../lang/common'
@@ -96,6 +96,7 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 			this.codeLenses.push(submitCodeLenses);
 			this.codeLenses.push(buildCodeLenses);
 			this.codeLenses.push(desCodeLenses)
+
 			if ([CodeLang.JavaScript, CodeLang.TypeScript].includes(codeLang)) {
 
 
@@ -112,10 +113,8 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 					this.codeLenses.push(testCodeLenses);
 					this.codeLenses.push(debugCodeLenses);
 				});
-			} else {
+			} else if (isAlgorithm(codeLang)) {
 				const lang = new Service(filePath, text)
-
-
 				const testCaseList = lang.getTestCaseList(text)
 				testCaseList.forEach((testCaseParam) => {
 					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)

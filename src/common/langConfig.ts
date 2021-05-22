@@ -169,6 +169,11 @@ export enum CodeLang {
     PHP = 'PHP',
     TypeScript = 'TypeScript'
 }
+export enum DataBase {
+    MySQL = 'MySQL',
+    'MS SQL Server' = 'MS SQL Server',
+    'Oracle' = 'Oracle'
+}
 
 export function getFileLang(filePath: string) {
     const ext = path.extname(filePath)
@@ -177,6 +182,17 @@ export function getFileLang(filePath: string) {
         throw new Error('file extname invalid')
     }
     return langItem.lang
+}
+export function isDataBase(filePath: string) {
+    const ext = path.extname(filePath)
+    return ext === '.sql'
+}
+export function isShell(filePath: string) {
+    const ext = path.extname(filePath)
+    return ext === '.sh'
+}
+export function isAlgorithm(lang: CodeLang) {
+    return !!langsConfig.algorithms.find(alg => alg.lang === lang)
 }
 export function getFileComment(filePath: string) {
     const ext = path.extname(filePath)
@@ -189,6 +205,7 @@ export function getFileComment(filePath: string) {
 export const builtInLang = [CodeLang.JavaScript, CodeLang.TypeScript]
 export const otherLang = [CodeLang.Python3, CodeLang.Go, CodeLang.Java, CodeLang["C++"]]
 export const enableLang = [...builtInLang, ...otherLang]
+export const databases = [DataBase["MS SQL Server"], DataBase.MySQL, DataBase.Oracle]
 export const enNameLangs = [CodeLang.Java, CodeLang["C++"]]
 export enum ExtraType {
     ListNode = 'ListNode',

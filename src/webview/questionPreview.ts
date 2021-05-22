@@ -5,7 +5,7 @@ import { api, apiCn, apiEn } from '../api/index'
 import { config, log } from '../config';
 import { writeFile, parseHtml } from '../common/util';
 import { preprocessCode, shouldAskForImport, askForImport } from '../util'
-import { CodeLang, enNameLangs, langMap } from '../common/langConfig';
+import { CodeLang, enNameLangs, isAlgorithm, isDataBase, langMap } from '../common/langConfig';
 import { Service } from '../lang/common';
 import { pathExists } from 'fs-extra'
 export const QuestionPreview = 'algorithm.questionPreview';
@@ -53,6 +53,16 @@ async function fetchQuestion(extensionPath: string, param: Param) {
 	}
 	return question
 }
+function getCodeSnippet(codeSnippets) {
+	const langTypes = [config.codeLang, config.database]
+	for (const defaultLang of langTypes) {
+		let codeSnippet = codeSnippets.find(codeSnippet => codeSnippet.lang === defaultLang);
+		if (codeSnippet) {
+			return codeSnippet
+		}
+	}
+	return codeSnippets[0]
+}
 export async function createQuestionPanelCommand(extensionPath: string, param: Param) {
 	let { weekname } = param
 	try {
@@ -67,12 +77,9 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 			}
 
 			const defaultLang = config.codeLang
-			let questionDir = config.questionDir
-			let codeSnippet = codeSnippets.find(codeSnippet => codeSnippet.lang === defaultLang);
-			if (!codeSnippet) {
-				codeSnippet = codeSnippets[0];
-				questionDir = path.join(config.algDir, codeSnippet.lang)
-			}
+			let codeSnippet = getCodeSnippet(codeSnippets)
+			let questionDir = path.join(config.algDir, codeSnippet.lang)
+
 			const langSlug = codeSnippet.langSlug;
 			const langConfig = langMap[langSlug];
 
@@ -106,7 +113,10 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 				if (langConfig.lang === CodeLang.Java) {
 					code = code.replace('class Solution', 'public class Solution');
 				}
-				await Service.handlePreImport(filePath)
+				if (isAlgorithm(langConfig.lang)) {
+					await Service.handlePreImport(filePath)
+				}
+
 				await writeFile(filePath, code);
 			}
 			const fileDocument = await vscode.workspace.openTextDocument(filePath)

@@ -78,6 +78,16 @@
                     ],
                     "scope": "window"
                 },
+                "algorithm.database":{
+                    "type": "string",
+                    "default": "MySQL",
+                    "enum": [
+                        "MySQL",
+                        "MS SQL Server",
+                        "Oracle"
+                    ],
+                    "scope": "window"
+                },
                 "algorithm.autoImportStr": {
                     "type": "string",
                     "default": "",
@@ -220,6 +230,11 @@
             {
                 "command": "algorithm.switchCodeLang",
                 "title": "switch default language",
+                "category": "algorithm"
+            },
+            {
+                "command": "algorithm.switchDataBase",
+                "title": "switch default database",
                 "category": "algorithm"
             },
             {
