@@ -87,7 +87,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 			let name = path.parse(filename).name
 			if (langConfig.lang === CodeLang.Go) {
 				filePath = path.join(questionDir, name, "solution.go");
-			} else if (langConfig.lang == CodeLang.Java) {
+			} else if (langConfig.lang === CodeLang.Java) {
 				name = '_' + name.replace(/\./, '_')
 				name = name.replace(/[^\w]/g, '_')
 				filePath = path.join(questionDir, name, "Solution.java");
