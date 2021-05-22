@@ -23,7 +23,7 @@ import { githubInput, selectLogin } from './login/input'
 import { githubLogin } from './login';
 import presetTs = require('@babel/preset-typescript')
 import { getQuestionDescription } from './webview/questionPreview';
-import { builtInLang, CodeLang, databases, enableLang, getFileLang, isDataBase, langExtMap, otherLang } from './common/langConfig';
+import { builtInLang, CodeLang, databases, enableLang, getFileLang, isDataBase, isShell, langExtMap, otherLang } from './common/langConfig';
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
 import { MemoFile } from './model/memo'
 import { addFolder, addFolderFile, addQuestion } from './memo/index'
@@ -31,6 +31,7 @@ import { MemoProvider, MemoTree } from './provider/memoProvider';
 import { ResolverParam } from './provider/resolver'
 import { Service } from './lang/common'
 import { DataBaseParse } from './lang/database';
+import { BashParse } from './lang/bash'
 
 interface PlainObject {
     [key: string]: any
@@ -264,6 +265,9 @@ export async function buildCode(text: string, filePath: string): Promise<BuildCo
     }
     if (isDataBase(filePath)) {
         const parse = new DataBaseParse(filePath, text)
+        return parse.buildCode()
+    } else if (isShell(filePath)) {
+        const parse = new BashParse(filePath, text)
         return parse.buildCode()
     }
     const service = new Service(filePath, text)
