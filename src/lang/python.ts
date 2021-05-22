@@ -11,6 +11,7 @@ import * as path from 'path'
 import { BaseLang } from './base'
 import { parseCommentTest } from '../common/util'
 import { platform } from 'os'
+import { LanguageMetaData } from '../util'
 const execFileAsync = promisify(cp.execFile)
 
 export class PythonParse extends BaseLang {
@@ -220,7 +221,8 @@ export class PythonParse extends BaseLang {
     }
 
     async handleArgsType(argsStr: string) {
-        const meta = await this.getQuestionMeta()
+        const meta = (await this.getQuestionMeta()) as LanguageMetaData | undefined
+
         if (!meta) {
             throw new Error('question meta not found')
         }
@@ -323,26 +325,7 @@ export class PythonParse extends BaseLang {
     }
     // do some thing before debug,eg. get testcase 
     async beforeDebug(breaks: vscode.SourceBreakpoint[]) {
-        const filePath = this.filePath
-        const customBreakpoints = tranfromToCustomBreakpoint(breaks)
-        const customBreakPoint = customBreakpoints.find(c => c.path === filePath)
-        if (!customBreakPoint) {
-            throw new Error('breakpoint not found, please set breakpoint first')
-        }
-        const originCode = await this.getOriginCode()
-        const questionMeta = await this.getQuestionMeta()
-        if (!questionMeta) {
-            throw new Error('questionMeta not found ')
-        }
-        const funcName = questionMeta.name
-        let codeLines = originCode.split('\n')
-
-        const lines = customBreakPoint.lines
-        const line = lines.find(num => this.testRegExp.test(codeLines[num]))
-        if (!Number.isInteger(line)) {
-            throw new Error('please select the test case')
-        }
-        const { args } = parseCommentTest(codeLines[(line as number)])
+        const args = await this.resolveArgsFromBreaks(breaks)
         const str = JSON.stringify([args.map(v => JSON.parse(v))])
         await this.writeTestCase(str)
     }

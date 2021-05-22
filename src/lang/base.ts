@@ -6,7 +6,7 @@ import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/ut
 import { log, config } from '../config'
 import { getDb } from '../db';
 import { api } from '../api/index'
-import { MetaData } from '../util'
+import { LanguageMetaData, MetaData } from '../util'
 import { resolve } from 'path'
 import { rejects } from 'assert'
 import { runInNewContext } from 'vm'
@@ -17,6 +17,7 @@ import { tranfromToCustomBreakpoint } from '../debug/launch'
 import { stdout } from 'process'
 import * as path from 'path'
 import { getFileComment } from '../common/langConfig'
+import { parseCommentTest } from '../common/util'
 
 export abstract class BaseLang {
     public log: OutputChannel
@@ -62,6 +63,29 @@ export abstract class BaseLang {
         }
         const metaData: MetaData = JSON.parse(question.metaData)
         return metaData
+    }
+    async resolveArgsFromBreaks(breaks: vscode.SourceBreakpoint[]): Promise<string[]> {
+        const filePath = this.filePath
+        const customBreakpoints = tranfromToCustomBreakpoint(breaks)
+        const customBreakPoint = customBreakpoints.find(c => c.path === filePath)
+        if (!customBreakPoint) {
+            throw new Error('breakpoint not found, please set breakpoint first')
+        }
+        const originCode = await this.getOriginCode()
+        const questionMeta = (await this.getQuestionMeta()) as LanguageMetaData | undefined
+        if (!questionMeta) {
+            throw new Error('questionMeta not found ')
+        }
+        const funcName = questionMeta.name
+        let codeLines = originCode.split('\n')
+
+        const lines = customBreakPoint.lines
+        const line = lines.find(num => this.testRegExp.test(codeLines[num]))
+        if (!Number.isInteger(line)) {
+            throw new Error('please select the test case')
+        }
+        const { args } = parseCommentTest(codeLines[(line as number)])
+        return args
     }
     handleResult(stdout: string, caseList) {
         let testResultList: TestResult[] = caseList.map(v => {
@@ -114,7 +138,7 @@ export abstract class BaseLang {
             log.appendLine('question not found')
             return
         }
-        const metaData: MetaData = JSON.parse(question.metaData)
+        const metaData: LanguageMetaData = JSON.parse(question.metaData)
         const funcName = metaData.name
         if (!caseList.length) return
         return this.runMultiple(caseList, originCode, funcName)

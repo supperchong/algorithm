@@ -39,16 +39,22 @@ interface ReturnType {
 }
 
 const extraTypeValues = [ExtraType.ListNode, ExtraType.TreeNode]
-export interface MetaData {
+export type MetaData = LanguageMetaData | DataBaseMetaData | ShellMetaData
+export interface LanguageMetaData {
     name: string,
     params: Param[],
     return: ReturnType
 }
-// enum MessagePick{
-//     Yes='Yes',
-//     No='No',
-//     Later='Later'
-// }
+export interface DataBaseMetaData {
+    database: true,
+    mssql: string[],
+    mysql: string[],
+    oraclesql: string[]
+}
+export interface ShellMetaData {
+    shell: true
+}
+
 
 export function shouldAskForImport(): boolean {
     return !config.hasAskForImport && config.env.askForImportState === AskForImportState.Later && !config.autoImportAlgm
@@ -71,7 +77,7 @@ export async function askForImport() {
 
 
 }
-function getExtraTypeSet(metaData: MetaData) {
+function getExtraTypeSet(metaData: LanguageMetaData) {
     const arr: Set<ExtraType> = new Set()
     const params = metaData.params
     const r = metaData.return
@@ -89,13 +95,23 @@ function getExtraTypeSet(metaData: MetaData) {
     })
     return arr
 }
-function getImportStr(metaData: MetaData) {
+function getImportStr(metaData: LanguageMetaData) {
     const arr = getExtraTypeSet(metaData)
     if (arr.size) {
         return `import { ${[...arr].join(', ')} } from 'algm'`
     }
     return ''
 
+}
+
+function isShellMetaData(metaData: MetaData): metaData is ShellMetaData {
+    return ('shell' in metaData) && metaData.shell
+}
+function isDataBaseMetaData(metaData: MetaData): metaData is DataBaseMetaData {
+    return ('database' in metaData) && metaData.database
+}
+function isLanguageMetaData(metaData: MetaData): metaData is LanguageMetaData {
+    return ('name' in metaData)
 }
 export function preprocessCode({ questionId, codeSnippets, metaData, content, titleSlug, questionSourceContent }: Question, weekname: string = '', codeSnippet: CodeSnippet, name: string) {
 
@@ -106,15 +122,22 @@ export function preprocessCode({ questionId, codeSnippets, metaData, content, ti
     const langConfig = langMap[langSlug];
     const algorithmPath = config.algmModuleDir.replace(/\\/g, '\\\\')
     const weektag = weekname ? `weekname=${weekname}` : ''
+
+    const metaDataParse: MetaData = JSON.parse(metaData);
+    const LcComment = tag`
+        ${langConfig.comment} @algorithm @lc id=${questionId} lang=${langSlug} ${weektag}
+        ${langConfig.comment} @title ${titleSlug}
+    `
+    if (!isLanguageMetaData(metaDataParse)) {
+        return LcComment
+    }
     const supportImport = ['JavaScript', 'TypeScript'].includes(langConfig.lang)
     const shouldImport = supportImport && config.autoImportAlgm
-    const metaDataParse: MetaData = JSON.parse(metaData);
     const importStr = shouldImport ? `import * as a from 'algm'\n` + getImportStr(metaDataParse) : ''
     const autoImportStr = config.autoImportStr || ''
     const preImport = Service.getPreImport(langConfig.lang, name, getExtraTypeSet(metaDataParse))
     const flag = tag`
-            ${langConfig.comment} @algorithm @lc id=${questionId} lang=${langSlug} ${weektag}
-            ${langConfig.comment} @title ${titleSlug}
+            ${LcComment}
             ${importStr}
             ${autoImportStr}
             ${preImport}
