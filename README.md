@@ -16,6 +16,8 @@ An excellent vscode extension for leetcode.
 - golang
 - java
 - c++
+- shell
+- sql
 
 **will support other language soon**
 
@@ -77,6 +79,10 @@ Click the question in the `algorithm view`
 
 press `ctrl+shift+p` and run the Command `algorithm:switch default language`
 
+## Switch database
+
+press `ctrl+shift+p` and run the Command `algorithm:switch default database`
+
 ## shortcut buttons
 
 > Just click the shortcut button in the `view toolbar` to
@@ -126,7 +132,7 @@ You only need to set breakpoints on the testcase line and set breakpoints for th
 
 ## Submit
 
-Click the submit hover to submit your code.
+Click the submit hover to submit your code. You can use build to view the final submitted code.
 
 ![build.png](./images/build.png)
 
@@ -174,6 +180,7 @@ open `Extensions->algorithm`,you will see the settings:
 | Node Path       | The absolute pathname of the executable that started the Node.js process. eg: /usr/local/bin/node | node          |
 | javaPath        | The absolute pathname of java                                                                     | java          |
 | javacPath       | The absolute pathname of javac                                                                    | javac         |
+| Database        | default sql language                                                                              | MySQL         |
 
 ## Thanks
 

@@ -14,6 +14,8 @@ An excellent vscode extension for leetcode.
 - golang
 - java
 - c++
+- shell
+- sql
 
 **将会很快支持其它语言**
 
@@ -69,7 +71,11 @@ An excellent vscode extension for leetcode.
 
 ## 切换语言
 
-按 `ctrl+shift+p` 选择 `algorithm:switch default language`，目前支持 javascript,typescript,python3
+按 `ctrl+shift+p` 选择 `algorithm:switch default language`，目前支持 javascript,typescript,python3,golang,java,c++
+
+## 切换数据库
+
+按 `ctrl+shift+p` 选择 `algorithm:switch default database`，选择 `MySQL`,`MS SQL Server`,`Oracle`
 
 ## 快捷按钮
 
@@ -118,7 +124,7 @@ An excellent vscode extension for leetcode.
 
 ## 提交
 
-点击 submit 提交代码.
+点击 submit 提交代码. 你可以使用 build 查看最终提交的代码.
 
 ![build.png](../images/build.png)
 
@@ -157,6 +163,7 @@ An excellent vscode extension for leetcode.
 | Node Path       | nodejs 可执行文件的路径. eg: /usr/local/bin/node | node          |
 | javaPath        | java 可执行文件的路径.                           | java          |
 | javacPath       | javac 可执行文件的路径.                          | javac         |
+| Database        | 执行 sql 所用的数据库                            | MySQL         |
 
 ## 感谢
 
