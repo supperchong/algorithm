@@ -17,8 +17,8 @@ const langMap = {
     [CodeLang.Go]: GoParse,
     [CodeLang.Java]: JavaParse,
     [CodeLang["C++"]]: CppParse,
-    [CodeLang.JavaScript]:JavascriptParse,
-    [CodeLang.TypeScript]:TypescriptParse
+    [CodeLang.JavaScript]: JavascriptParse,
+    [CodeLang.TypeScript]: TypescriptParse
 }
 export class Service {
     public codeLang: CodeLang
@@ -61,5 +61,8 @@ export class Service {
     }
     public getTestCaseList(text: string) {
         return this.ctx.getTestCaseList(text)
+    }
+    public addComment(text, comment, funcName) {
+        return this.ctx.addComment(text, comment, funcName)
     }
 }

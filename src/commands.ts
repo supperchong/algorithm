@@ -23,7 +23,7 @@ import { githubInput, selectLogin } from './login/input'
 import { githubLogin } from './login';
 import presetTs = require('@babel/preset-typescript')
 import { getQuestionDescription } from './webview/questionPreview';
-import { builtInLang, CodeLang, databases, enableLang, getFileLang, isDataBase, isShell, langExtMap, otherLang } from './common/langConfig';
+import { builtInLang, CodeLang, databases, enableLang, getFileLang, isAlgorithm, isDataBase, isShell, langExtMap, otherLang } from './common/langConfig';
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
 import { MemoFile } from './model/memo'
 import { addFolder, addFolderFile, addQuestion } from './memo/index'
@@ -114,14 +114,17 @@ export async function submitCommand(questionsProvider: QuestionsProvider, text: 
                     let msg = `× @test(${result.input_formatted})  result: ${result.code_output} ,expect: ${result.expected_output}\n`;
                     log.appendLine(msg);
                     log.show()
-                    if (questionMeta.id) {
+                    const codeLang = getFileLang(filePath)
+
+                    if (questionMeta.id && isAlgorithm(codeLang)) {
                         const questionDetail = await api.fetchQuestionDetailById(questionMeta.id)
                         try {
                             if (questionDetail) {
                                 const metaData = JSON.parse(questionDetail.metaData)
                                 const funcName = metaData.name
                                 const comment = ` @test(${result.input_formatted})=${result.expected_output}`
-                                const newCode = addComment(text, comment, funcName)
+                                const s = new Service(filePath)
+                                const newCode = s.addComment(text, comment, funcName)
                                 await writeFileAsync(filePath, newCode)
                             }
 

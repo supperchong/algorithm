@@ -189,6 +189,22 @@ export abstract class BaseLang {
             questionMeta
         }
     }
+    public addComment(text: string, comment: string, funcName: string) {
+        const lines = text.split('\n')
+        const n = lines.length
+        for (let i = n - 1; i >= 0; i--) {
+            if (this.testRegExp.test(lines[i])) {
+                const newLine = this.commentToken + comment
+                return [...lines.slice(0, i + 1), newLine, ...lines.slice(i + 1)].join('\n')
+            }
+        }
+        for (let i = 0; i < n; i++) {
+            if (this.funcRegExp.test(lines[i])) {
+                const newLine = this.commentToken + comment
+                return [...lines.slice(0, i + 1), newLine, ...lines.slice(i + 1)].join('\n')
+            }
+        }
+    }
 
 
 }

@@ -14,6 +14,7 @@ import virtual = require('@rollup/plugin-virtual');
 import resolve from '@rollup/plugin-node-resolve';
 import rollupBabelPlugin from '@rollup/plugin-babel';
 import { window } from 'vscode';
+import { addComment } from '../common/transformCode'
 export class TypescriptParse extends BaseLang {
     static getPreImport() {
         return ''
@@ -140,6 +141,9 @@ export class TypescriptParse extends BaseLang {
             ],
             // "preLaunchTask": "algorithm: build"
         }
+    }
+    public addComment(text: string, comment: string, funcName: string) {
+        return addComment(text, comment, funcName)
     }
 
 }

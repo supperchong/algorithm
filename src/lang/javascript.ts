@@ -1,4 +1,4 @@
-import { CaseList,getFuncNames, readFileAsync, } from '../common/util'
+import { CaseList, getFuncNames, readFileAsync, } from '../common/util'
 import { config } from '../config'
 import * as vscode from 'vscode'
 import { BaseLang } from './base'
@@ -13,6 +13,7 @@ import rollup = require('rollup');
 import resolve from '@rollup/plugin-node-resolve';
 import rollupBabelPlugin from '@rollup/plugin-babel';
 import { window } from 'vscode';
+import { addComment } from '../common/transformCode'
 
 export class JavascriptParse extends BaseLang {
     static getPreImport() {
@@ -44,7 +45,7 @@ export class JavascriptParse extends BaseLang {
     }
     async handlePreImport() {
     }
-    async buildCode(){
+    async buildCode() {
         try {
             const filePath = this.filePath
             let text = this.text!
@@ -60,7 +61,7 @@ export class JavascriptParse extends BaseLang {
             entry = entry?.code + `\n${funcRunStr}`;
             const bundle = await rollup.rollup({
                 input: 'entry',
-    
+
                 treeshake: true,
                 plugins: [
                     // It use virtual entry because treeshake will remove unuse code.
@@ -132,6 +133,9 @@ export class JavascriptParse extends BaseLang {
             ],
             // "preLaunchTask": "algorithm: build"
         }
+    }
+    public addComment(text: string, comment: string, funcName: string) {
+        return addComment(text, comment, funcName)
     }
 
 }
