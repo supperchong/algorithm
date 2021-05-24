@@ -62,7 +62,7 @@ export class PythonParse extends BaseLang {
             else:
                 arr.append("null")
         i=len(arr)-1
-        while(arr[i]==None):
+        while(arr[i]=="null"):
             i=i-1
             arr.pop()
         return '['+','.join(arr)+']'
