@@ -14,7 +14,6 @@ import virtual = require('@rollup/plugin-virtual');
 import resolve from '@rollup/plugin-node-resolve';
 import rollupBabelPlugin from '@rollup/plugin-babel';
 import { window } from 'vscode';
-import strip = require('@rollup/plugin-strip');
 export class TypescriptParse extends BaseLang {
     static getPreImport() {
         return ''
@@ -39,7 +38,7 @@ export class TypescriptParse extends BaseLang {
         try {
             const filePath = this.filePath
             let text = this.text!
-            text= text.split('\n').filter(line =>!this.shouldRemoveInBuild(line)).join('\n')
+            text = text.split('\n').filter(line => !this.shouldRemoveInBuild(line)).join('\n')
 
             const dir = path.parse(filePath).dir
             const { funcNames, questionMeta } = getFuncNames(text, filePath);
@@ -62,9 +61,9 @@ export class TypescriptParse extends BaseLang {
                     virtual({
                         entry: entry
                     }),
-                 
+
                     resolve({ rootDir: dir, modulesOnly: true }),
-                  
+
                     rollupBabelPlugin({
                         babelHelpers: 'bundled',
                         comments: false,
