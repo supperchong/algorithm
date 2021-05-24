@@ -197,14 +197,14 @@ export class JavaParse extends BaseLang {
         for (const { type, handleFn } of handleConfig) {
             if (type === returnType) {
                 if (!isVoid) {
-                    const funcExpression = `
+                    const funcExpression = tag`
                     ${langType} result=s.${funcName}(${argStr});
                     String resultabc =Util.${handleFn}(result);
                     `
                     return funcExpression
                 } else {
-                    const funcExpression = `
-                    s.${funcName}(${argStr})
+                    const funcExpression = tag`
+                    s.${funcName}(${argStr});
                     String resultabc =Util.${handleFn}(arg0);
                     `
                     return funcExpression
