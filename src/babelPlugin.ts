@@ -115,3 +115,16 @@ export function generateAddTestCommentPlugin(funcName: string, comment: string) 
 		}
 	}
 }
+
+export function removeExtraTypePlugin(){
+	return {
+		visitor: {
+			ClassDeclaration(path: babel.NodePath<babel.types.DeclareClass>) {
+				const extraTypes=['ListNode','TreeNode']
+				if(path.node.id&&extraTypes.includes(path.node.id.name)){
+					path.remove()
+				}
+			}
+		},
+	}
+}

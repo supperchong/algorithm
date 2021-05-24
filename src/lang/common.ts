@@ -10,11 +10,15 @@ import { readFileAsync, TestCase, TestCaseParam, writeFileAsync, execFileAsync }
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { enableLang } from '../common/langConfig'
+import { JavascriptParse } from "./javascript";
+import { TypescriptParse } from "./typescript";
 const langMap = {
     [CodeLang.Python3]: PythonParse,
     [CodeLang.Go]: GoParse,
     [CodeLang.Java]: JavaParse,
-    [CodeLang["C++"]]: CppParse
+    [CodeLang["C++"]]: CppParse,
+    [CodeLang.JavaScript]:JavascriptParse,
+    [CodeLang.TypeScript]:TypescriptParse
 }
 export class Service {
     public codeLang: CodeLang

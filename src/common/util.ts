@@ -12,6 +12,9 @@ import * as compressing from "compressing";
 import { CodeLang, getFileLang } from './langConfig';
 import { getFileComment } from './langConfig'
 import * as cp from 'child_process'
+import { tag } from 'pretty-tag'
+import { LanguageMetaData } from './lang';
+
 const rimraf = require('rimraf')
 const cheerio = require('cheerio');
 const access = promisify(fs.access);
@@ -536,4 +539,119 @@ export function handleMsg(testResultList: TestResult[]) {
     }
     return msg;
 }
-export { detectEnableExt, getJsTestCaseList as getTestCaseList, getTsTestCaseList, parseTestCase, parseCode as getFuncNames, writeFileAsync, readFileAsync, execFileAsync, paramMetaRegExp, returnRegExp };
+
+function handleParam(index: number, paramType: string,esbuild:boolean=false): string {
+    const prefix=esbuild?'a.':''
+    const handleConfig = [{
+        type: "ListNode",
+        handleFn: prefix+"listNode.deserialize"
+    }, {
+        type: "TreeNode",
+        handleFn:prefix+ "treeNode.deserialize"
+    }, {
+        type: "ListNode[]",
+        handleFn: prefix+"listNode.deserializeArr"
+    }, {
+        type: "TreeNode[]",
+        handleFn:prefix+ "treeNode.deserializeArr"
+    }]
+    const jsonType = ['integer', 'string', 'integer[]', 'string[]', 'integer[][]', 'string[][]', 'list<string>', 'list<integer>', 'list<list<integer>>', 'list<list<string>>', 'character[][]"', "boolean", "double"]
+    if (jsonType.includes(paramType)) {
+        return `const arg${index} =JSON.parse(unitArgs[${index}])`
+    } else {
+        for (const { type, handleFn } of handleConfig) {
+            if (type === paramType) {
+                return `const arg${index} =${handleFn}(unitArgs[${index}])`
+            }
+        }
+    }
+
+    throw new Error(`paramType ${paramType} not support`)
+}
+
+function handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string,esbuild:boolean=false): string {
+    let isVoid = returnType === 'void'
+    if (isVoid) {
+        returnType = firstParamType
+    }
+    const prefix=esbuild?'a.':''
+    const handleConfig = [{
+        type: "ListNode",
+        handleFn:prefix+ "listNode.serialize"
+    }, {
+        type: "TreeNode",
+        handleFn:prefix+ "treeNode.serialize"
+    },
+    {
+        type: "ListNode[]",
+        handleFn:prefix+ "listNode.serializeArr"
+    }, {
+        type: "TreeNode[]",
+        handleFn: prefix+"treeNode.serializeArr"
+    },{
+        type:'double',
+        handleFn:`${isVoid?';':''}(v=>v.toFixed(5))`
+    }]
+    const jsonType = ['integer', 'string', 'integer[]', 'string[]', 'integer[][]', 'string[][]', 'list<string>', 'list<integer>', 'list<list<integer>>', 'list<list<string>>', 'character[][]"', 'boolean']
+
+    const argStr = Array(paramCount).fill(0).map((v, i) => `arg${i}`).join(',')
+    if (jsonType.includes(returnType)) {
+        if (!isVoid) {
+            const funcExpression = tag`
+            const result=${funcName}(${argStr})
+            JSON.stringify(result)
+            `
+            return funcExpression
+        } else {
+            const funcExpression = tag`
+            ${funcName}(${argStr})
+            JSON.stringify(arg0)
+            `
+            return funcExpression
+        }
+
+    } else {
+        for (const { type, handleFn } of handleConfig) {
+            if (type === returnType) {
+                if (!isVoid) {
+                    const funcExpression = tag`
+                    const result=${funcName}(${argStr})
+                    resultabc =${handleFn}(result)
+                    `
+                    return funcExpression
+                } else {
+                    const funcExpression = tag`
+                    ${funcName}(${argStr})
+                    ${handleFn}(arg0)
+                    `
+                    return funcExpression
+                }
+
+
+            }
+        }
+    }
+
+    throw new Error(`returnType ${returnType} not support`)
+}
+function handleArgsType(meta:LanguageMetaData,originCode:string,args:string[],isEsbuild:boolean=false){
+    const params = meta.params || []
+    let rt = meta.return.type
+    const funcName = meta.name
+    const argExpressions: string[] = []
+    const paramCount = params.length
+    for (let i = 0; i < paramCount; i++) {
+        const { name, type } = params[i]
+        argExpressions[i] = handleParam(i, type,isEsbuild)
+    }
+    const argExpression = argExpressions.join('\n')
+
+    const rtExpression = handleReturn(paramCount, funcName, rt, params[0].type,isEsbuild)
+    const formatArg= JSON.stringify(args)
+    return originCode+'\n'+tag`
+    const unitArgs=${formatArg}
+    ${argExpression}
+    ${rtExpression}
+    `
+}
+export { detectEnableExt, getJsTestCaseList as getTestCaseList, getTsTestCaseList, parseTestCase, parseCode as getFuncNames, writeFileAsync, readFileAsync, execFileAsync, paramMetaRegExp, returnRegExp,handleArgsType};

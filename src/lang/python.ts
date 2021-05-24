@@ -11,7 +11,7 @@ import * as path from 'path'
 import { BaseLang } from './base'
 import { parseCommentTest } from '../common/util'
 import { platform } from 'os'
-import { LanguageMetaData } from '../util'
+import { LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 
 export class PythonParse extends BaseLang {

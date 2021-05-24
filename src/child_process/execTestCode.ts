@@ -12,12 +12,14 @@ import {
     normalize,
     getResultType,
     deserializeParam,
+    handleArgsType,
 } from "../common/util";
 import { outBoundArrayPlugin } from '../babelPlugin'
 import { Script } from "vm";
 import { handleMsg } from '../common/util'
 import { langExtMap, LangBase, CodeLang, getFileLang } from '../common/langConfig'
 import presetTs = require('@babel/preset-typescript')
+import { TestOptions, LanguageMetaData } from "../common/lang";
 const defaultTimeout = 10000;
 const supportCodeLang = [CodeLang.JavaScript, CodeLang.TypeScript]
 let options = ''
@@ -32,28 +34,24 @@ process.stdin.on('end', async () => {
         console.log(err);
     }
 })
-async function execTestCase(options) {
+async function execTestCase(options:TestOptions) {
     const {
-        line,
-        testCase,
-        funcName,
-        paramsTypes,
-        resultType,
-        filepath,
+        caseList,
+        originCode,
+        filePath,
+        metaData
     } = options;
-    const lang = getFileLang(filepath)
+    const lang = getFileLang(filePath)
     if (!supportCodeLang.includes(lang)) {
         return `${lang} is currently not supported`
     }
-    const output = await buildCode(filepath, lang)
+    const output = await buildCode(filePath, lang)
     const code = output[0].code;
-    const caseList = parseTestCase(testCase);
     const list: TestResult[] = [];
     for (const { args, result: expect } of caseList) {
         const originArgs = [...args]
-        const { hasTree, hasList } = deserializeParam(args, paramsTypes, false);
-        const rt = getResultType(resultType);
-        const finalCode = formatCodeOutput(code, funcName, rt, args)
+ 
+        const finalCode = handleArgsType(metaData,code,args)
         const script = new Script(finalCode, {});
         try {
             const result = script.runInNewContext(
@@ -69,7 +67,7 @@ async function execTestCase(options) {
             list.push({
                 args: originArgs.join(","),
                 expect: expect,
-                result: normalize(result, rt),
+                result:result,
             });
         } catch (err) {
             return handleErrPosition(err, output[0].map as rollup.SourceMap, originArgs)
@@ -79,13 +77,13 @@ async function execTestCase(options) {
     return handleMsg(list)
 }
 
-async function buildCode(filepath: string, lang: CodeLang) {
+async function buildCode(filePath: string, lang: CodeLang) {
     if (lang === CodeLang.TypeScript) {
-        return buildTsCode(filepath)
+        return buildTsCode(filePath)
     }
-    return buildJsCode(filepath)
+    return buildJsCode(filePath)
 }
-async function buildJsCode(filepath: string) {
+async function buildJsCode(filePath: string) {
     let plugins = [
         resolve(),
         rollupBabelPlugin({
@@ -97,7 +95,7 @@ async function buildJsCode(filepath: string) {
         })
     ]
     const bundle = await rollup.rollup({
-        input: filepath,
+        input: filePath,
         treeshake: false,
         plugins,
     });
@@ -109,11 +107,11 @@ async function buildJsCode(filepath: string) {
     return output
 }
 
-async function buildTsCode(filepath: string) {
-    const code = fs.readFileSync(filepath, { encoding: 'utf8' })
-    const fileDir = path.parse(filepath).dir
+async function buildTsCode(filePath: string) {
+    const code = fs.readFileSync(filePath, { encoding: 'utf8' })
+    const fileDir = path.parse(filePath).dir
     const entry = transformSync(code, {
-        filename: filepath,
+        filename: filePath,
         comments: false,
         cwd: fileDir,
         presets: [[presetTs, { onlyRemoveTypeImports: true }]],
@@ -135,16 +133,9 @@ async function buildTsCode(filepath: string) {
     return output
 }
 
-function formatCodeOutput(code: string, funcName: string, rt: string, args: string[]) {
-    let funExecExpression = `${funcName}(${args.join(",")})`;
-    if (rt === "TreeNode") {
-        funExecExpression = `treeNode.serialize(${funExecExpression})`;
-    } else if (rt === "ListNode") {
-        funExecExpression = `listNode.serialize(${funExecExpression})`;
-    }
-    const finalCode = code + `;${funExecExpression}`;
-    return finalCode
-}
+
+
+
 
 async function handleErrPosition(err: Error, map: sourceMap.RawSourceMap, args: string[]) {
     const consumer = await new sourceMap.SourceMapConsumer(map)

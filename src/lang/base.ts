@@ -6,7 +6,6 @@ import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/ut
 import { log, config } from '../config'
 import { getDb } from '../db';
 import { api } from '../api/index'
-import { LanguageMetaData, MetaData } from '../util'
 import { resolve } from 'path'
 import { rejects } from 'assert'
 import { runInNewContext } from 'vm'
@@ -18,6 +17,7 @@ import { stdout } from 'process'
 import * as path from 'path'
 import { getFileComment } from '../common/langConfig'
 import { parseCommentTest } from '../common/util'
+import { LanguageMetaData, MetaData } from '../common/lang'
 
 export abstract class BaseLang {
     public log: OutputChannel

@@ -6,8 +6,6 @@ import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/ut
 import { log, config } from '../config'
 import { getDb } from '../db';
 import { api } from '../api/index'
-import { LanguageMetaData, MetaData } from '../util'
-
 
 import { promisify } from 'util'
 
@@ -19,6 +17,7 @@ import { getFileComment } from '../common/langConfig'
 import { BaseLang } from './base'
 import { parseCommentTest } from '../common/util'
 import { platform } from 'os'
+import { LanguageMetaData } from '../common/lang'
 
 const execFileAsync = promisify(cp.execFile)
 

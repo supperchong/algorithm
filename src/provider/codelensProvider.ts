@@ -97,36 +97,15 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 			this.codeLenses.push(buildCodeLenses);
 			this.codeLenses.push(desCodeLenses)
 
-			if ([CodeLang.JavaScript, CodeLang.TypeScript].includes(codeLang)) {
-
-
-
-				let testCaseList: TestCaseParam[] = []
-				if (codeLang === CodeLang.JavaScript) {
-					testCaseList = getTestCaseList(text);
-				} else {
-					testCaseList = getTsTestCaseList(text)
-				}
-				testCaseList.forEach((testCaseParam) => {
-					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
-					const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)
-					this.codeLenses.push(testCodeLenses);
-					this.codeLenses.push(debugCodeLenses);
-				});
-			} else if (isAlgorithm(codeLang)) {
-				const lang = new Service(filePath, text)
-				const testCaseList = lang.getTestCaseList(text)
-				testCaseList.forEach((testCaseParam) => {
-					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
-					const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)
-					this.codeLenses.push(testCodeLenses);
-					this.codeLenses.push(debugCodeLenses);
-
-				});
-			}
-
-
-
+			const lang = new Service(filePath, text)
+			const testCaseList = lang.getTestCaseList(text)
+			testCaseList.forEach((testCaseParam) => {
+				const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
+				const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)
+				this.codeLenses.push(testCodeLenses);
+				this.codeLenses.push(debugCodeLenses);
+			});
+		
 			return this.codeLenses;
 		}
 		return [];

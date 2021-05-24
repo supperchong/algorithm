@@ -33,9 +33,7 @@ import { Service } from './lang/common'
 import { DataBaseParse } from './lang/database';
 import { BashParse } from './lang/bash'
 
-interface PlainObject {
-    [key: string]: any
-}
+
 type Requred<T, R extends keyof T> = {
     [key in R]-?: T[key]
 } & {
@@ -49,22 +47,11 @@ function checkParams<T, R extends keyof T>(obj: T, attrs: R[]): asserts obj is R
 }
 export async function testCodeCommand(line: number, testCase: TestCase, funcName: string, paramsTypes: string[], resultType: string, filepath: string) {
     try {
-        const codeLang = getFileLang(filepath)
-        if (builtInLang.includes(codeLang)) {
-            const promise = execTestChildProcess({
-                line, testCase, funcName, paramsTypes, resultType, filepath
-            });
-            const msg = await execWithProgress(promise, 'wait test');
-            log.appendLine(msg);
-            log.show()
-        } else if (otherLang.includes(codeLang)) {
-            const service = new Service(filepath)
-            const promise = service.execTest(testCase)
-            const msg = await execWithProgress(promise, 'wait test');
-            log.appendLine(msg);
-            log.show()
-        }
-
+        const service = new Service(filepath)
+        const promise = service.execTest(testCase)
+        const msg = await execWithProgress(promise, 'wait test');
+        log.appendLine(msg);
+        log.show()
     } catch (err) {
         console.log(err);
         window.showInformationMessage(`parse params err: ${err}`);
@@ -102,18 +89,8 @@ export async function debugCodeCommand(filePath: string) {
     if (!checkBeforeDebug(filePath)) {
         return
     }
-    const codeLang = getFileLang(filePath)
-
-    if (codeLang === CodeLang.JavaScript || codeLang === CodeLang.TypeScript) {
-        const debugConfiguration = getDebugConfig()
-
-        vscode.debug.startDebugging(p, debugConfiguration)
-    } else {
-        const service = new Service(filePath)
-        service.debugCodeCommand(p!, breaks)
-    }
-
-
+    const service = new Service(filePath)
+    service.debugCodeCommand(p!, breaks)
 }
 export async function buildCodeCommand(context: ExtensionContext, text: string, filePath: string) {
     const { code } = await buildCode(text, filePath)
@@ -255,14 +232,7 @@ interface BuildCode {
     questionMeta: QuestionMeta
 }
 export async function buildCode(text: string, filePath: string): Promise<BuildCode> {
-    const lang = getFileLang(filePath)
 
-    if (lang === CodeLang.JavaScript) {
-        return buildJsCode(text, filePath)
-    }
-    if (lang === CodeLang.TypeScript) {
-        return buildTsCode(text, filePath)
-    }
     if (isDataBase(filePath)) {
         const parse = new DataBaseParse(filePath, text)
         return parse.buildCode()
@@ -275,101 +245,6 @@ export async function buildCode(text: string, filePath: string): Promise<BuildCo
     return service.buildCode()
 }
 
-export async function buildJsCode(text: string, filePath: string) {
-    try {
-        const dir = path.parse(filePath).dir
-        const { funcNames, questionMeta } = getFuncNames(text, filePath);
-        const funcRunStr = 'console.log(' + funcNames.map(f => f + '()').join('+') + ')';
-        // The rollup will not transform code in virtual entry
-        let entry: any = await babel.transformAsync(text, {
-            comments: false,
-            compact: false,
-            plugins: [outBoundArrayPlugin]
-        });
-        entry = entry?.code + `\n${funcRunStr}`;
-        const bundle = await rollup.rollup({
-            input: 'entry',
-
-            treeshake: true,
-            plugins: [
-                // It use virtual entry because treeshake will remove unuse code.
-                virtual({
-                    entry: entry
-                }),
-                resolve({ rootDir: dir }),
-                rollupBabelPlugin({
-                    babelHelpers: 'bundled',
-                    comments: false,
-                    shouldPrintComment: () => false
-                },
-                )
-            ]
-        });
-        const { output } = await bundle.generate({});
-        let code = output[0].code;
-        code = code.replace(funcRunStr, '').replace(/;\s*$/, '');
-        return {
-            code,
-            questionMeta
-        };
-    } catch (err) {
-        console.log('err:', err);
-        window.showInformationMessage(`parse params err: ${err}`);
-        return {
-            code: '',
-            questionMeta: {}
-        };
-    }
-}
-export async function buildTsCode(text: string, filePath: string) {
-    try {
-        const dir = path.parse(filePath).dir
-        const { funcNames, questionMeta } = getFuncNames(text, filePath);
-        const funcRunStr = 'console.log(' + funcNames.map(f => f + '()').join('+') + ')';
-        // The rollup will not transform code in virtual entry
-        let entry: any = await babel.transformAsync(text, {
-            filename: filePath,
-            comments: false,
-            compact: false,
-            presets: [presetTs],
-            plugins: [outBoundArrayPlugin]
-        });
-        entry = entry?.code + `\n${funcRunStr}`;
-        const bundle = await rollup.rollup({
-            input: 'entry',
-
-            treeshake: true,
-            plugins: [
-                // It use virtual entry because treeshake will remove unuse code.
-                virtual({
-                    entry: entry
-                }),
-                resolve({ rootDir: dir, modulesOnly: true }),
-                rollupBabelPlugin({
-                    babelHelpers: 'bundled',
-                    comments: false,
-                    shouldPrintComment: () => false
-                },
-                )
-            ]
-        });
-        const { output } = await bundle.generate({});
-        let code = output[0].code;
-        code = code.replace(funcRunStr, '').replace(/;\s*$/, '');
-        return {
-            code,
-            questionMeta
-        };
-
-    } catch (err) {
-        console.log('err:', err);
-        window.showInformationMessage(`parse params err: ${err}`);
-        return {
-            code: '',
-            questionMeta: {}
-        };
-    }
-}
 
 export async function getDescriptionCommand(extensionPath: string, text: string, filePath: string) {
     const { questionMeta } = getFuncNames(text, filePath);

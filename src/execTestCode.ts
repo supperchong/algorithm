@@ -3,8 +3,9 @@ import cp = require('child_process');
 import path = require('path');
 import { config } from './config';
 import { window } from 'vscode';
+import { TestOptions } from './common/lang';
 const notFoundReg = /node: not found/;
-export function execTestChildProcess(options): Promise<string> {
+export function execTestChildProcess(options:TestOptions): Promise<string> {
     return new Promise((resolve, reject) => {
         const { nodeBinPath } = config
         let cmd = cp.spawn(nodeBinPath, [path.join(__dirname, './child_process/execTestCode.js')]);

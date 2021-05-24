@@ -10,6 +10,7 @@ import { Question, CodeSnippet } from './model/question.cn';
 import { AskForImportState, ConciseQuestion } from './model/common';
 import { MemoFile } from './model/memo';
 import { Service } from './lang/common'
+import { DataBaseMetaData, LanguageMetaData, MetaData, ShellMetaData } from './common/lang';
 export async function execWithProgress(promise: Promise<any>, message: string) {
     return window.withProgress({ location: vscode.ProgressLocation.Notification }, (p) => {
         p.report({ message });
@@ -30,30 +31,10 @@ export async function appendComment(code: string, comment: string, funcName: str
     });
     return fileResult?.code
 }
-interface Param {
-    name: string,
-    type: string,
-}
-interface ReturnType {
-    type: string
-}
+
 
 const extraTypeValues = [ExtraType.ListNode, ExtraType.TreeNode]
-export type MetaData = LanguageMetaData | DataBaseMetaData | ShellMetaData
-export interface LanguageMetaData {
-    name: string,
-    params: Param[],
-    return: ReturnType
-}
-export interface DataBaseMetaData {
-    database: true,
-    mssql: string[],
-    mysql: string[],
-    oraclesql: string[]
-}
-export interface ShellMetaData {
-    shell: true
-}
+
 
 
 export function shouldAskForImport(): boolean {

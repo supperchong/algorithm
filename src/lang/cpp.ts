@@ -6,7 +6,6 @@ import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/ut
 import { log, config } from '../config'
 import { getDb } from '../db';
 import { api } from '../api/index'
-import { LanguageMetaData, MetaData } from '../util'
 import { resolve } from 'path'
 import { rejects } from 'assert'
 import { runInNewContext } from 'vm'
@@ -19,6 +18,7 @@ import * as path from 'path'
 import { ExtraType } from '../common/langConfig'
 import { BaseLang } from './base'
 import { parseCommentTest } from '../common/util'
+import { LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 const GCC = 'g++'
 const langTypeMap: Record<string, string> = {
