@@ -11,13 +11,13 @@ import { AskForImportState, ConciseQuestion } from './model/common';
 import { MemoFile } from './model/memo';
 import { Service } from './lang/common'
 import { DataBaseMetaData, LanguageMetaData, MetaData, ShellMetaData } from './common/lang';
-export async function execWithProgress(promise: Promise<any>, message: string) {
-    return window.withProgress({ location: vscode.ProgressLocation.Notification }, (p) => {
+export async function execWithProgress<T>(promise: Promise<T>, message: string): Promise<T> {
+    return window.withProgress<T>({ location: vscode.ProgressLocation.Notification }, (p) => {
         p.report({ message });
         return promise;
     });
 }
-export async function execWithProgress2(promise: Promise<any>, message: string) {
+export async function execWithProgress2<T>(promise: Promise<T>, message: string): Promise<T> {
     return window.withProgress({ location: vscode.ProgressLocation.Window }, (p) => {
         p.report({ message });
         return promise;

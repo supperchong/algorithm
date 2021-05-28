@@ -35,7 +35,9 @@ export class Service {
     }
     static getPreImport(codeLang: CodeLang, name: string, extraTypeSet: Set<ExtraType>): string {
         const Parse = langMap[codeLang]
-        if (!Parse) return ''
+        if (!Parse) {
+            return ''
+        }
         return Parse.getPreImport(name, extraTypeSet)
     }
     static handlePreImport(filePath: string) {

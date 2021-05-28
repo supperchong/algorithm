@@ -46,6 +46,8 @@ export interface CheckResponse {
     status_memory: string
     memory_percentile: number
     pretty_lang: string
+    input_formatted?: string
+    expected_output?: string
 }
 type State = 'PENDING' | 'STARTED' | 'SUCCESS';
 export interface MapIdConciseQuestion {
@@ -58,12 +60,12 @@ export interface Problems {
     ac_easy: number
     ac_medium: number
     ac_hard: number
-    stat_status_pairs: Stat_status_pairs[]
+    stat_status_pairs: StatStatusPairs[]
     frequency_high: number
     frequency_mid: number
     category_slug: string
 }
-interface Stat_status_pairs {
+interface StatStatusPairs {
     stat: Stat
     status: any
     difficulty: Difficulty
@@ -91,8 +93,8 @@ export enum ErrorStatus {
     InvalidCookie = 499
 }
 
-export enum AskForImportState{
-    Yes='Yes',
-    No='No',
-    Later='Later'
+export enum AskForImportState {
+    Yes = 'Yes',
+    No = 'No',
+    Later = 'Later'
 }

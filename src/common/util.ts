@@ -338,7 +338,7 @@ async function sleep(ms: number) {
     });
 
 }
-export async function retry({ fn, time = 1, delay = 1000, verifyFn }) {
+export async function retry<T>({ fn, time = 1, delay = 1000, verifyFn }: { fn: () => Promise<T>, time?: number, delay?: number, verifyFn: (arg: T) => boolean }): Promise<T> {
     let count = time | 0;
     while (count > 0) {
         count--;

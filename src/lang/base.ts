@@ -103,7 +103,7 @@ export abstract class BaseLang {
         }
         return testResultList
     }
-    runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+    runMultiple(caseList: CaseList, originCode: string, funcName: string): Promise<string> {
         let testResultList: TestResult[] = []
         return new Promise(async (resolve, reject) => {
             for (const { args, result: expect } of caseList) {
@@ -140,7 +140,9 @@ export abstract class BaseLang {
         }
         const metaData: LanguageMetaData = JSON.parse(question.metaData)
         const funcName = metaData.name
-        if (!caseList.length) return
+        if (!caseList.length) {
+            return
+        }
         return this.runMultiple(caseList, originCode, funcName)
     }
 

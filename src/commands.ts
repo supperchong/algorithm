@@ -50,7 +50,9 @@ export async function testCodeCommand(line: number, testCase: TestCase, funcName
         const service = new Service(filepath)
         const promise = service.execTest(testCase)
         const msg = await execWithProgress(promise, 'wait test');
-        log.appendLine(msg);
+        if (msg) {
+            log.appendLine(msg);
+        }
         log.show()
     } catch (err) {
         console.log(err);
@@ -103,7 +105,7 @@ export async function submitCommand(questionsProvider: QuestionsProvider, text: 
 
         message = result.status_msg;
         if (message === 'Accepted') {
-            cache.updateQuestion(parseInt(questionMeta.id), { status: 'ac' });
+            cache.updateQuestion(parseInt(questionMeta.id!), { status: 'ac' });
             questionsProvider.refresh();
         } else {
             if (result.status_code === 11) {
@@ -198,7 +200,7 @@ async function submitContest(code: string, questionMeta: QuestionMeta): Promise<
     const result = await retry({ fn, verifyFn, time: 5 });
     return result;
 }
-async function submitAsync(code: string, questionMeta: QuestionMeta): Promise<any> {
+async function submitAsync(code: string, questionMeta: QuestionMeta): Promise<CheckResponse> {
     checkParams(questionMeta, ['titleSlug', 'id']);
     const { titleSlug, id } = questionMeta;
     const res = await api.submit({
