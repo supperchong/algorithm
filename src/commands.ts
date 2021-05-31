@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { parseTestCase, TestCase, TestResult, normalize, getResultType, getFuncNames, deserializeParam, QuestionMeta, retry } from './common/util';
+import { parseTestCase, TestCase, TestResult, normalize, getResultType, getFuncNames, deserializeParam, QuestionMeta, retry, readFileAsync } from './common/util';
 import { appendComment, checkBeforeDebug, execWithProgress, execWithProgress2, getDebugConfig } from './util';
 import { log, updateConfig } from './config';
 import { window, ExtensionContext } from 'vscode';
@@ -32,6 +32,10 @@ import { ResolverParam } from './provider/resolver'
 import { Service } from './lang/common'
 import { DataBaseParse } from './lang/database';
 import { BashParse } from './lang/bash'
+import { createSubmitHistoryPanel } from './webview/submitHistory';
+import { submitStorage } from './history/storage';
+import { answerStorage } from './history/answer';
+import { formatMemory } from './history';
 
 
 type Requred<T, R extends keyof T> = {
@@ -104,6 +108,15 @@ export async function submitCommand(questionsProvider: QuestionsProvider, text: 
         const { result, questionMeta } = await execWithProgress(submitCode(text, filePath), 'wait submit');
 
         message = result.status_msg;
+        submitStorage.saveSubmit({
+            filePath: filePath,
+            text,
+            result: {
+                ...result,
+                memory: formatMemory(result.memory)
+            },
+            desc: questionMeta.desc
+        })
         if (message === 'Accepted') {
             cache.updateQuestion(parseInt(questionMeta.id!), { status: 'ac' });
             questionsProvider.refresh();
@@ -404,4 +417,18 @@ export async function removeMemoFileCommand(memoProvider: MemoProvider, param: M
     if (isRemove) {
         memoProvider.refresh()
     }
+}
+
+export async function viewSubmitHistoryCommand(context: ExtensionContext, text: string, filePath: string) {
+
+    const { questionMeta } = getFuncNames(text, filePath)
+    if (!questionMeta.id) {
+        return
+    }
+    createSubmitHistoryPanel(context, questionMeta.id)
+}
+
+export async function newAnswerCommand(uri: vscode.Uri) {
+    const filePath = uri.fsPath
+    answerStorage.newAnswer(filePath)
 }

@@ -103,7 +103,7 @@ export abstract class BaseLang {
         }
         return testResultList
     }
-    runMultiple(caseList: CaseList, originCode: string, funcName: string): Promise<string> {
+    runMultiple(caseList: CaseList, originCode: string, funcName: string): Promise<string | undefined> {
         let testResultList: TestResult[] = []
         return new Promise(async (resolve, reject) => {
             for (const { args, result: expect } of caseList) {

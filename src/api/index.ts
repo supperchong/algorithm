@@ -77,6 +77,20 @@ export const api = {
         } else {
             return apiCn.api.getAllQuestions();
         }
+    },
+    async fetchSubmissions(options: modelCn.SubmissionsOptions | modelEn.SubmissionsOptions) {
+        if (config.lang === 'en') {
+            return apiEn.api.fetchSubmissions(options)
+        } else {
+            return apiCn.api.fetchSubmissions(options)
+        }
+    },
+    async fetchSubmissionDetail(options: modelCn.SubmissionDetailOptions) {
+        if (config.lang === 'en') {
+            return Promise.reject('can not query')
+        } else {
+            return apiCn.api.fetchSubmissionDetail(options)
+        }
     }
 
 }

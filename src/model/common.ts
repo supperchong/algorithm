@@ -98,3 +98,51 @@ export enum AskForImportState {
     No = 'No',
     Later = 'Later'
 }
+
+export enum PendingStatus {
+    NotPending = 'Not Pending',
+    Pending = 'Pending'
+}
+export enum FlagType {
+    BLUE = 'BLUE',
+    ORANGE = 'ORANGE',
+    GREEN = 'GREEN',
+    PURPLE = 'PURPLE',
+    RED = 'RED'
+}
+export interface SubmissionComment {
+    comment: string
+    flagType: FlagType
+}
+export interface Submission {
+    id: string
+    isPending: PendingStatus
+    submissionComment?: SubmissionComment
+    lang: string
+    memory: string
+    runtime: string
+    statusDisplay: string
+    timestamp: string
+    url: string
+}
+
+export interface LocalSubmission {
+    code: string
+    submission: Submission
+}
+
+export type LocalSubmissionArr = LocalSubmission[]
+
+export enum HistoryType {
+    Answer = 'answer',
+    LocalSubmit = 'localSubmit',
+    RemoteSubmit = 'remoteSubmit'
+}
+
+export interface UpdateCommentOption {
+    id: string
+    comment: string
+    questionId: string
+}
+
+export type UpdateRemoteCommentOption = Omit<UpdateCommentOption, 'questionId'>

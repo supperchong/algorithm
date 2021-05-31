@@ -17,7 +17,7 @@ class BuildCodePanel {
 	 */
 	public static currentPanel: BuildCodePanel | undefined;
 	private static readonly buildCodeActiveContextKey = 'buildCodeFocus';
-	public static readonly viewType = 'catCoding';
+	public static readonly viewType = 'buildCodeView';
 
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionPath: string;
@@ -153,7 +153,7 @@ class BuildCodePanel {
         </head>
         <body>
             ${code}
-            
+
         <script nonce=${nonce} src="${scriptUri}"></script>
         <script nonce=${nonce}>hljs.initHighlightingOnLoad();</script>
         </body>

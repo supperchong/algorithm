@@ -23,10 +23,10 @@ export interface ShellMetaData {
     shell: true
 }
 
-export interface TestOptions{
-    caseList:CaseList
-    metaData:LanguageMetaData
-    filePath:string
-    originCode:string
+export interface TestOptions {
+    caseList: CaseList
+    metaData: LanguageMetaData
+    filePath: string
+    originCode: string
 }
-export type DebugOptions=Omit<TestOptions,'caseList'>
+export type DebugOptions = Omit<TestOptions, 'caseList'>

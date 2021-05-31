@@ -1,3 +1,5 @@
+import { SubmissionComment } from "./common";
+
 export interface Chapter {
     descriptionText: string
     id: string
@@ -260,4 +262,30 @@ export interface CheckOptions {
 }
 export interface CheckContestOptions extends CheckOptions {
     weekname: string
+}
+
+export interface SubmissionsResponse {
+    submissionList: SubmissionList
+}
+export interface SubmissionsOptions {
+    lastKey?: string
+    limit?: number
+    offset?: number
+    titleSlug: string
+}
+interface SubmissionList {
+    lastKey: string
+    hasNext: boolean
+    submissions: Submissions[]
+}
+export interface Submissions {
+    id: string
+    statusDisplay: string
+    lang: string
+    runtime: string
+    timestamp: string
+    url: string
+    isPending: string
+    memory: string
+    submissionComment?: SubmissionComment
 }

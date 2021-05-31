@@ -1,8 +1,8 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import fs = require('fs');
 import { cache, ALLQUESTIONS } from '../cache';
-import { ConciseQuestion, MapIdConciseQuestion, CheckContestOptions, CheckOptions, SubmitContestOptions, CheckResponse, SubmitOptions, SubmitResponse, TagData, GraphqlResponse, QuestionTranslationData, TodayRecordData, DailyQuestionRecordData, DailyQuestionRecord, QuestionData, GraphqlRequestData, ContestData } from '../model/question.cn';
-import { Problems, ErrorStatus } from '../model/common'
+import { ConciseQuestion, MapIdConciseQuestion, CheckContestOptions, CheckOptions, SubmitContestOptions, CheckResponse, SubmitOptions, SubmitResponse, TagData, GraphqlResponse, QuestionTranslationData, TodayRecordData, DailyQuestionRecordData, DailyQuestionRecord, QuestionData, GraphqlRequestData, ContestData, SubmissionsOptions, SubmissionsResponse, UpdateCommentOptions, UpdateCommentResponse, SubmissionDetailOptions, SubmissionDetailResponse } from '../model/question.cn';
+import { Problems, ErrorStatus, FlagType } from '../model/common'
 import { showLoginMessage } from '../login/index'
 
 import { getDb } from '../db';
@@ -241,6 +241,19 @@ const config = {
             },
 
         };
+    },
+    getSubmissions(options: SubmissionsOptions) {
+        const { titleSlug, limit = 40, offset = 0, lastKey = null } = options;
+        return { "operationName": "submissions", "variables": { "offset": offset, "limit": limit, "lastKey": lastKey, "questionSlug": titleSlug }, "query": "query submissions($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $markedOnly: Boolean, $lang: String) {\n  submissionList(offset: $offset, limit: $limit, lastKey: $lastKey, questionSlug: $questionSlug, markedOnly: $markedOnly, lang: $lang) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      statusDisplay\n      lang\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n        flagType\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n" }
+
+    },
+    getUpdateComment(options: UpdateCommentOptions) {
+        const { submissionId, flagType = FlagType.BLUE, comment } = options
+        return { "operationName": "submissionCreateOrUpdateSubmissionComment", "variables": { "submissionId": submissionId, "flagType": flagType, "comment": comment }, "query": "mutation submissionCreateOrUpdateSubmissionComment($submissionId: ID!, $flagType: SubmissionFlagTypeEnum!, $comment: String!) {\n  submissionCreateOrUpdateSubmissionComment(comment: $comment, flagType: $flagType, submissionId: $submissionId) {\n    ok\n    __typename\n  }\n}\n" }
+    },
+    getSubmissionDetail(options: SubmissionDetailOptions) {
+        const { id } = options
+        return { "operationName": "mySubmissionDetail", "variables": { "id": id }, "query": "query mySubmissionDetail($id: ID!) {\n  submissionDetail(submissionId: $id) {\n    id\n    code\n    runtime\n    memory\n    rawMemory\n    statusDisplay\n    timestamp\n    lang\n    passedTestCaseCnt\n    totalTestCaseCnt\n    sourceUrl\n    question {\n      titleSlug\n      title\n      translatedTitle\n      questionId\n      __typename\n    }\n    ... on GeneralSubmissionNode {\n      outputDetail {\n        codeOutput\n        expectedOutput\n        input\n        compileError\n        runtimeError\n        lastTestcase\n        __typename\n      }\n      __typename\n    }\n    submissionComment {\n      comment\n      flagType\n      __typename\n    }\n    __typename\n  }\n}\n" }
     }
 
 
@@ -417,5 +430,15 @@ export const api = {
     },
     checkContest(options: CheckContestOptions) {
         return request<CheckResponse>(config.getContestCheck(options));
+    },
+    fetchSubmissions(options: SubmissionsOptions) {
+        return graphql<SubmissionsResponse>(config.getSubmissions(options))
+    },
+    updateComment(options: UpdateCommentOptions) {
+        return graphql<UpdateCommentResponse>(config.getUpdateComment(options))
+    },
+    fetchSubmissionDetail(options: SubmissionDetailOptions) {
+        return graphql<SubmissionDetailResponse>(config.getSubmissionDetail(options))
+
     }
 };

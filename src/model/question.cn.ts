@@ -1,3 +1,4 @@
+import { FlagType, SubmissionComment } from "./common";
 
 export interface ConciseQuestion {
     fid: string
@@ -208,4 +209,76 @@ export interface CheckOptions {
 }
 export interface CheckContestOptions extends CheckOptions {
     weekname: string
+}
+
+export interface SubmissionsResponse {
+    submissionList: SubmissionList
+}
+export interface SubmissionsOptions {
+    lastKey?: string
+    limit?: number
+    offset?: number
+    titleSlug: string
+}
+interface SubmissionList {
+    lastKey: string
+    hasNext: boolean
+    submissions: Submissions[]
+}
+interface Submissions {
+    id: string
+    statusDisplay: string
+    lang: string
+    runtime: string
+    timestamp: string
+    url: string
+    isPending: string
+    memory: string
+    submissionComment?: SubmissionComment
+}
+export interface UpdateCommentOptions {
+    comment: string
+    flagType?: FlagType
+    submissionId: string
+}
+export interface UpdateCommentResponse {
+    submissionCreateOrUpdateSubmissionComment: SubmissionCreateOrUpdateSubmissionComment
+}
+
+interface SubmissionCreateOrUpdateSubmissionComment {
+    ok: boolean
+}
+
+export interface SubmissionDetailOptions {
+    id: string
+}
+export interface SubmissionDetailResponse {
+    submissionDetail: SubmissionDetail
+}
+interface SubmissionDetail {
+    id: string
+    code: string
+    runtime: string
+    memory: string
+    rawMemory: string
+    statusDisplay: string
+    timestamp: number
+    lang: string
+    passedTestCaseCnt: number
+    totalTestCaseCnt: number
+    sourceUrl: string
+    question: Question
+    outputDetail: OutputDetail
+    __typename: string
+    submissionComment: SubmissionComment
+}
+
+interface OutputDetail {
+    codeOutput: string
+    expectedOutput: string
+    input: string
+    compileError: string
+    runtimeError: string
+    lastTestcase: string
+    __typename: String
 }

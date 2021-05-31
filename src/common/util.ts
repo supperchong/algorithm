@@ -209,7 +209,8 @@ export interface QuestionMeta {
     id?: string,
     lang?: string,
     titleSlug?: string,
-    weekname?: string
+    weekname?: string,
+    desc?: string
 }
 interface FunNamesMeta {
     funcNames: string[],
@@ -222,6 +223,7 @@ function parseCode(text: string, filePath: string): FunNamesMeta {
     let lcToken = comment === '//' ? /^\/\/ @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-]+))?/ :
         /^# @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-]+))?/
     let titleSlugToken = comment === '//' ? /^\/\/ @title ([\w-]+)/ : /^# @title ([\w-]+)/
+    let descToken = comment === '//' ? /^\/\/ @desc (.+)/ : /^# @desc (.+)/
     let questionMeta: QuestionMeta = {};
     for (let i = 0; i < lines.length; i++) {
         if (lcToken.test(lines[i])) {
@@ -235,6 +237,9 @@ function parseCode(text: string, filePath: string): FunNamesMeta {
         } else if (titleSlugToken.test(lines[i])) {
             const match = lines[i].match(titleSlugToken) as RegExpMatchArray;
             questionMeta.titleSlug = match[1];
+        } else if (descToken.test(lines[i])) {
+            const match = lines[i].match(descToken) as RegExpMatchArray;
+            questionMeta.desc = match[1]
         } else {
             const match = lines[i].match(funcNameRegExp);
             if (match) {
@@ -250,6 +255,18 @@ function parseCode(text: string, filePath: string): FunNamesMeta {
     };
 }
 
+export function getDesc(text: string, filePath: string) {
+    const lines = text.split(/\n/);
+    const comment = getFileComment(filePath)
+    let descToken = comment === '//' ? /^\/\/ @desc (.+)/ : /^# @desc (.+)/
+
+    for (let i = 0; i < lines.length; i++) {
+        if (descToken.test(lines[i])) {
+            const match = lines[i].match(descToken) as RegExpMatchArray;
+            return match[1]
+        }
+    }
+}
 export async function existDir(dir: string): Promise<boolean> {
     try {
         await access(dir, fs.constants.F_OK | fs.constants.W_OK);
@@ -418,7 +435,7 @@ export function parseLink() {
 
 }
 /**
- * 
+ *
  * @param args the params of function
  * @param paramsTypes the type of params
  * @param includeFunctionCall whether the building step contains function call
@@ -654,4 +671,9 @@ function handleArgsType(meta: LanguageMetaData, originCode: string, args: string
     ${rtExpression}
     `
 }
-export { detectEnableExt, getJsTestCaseList as getTestCaseList, getTsTestCaseList, parseTestCase, parseCode as getFuncNames, writeFileAsync, readFileAsync, execFileAsync, paramMetaRegExp, returnRegExp, handleArgsType };
+
+function generateId(): string {
+    return Math.random().toString(32).slice(2)
+}
+
+export { detectEnableExt, getJsTestCaseList as getTestCaseList, getTsTestCaseList, parseTestCase, parseCode as getFuncNames, writeFileAsync, readFileAsync, execFileAsync, paramMetaRegExp, returnRegExp, handleArgsType, generateId };

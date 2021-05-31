@@ -5,9 +5,10 @@ import { api, apiCn, apiEn } from '../api/index'
 import { config, log } from '../config';
 import { writeFile, parseHtml } from '../common/util';
 import { preprocessCode, shouldAskForImport, askForImport } from '../util'
-import { CodeLang, enNameLangs, isAlgorithm, isDataBase, langMap } from '../common/langConfig';
+import { CodeLang, enNameLangs, isAlgorithm, isDataBase, LangBase, langMap } from '../common/langConfig';
 import { Service } from '../lang/common';
 import { pathExists } from 'fs-extra'
+import { BaseLang } from '../lang/base';
 export const QuestionPreview = 'algorithm.questionPreview';
 const defaultLang = 'JavaScript';
 
@@ -23,7 +24,7 @@ interface Param {
 	questionId?: number | string
 	itemId?: string
 }
-async function fetchQuestion(extensionPath: string, param: Param) {
+export async function fetchQuestion(param: Param) {
 	let { titleSlug, weekname, questionId: id, itemId } = param
 	let data: string;
 	let question
@@ -63,10 +64,37 @@ function getCodeSnippet(codeSnippets) {
 	}
 	return codeSnippets[0]
 }
+export function getName(questionFrontendId: string, title: string, translatedTitle: string, codeSnippet: any) {
+	const langSlug = codeSnippet.langSlug;
+	const langConfig = langMap[langSlug];
+	let filename = questionFrontendId + langConfig.fileNameSep + title + langConfig.ext;
+	if (config.lang === 'cn' && !enNameLangs.includes(langConfig.lang)) {
+		filename = questionFrontendId + langConfig.fileNameSep + translatedTitle + langConfig.ext;
+	}
+	let questionDir = path.join(config.algDir, codeSnippet.lang)
+
+	let filePath = path.join(questionDir, filename);
+	let name = path.parse(filename).name
+	if (langConfig.lang === CodeLang.Go) {
+		filePath = path.join(questionDir, name, "solution.go");
+	} else if (langConfig.lang === CodeLang.Java) {
+		name = '_' + name.replace(/\./, '_')
+		name = name.replace(/[^\w]/g, '_')
+		filePath = path.join(questionDir, name, "Solution.java");
+	} else if (langConfig.lang === CodeLang["C++"]) {
+		name = name.replace(/[^\w]/g, '_')
+		filePath = path.join(questionDir, 'question', name + ".cpp");
+	}
+	return {
+		filePath,
+		name,
+		filename
+	}
+}
 export async function createQuestionPanelCommand(extensionPath: string, param: Param) {
 	let { weekname } = param
 	try {
-		const question = await fetchQuestion(extensionPath, param)
+		const question = await fetchQuestion(param)
 
 		if (question) {
 			const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle } = question;
@@ -84,24 +112,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 			const langConfig = langMap[langSlug];
 
 			//generate code
-			let filename = questionFrontendId + langConfig.fileNameSep + title + langConfig.ext;
-			if (config.lang === 'cn' && !enNameLangs.includes(langConfig.lang)) {
-				filename = questionFrontendId + langConfig.fileNameSep + translatedTitle + langConfig.ext;
-			}
-
-
-			let filePath = path.join(questionDir, filename);
-			let name = path.parse(filename).name
-			if (langConfig.lang === CodeLang.Go) {
-				filePath = path.join(questionDir, name, "solution.go");
-			} else if (langConfig.lang === CodeLang.Java) {
-				name = '_' + name.replace(/\./, '_')
-				name = name.replace(/[^\w]/g, '_')
-				filePath = path.join(questionDir, name, "Solution.java");
-			} else if (langConfig.lang === CodeLang["C++"]) {
-				name = name.replace(/[^\w]/g, '_')
-				filePath = path.join(questionDir, 'question', name + ".cpp");
-			}
+			const { filePath, name, filename } = getName(questionFrontendId, title, translatedTitle, codeSnippet)
 			const exist = await pathExists(filePath);
 
 			if (!exist) {
@@ -136,7 +147,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 }
 export async function getQuestionDescription(extensionPath: string, param: Param) {
 
-	const question = await fetchQuestion(extensionPath, param)
+	const question = await fetchQuestion(param)
 	if (question) {
 		const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle } = question;
 		//preview

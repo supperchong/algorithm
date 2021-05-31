@@ -1,0 +1,90 @@
+input:disabled {
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--vscode-list-inactiveSelectionForeground);
+}
+input {
+    text-align: center;
+}
+.container {
+    margin-top: 10px;
+    height: 50vh;
+    border-bottom: 1px solid #aaa;
+    overflow: scroll;
+}
+.hide {
+    display: none;
+}
+.history-code {
+    overflow: scroll;
+}
+.nav {
+    display: flex;
+}
+
+.nav button {
+    margin-right: 20px;
+}
+.nav button.active {
+    background-color: var(--vscode-pickerGroup-foreground);
+    border-color: var(--vscode-pickerGroup-foreground);
+    border-style: none;
+    outline: none;
+}
+.nav button:focus {
+    outline: none;
+}
+.item,
+.item-header {
+    display: flex;
+    flex-direction: row;
+    /* justify-content: space-around; */
+    height: 30px;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 16px;
+    border-top: 1px solid #eee;
+}
+
+.item > div,
+.item-header > div {
+    flex: 1;
+    text-align: center;
+}
+.item input {
+    width: 100%;
+}
+.item {
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--vscode-list-inactiveSelectionForeground);
+    background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
+.item:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    color: var(--vscode-list-hoverForeground);
+}
+
+.item.active {
+    background-color: var(--vscode-list-activeSelectionBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+}
+
+.item > div {
+    opacity: 0.7;
+}
+.operate-box {
+    display: flex;
+    justify-content: space-evenly;
+    color: var(--vscode-editorLightBulb-foreground);
+}
+
+body.vscode-light .operate-box {
+    color: var(--vscode-editorLink-activeForeground);
+}
+body.vscode-light .active .operate-box {
+    color: var(--vscode-list-activeSelectionForeground);
+}

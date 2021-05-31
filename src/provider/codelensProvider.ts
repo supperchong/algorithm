@@ -54,6 +54,18 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 		};
 		return codeLens
 	}
+	private getHistoryCodeLenses(text: string, filePath: string) {
+		const codeLens = new vscode.CodeLens(
+			new vscode.Range(0, 0, 0, 7)
+		);
+		codeLens.command = {
+			title: "history",
+			tooltip: "history",
+			command: "algorithm.viewSubmitHistory",
+			arguments: [text, filePath]
+		};
+		return codeLens
+	}
 	private getTestCodeLenses(testCaseParam: TestCaseParam, filePath: string) {
 		const { line, testCase, funcName, paramsTypes, resultType } = testCaseParam
 		const codeLens = new vscode.CodeLens(
@@ -93,9 +105,11 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 			const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
 			const buildCodeLenses = this.getBuildCodeLenses(text, filePath);
 			const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
+			const historyCodeLenses = this.getHistoryCodeLenses(text, filePath)
 			this.codeLenses.push(submitCodeLenses);
 			this.codeLenses.push(buildCodeLenses);
 			this.codeLenses.push(desCodeLenses)
+			this.codeLenses.push(historyCodeLenses)
 			if (isAlgorithm(codeLang)) {
 				const lang = new Service(filePath, text)
 				const testCaseList = lang.getTestCaseList(text)
