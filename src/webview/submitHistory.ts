@@ -3,12 +3,8 @@ import * as vscode from 'vscode';
 import { api } from '../api/index';
 import { config } from '../config';
 import { getHistory, getRemoteSubmits, updateComment } from '../history';
-const md = require('markdown-it')({
-	html: true,
-	inkify: true,
-	typographer: true
-});
-const formatCode = code => md.render(`\`\`\`js\n${code}\n\`\`\``)
+import { highlightCode } from '../util';
+
 export function createSubmitHistoryPanel(context: vscode.ExtensionContext, question_id: string) {
 	BuildSubmitHistoryPanel.createOrShow(context, question_id);
 }
@@ -69,10 +65,10 @@ class BuildSubmitHistoryPanel {
 			message => {
 				switch (message.command) {
 					case 'getSubmissionCode':
-						api.fetchSubmissionDetail({ id: message.id }).then(q => {
+						api.fetchSubmissionDetail({ id: message.id }).then(code => {
 							this._panel.webview.postMessage({
 								command: 'submissionDetail', data: {
-									code: formatCode(q.submissionDetail.code),
+									code: highlightCode(code, message.lang),
 									id: message.id,
 									uuid: message.uuid
 								}
@@ -187,7 +183,7 @@ class BuildSubmitHistoryPanel {
 	}
 	private async _update() {
 		const question_id = this.question_id
-		const data = await getHistory(question_id, formatCode)
+		const data = await getHistory(question_id, highlightCode)
 		this._panel.webview.postMessage({ command: 'init', data: data });
 		getRemoteSubmits(question_id).then(data => {
 			this._panel.webview.postMessage({ command: 'remoteStorageData', data: data });

@@ -4,11 +4,11 @@ import { config } from '../config'
 import { HistoryType, Lang, UpdateCommentOption, UpdateRemoteCommentOption } from '../model/common'
 import { api } from '../api/index'
 
-export async function getHistory(questionId: string, fn: (code: string) => string) {
+export async function getHistory(questionId: string, fn: (code: string, lang: string) => string) {
   const originAnswers = await answerStorage.read(questionId)
   const formatAnswers = originAnswers.map(v => {
     return {
-      code: fn(v.code),
+      code: fn(v.code, v.lang || ''),
       obj: {
         desc: v.desc,
         timestamp: formatTimestamp(v.timestamp),
@@ -33,7 +33,7 @@ export async function getHistory(questionId: string, fn: (code: string) => strin
   const originSubmitStorage = await submitStorage.read(questionId)
   const formatSubmits = originSubmitStorage.map(v => {
     return {
-      code: fn(v.code),
+      code: fn(v.code, v.submission.lang),
       obj: {
         ...v.submission,
         memory: v.submission.memory,

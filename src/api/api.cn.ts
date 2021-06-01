@@ -437,8 +437,13 @@ export const api = {
     updateComment(options: UpdateCommentOptions) {
         return graphql<UpdateCommentResponse>(config.getUpdateComment(options))
     },
-    fetchSubmissionDetail(options: SubmissionDetailOptions) {
-        return graphql<SubmissionDetailResponse>(config.getSubmissionDetail(options))
+    async fetchSubmissionDetail(options: SubmissionDetailOptions) {
+        const submissionDetail = await graphql<SubmissionDetailResponse>(config.getSubmissionDetail(options))
+        if (submissionDetail.submissionDetail) {
+            return submissionDetail.submissionDetail?.code
+        } else {
+            return 'can not query'
+        }
 
     }
 };

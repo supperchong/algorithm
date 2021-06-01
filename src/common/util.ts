@@ -5,6 +5,7 @@ import fse = require('fs-extra')
 import { promisify } from 'util';
 import vm = require('vm');
 import { Question } from '../model/question.cn';
+import { SubmissionDetailPageData } from '../model/question'
 import { ConciseQuestion } from '../model/common';
 import * as path from 'path'
 import axios from 'axios'
@@ -341,6 +342,21 @@ export function parseHtml(html: string): Question | null {
         }
     }
     return question;
+}
+export function parseSubmissionDetailHtml(html: string): SubmissionDetailPageData | null {
+    const $ = cheerio.load(html, { decodeEntities: false });
+    let scripts = $("script").filter(function () {
+        const text = $(this).html();
+        return text.includes("pageData") && text.includes("questionId");
+    });
+    let pageData: SubmissionDetailPageData | null = null
+    if (scripts.length === 1) {
+        let text = scripts.html();
+        const Script = vm.Script;
+        const script = new Script(text + ";pageData");
+        pageData = script.runInNewContext();
+    }
+    return pageData
 }
 export function escape2html(str: string) {
     let map = { 'lt': '<', 'gt': '>', 'nbsp': ' ', 'amp': '&', 'quot': '"', '#39': "'" };

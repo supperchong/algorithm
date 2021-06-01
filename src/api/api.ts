@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosError } from 'axios';
 import fs = require('fs');
 import { cache, ALLQUESTIONS } from '../cache';
-import { ChapterItemRes, ChaptersRes, ChapterRes, ConciseQuestion, MapIdConciseQuestion, CheckContestOptions, CheckOptions, SubmitContestOptions, CheckResponse, SubmitOptions, SubmitResponse, TagData, GraphqlResponse, QuestionTranslationData, TodayRecordData, DailyQuestionRecordData, DailyQuestionRecord, QuestionData, GraphqlRequestData, ContestData, ChaptersProgressRes, SubmissionsOptions, SubmissionsResponse } from '../model/question';
+import { ChapterItemRes, ChaptersRes, ChapterRes, ConciseQuestion, MapIdConciseQuestion, CheckContestOptions, CheckOptions, SubmitContestOptions, CheckResponse, SubmitOptions, SubmitResponse, TagData, GraphqlResponse, QuestionTranslationData, TodayRecordData, DailyQuestionRecordData, DailyQuestionRecord, QuestionData, GraphqlRequestData, ContestData, ChaptersProgressRes, SubmissionsOptions, SubmissionsResponse, SubmissionDetailOptions } from '../model/question';
 import { Problems } from '../model/common'
 import { getDb } from '../db';
 import { GraphRes, ErrorStatus } from '../model/common'
@@ -10,6 +10,7 @@ import { window } from 'vscode';
 import { signInCommand } from '../commands';
 import { log } from '../config'
 import { sortQuestions } from '../util'
+import { parseHtml, parseSubmissionDetailHtml } from '../common/util';
 
 const MAPIDQUESTION = 'MapIdQuestion';
 const monthEns = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
@@ -247,6 +248,17 @@ const config = {
         const { titleSlug, limit = 40, offset = 0, lastKey = null } = options;
         return { "operationName": "Submissions", "variables": { "questionSlug": titleSlug, "offset": offset, "limit": limit, "lastKey": lastKey }, "query": "query Submissions($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!) {\n  submissionList(offset: $offset, limit: $limit, lastKey: $lastKey, questionSlug: $questionSlug) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      statusDisplay\n      lang\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      __typename\n    }\n    __typename\n  }\n}\n" }
 
+    },
+    getSubmissionDetail(options: SubmissionDetailOptions): AxiosRequestConfig {
+        const { id: submission_id } = options
+        return {
+            url: `https://leetcode.com/submissions/detail/${submission_id}/`,
+            method: 'GET',
+            headers: {
+                'x-requested-with': "XMLHttpRequest"
+            },
+
+        };
     }
 
 
@@ -352,6 +364,15 @@ async function setTranslations(questions) {
         question.name = mapIdTitle[question.id] || question.title;
     }
 }
+
+function handleSubmissionDetail(html: string): string | undefined {
+    const question = parseSubmissionDetailHtml(html)
+    if (question) {
+        return question.submissionCode
+    } else {
+        return
+    }
+}
 interface Question {
     questionId: string
     title: string
@@ -428,5 +449,13 @@ export const api = {
     },
     fetchSubmissions(options: SubmissionsOptions) {
         return graphql<SubmissionsResponse>(config.getSubmissions(options))
+    },
+    async fetchSubmissionDetail(options: SubmissionDetailOptions) {
+        const html = await request<string>(config.getSubmissionDetail(options))
+        const detail = handleSubmissionDetail(html)
+        if (typeof detail === 'undefined') {
+            return Promise.reject('can not query')
+        }
+        return detail
     }
 };

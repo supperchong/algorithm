@@ -289,3 +289,36 @@ export interface Submissions {
     memory: string
     submissionComment?: SubmissionComment
 }
+export interface SubmissionDetailOptions {
+    id: string
+}
+
+export interface SubmissionDetailPageData {
+    submissionData: SubmissionData;
+    questionId: string;
+    sessionId: string;
+    getLangDisplay: string;
+    submissionCode: string;
+    editCodeUrl: string;
+    checkUrl: string;
+    runtimeDistributionFormatted: string;
+    memoryDistributionFormatted: string;
+    langs: any[];
+    runtime: string;
+    memory: string;
+    enableMemoryDistribution: string;
+    nonSufficientMsg: string;
+}
+interface SubmissionData {
+    status_code: number;
+    runtime: string;
+    memory: string;
+    total_correct: string;
+    total_testcases: string;
+    compare_result: string;
+    input_formatted: string;
+    input: string;
+    expected_output: string;
+    code_output: string;
+    last_testcase: string;
+}

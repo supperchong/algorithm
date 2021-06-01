@@ -87,7 +87,7 @@ export const api = {
     },
     async fetchSubmissionDetail(options: modelCn.SubmissionDetailOptions) {
         if (config.lang === 'en') {
-            return Promise.reject('can not query')
+            return apiEn.api.fetchSubmissionDetail(options)
         } else {
             return apiCn.api.fetchSubmissionDetail(options)
         }

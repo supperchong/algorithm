@@ -253,7 +253,7 @@ export interface SubmissionDetailOptions {
     id: string
 }
 export interface SubmissionDetailResponse {
-    submissionDetail: SubmissionDetail
+    submissionDetail?: SubmissionDetail
 }
 interface SubmissionDetail {
     id: string

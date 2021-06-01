@@ -221,12 +221,12 @@ function initDiv(father, itemObj, code, headerArr, type, index) {
                 boxDiv.className = "item active";
                 activeDiv = boxDiv;
                 if (type === 2) {
-                    getQuestionCode(itemObj.id)
+                    getQuestionCode(itemObj.id, itemObj.lang)
                         .then((code) => {
                             if (state.codeId === newCodeId) {
+                                // const highlightedCode = hljs.highlightAuto(code).value;
                                 viewDiv.innerHTML = code;
-
-                                hljs.highlightBlock(viewDiv);
+                                // hljs.highlightBlock(viewDiv);
                                 setCode(code);
                             }
                         })
@@ -255,12 +255,13 @@ function sleep(time) {
     });
 }
 const pMap = {};
-function getQuestionCode(id) {
+function getQuestionCode(id, lang) {
     const uuid = Math.random().toString();
     vscode.postMessage({
         command: "getSubmissionCode",
         id: id,
         uuid: uuid,
+        lang: lang,
     });
     const p = new Promise((resolve, reject) => {
         pMap[uuid] = { resolve, reject };
