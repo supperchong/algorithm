@@ -73,7 +73,7 @@ export async function getHistory(questionId: string, fn: (code: string) => strin
 export async function getRemoteSubmits(questionId: string) {
   const question = await api.fetchQuestionDetailById(questionId)
   const res = await api.fetchSubmissions({ titleSlug: question.titleSlug })
-  const submissions = res.submissionList.submissions
+  const submissions = res.submissionList.submissions || []
   const formatRemoteSubmits = submissions.map(v => {
     return {
       code: '',
