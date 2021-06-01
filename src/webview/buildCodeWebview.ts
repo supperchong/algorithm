@@ -87,9 +87,6 @@ class BuildCodePanel {
 		this._panel.onDidChangeViewState(
 			e => {
 				this.setbuildCodeActiveContext(e.webviewPanel.active);
-				if (this._panel.visible) {
-					this._update();
-				}
 			},
 			null,
 			this._disposables
