@@ -22,10 +22,8 @@ const categories: Category[] = [
 ];
 
 type Category = 'algorithms' | 'database' | 'shell' | 'concurrency' | 'all';
-interface PlainObject {
-    [key: string]: any
-}
-function checkParams(obj: PlainObject, attrs: string[]) {
+
+function checkParams<T extends keyof R, R>(obj: R, attrs: T[]) {
     let verify = attrs.every(attr => obj[attr]);
     if (!verify) {
         throw new Error('options有误 options:' + obj + ',attrs:' + attrs);
@@ -176,8 +174,7 @@ const config = {
     },
     getSubmitContest(options: SubmitContestOptions): AxiosRequestConfig {
         const { titleSlug, weekname, question_id, typed_code } = options;
-        let attrs = ['titleSlug', 'weekname', 'question_id', 'typed_code'];
-        checkParams(options, attrs);
+        checkParams(options, ['titleSlug', 'weekname', 'question_id', 'typed_code']);
         return {
             url: `https://leetcode.com/contest/api/${weekname}/problems/${titleSlug}/submit/`,
             method: 'POST',
