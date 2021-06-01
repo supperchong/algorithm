@@ -244,7 +244,7 @@ const config = {
         };
     },
     getSubmissions(options: SubmissionsOptions) {
-        const { titleSlug, limit = 20, offset = 20, lastKey = null } = options;
+        const { titleSlug, limit = 40, offset = 0, lastKey = null } = options;
         return { "operationName": "Submissions", "variables": { "questionSlug": titleSlug, "offset": offset, "limit": limit, "lastKey": lastKey }, "query": "query Submissions($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!) {\n  submissionList(offset: $offset, limit: $limit, lastKey: $lastKey, questionSlug: $questionSlug) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      statusDisplay\n      lang\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      __typename\n    }\n    __typename\n  }\n}\n" }
 
     }
