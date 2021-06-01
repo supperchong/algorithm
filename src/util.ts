@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { window } from 'vscode';
 import { transformAsync } from "@babel/core"
 import { generateAddTestCommentPlugin } from './babelPlugin'
-import { langMap, LangBase, getFileLang, CodeLang, ExtraType } from './common/langConfig';
+import { langMap, LangBase, getFileLang, CodeLang, ExtraType, transformToHightlightLang } from './common/langConfig';
 import { ParseContent } from './common/parseContent'
 import { config, updateConfig, updateEnv, InstallState, log, checkEsbuildDir } from './config'
 import { tag } from 'pretty-tag'
@@ -11,6 +11,23 @@ import { AskForImportState, ConciseQuestion } from './model/common';
 import { MemoFile } from './model/memo';
 import { Service } from './lang/common'
 import { DataBaseMetaData, LanguageMetaData, MetaData, ShellMetaData } from './common/lang';
+const hljs = require('highlight.js');
+
+const md = require('markdown-it')({
+    highlight: function (str, lang) {
+        console.log(hljs)
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return '<pre class="hljs"><code>' +
+                    hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+                    '</code></pre>';
+            } catch (__) { }
+        }
+
+        return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+    }
+});
+export const highlightCode = (code: string, lang: string) => md.render(`\`\`\`${transformToHightlightLang(lang)}\n${code}\n\`\`\``)
 export async function execWithProgress<T>(promise: Promise<T>, message: string): Promise<T> {
     return window.withProgress<T>({ location: vscode.ProgressLocation.Notification }, (p) => {
         p.report({ message });

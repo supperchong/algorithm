@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { detectEnableExt, getTestCaseList, getTsTestCaseList, TestCaseParam } from '../common/util';
-import { CodeLang, getFileLang, isAlgorithm, isDataBase, isShell } from '../common/langConfig'
+import { CodeLang, getFileLang, getFileLangSlug, isAlgorithm, isDataBase, isShell } from '../common/langConfig'
 import * as path from 'path'
 import { PythonParse } from '../lang/python'
 import { Service } from '../lang/common'
@@ -18,7 +18,7 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 			this._onDidChangeCodeLenses.fire();
 		});
 	}
-	private getBuildCodeLenses(text: string, filePath: string): vscode.CodeLens {
+	private getBuildCodeLenses(text: string, filePath: string, langSlug: string): vscode.CodeLens {
 		const codeLens = new vscode.CodeLens(
 			new vscode.Range(0, 0, 0, 7)
 		);
@@ -26,7 +26,7 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 			title: "build",
 			tooltip: "build",
 			command: "algorithm.buildCode",
-			arguments: [text, filePath]
+			arguments: [text, filePath, langSlug]
 		};
 		return codeLens;
 	}
@@ -102,8 +102,9 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 
 		if (enableExt) {
 			const codeLang = getFileLang(filePath)
+			const langSlug = getFileLangSlug(filePath)
 			const submitCodeLenses = this.getSubmitCodeLenses(text, filePath);
-			const buildCodeLenses = this.getBuildCodeLenses(text, filePath);
+			const buildCodeLenses = this.getBuildCodeLenses(text, filePath, langSlug);
 			const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
 			const historyCodeLenses = this.getHistoryCodeLenses(text, filePath)
 			this.codeLenses.push(submitCodeLenses);

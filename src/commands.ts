@@ -98,9 +98,9 @@ export async function debugCodeCommand(filePath: string) {
     const service = new Service(filePath)
     service.debugCodeCommand(p!, breaks)
 }
-export async function buildCodeCommand(context: ExtensionContext, text: string, filePath: string) {
+export async function buildCodeCommand(context: ExtensionContext, text: string, filePath: string, langSlug: string) {
     const { code } = await buildCode(text, filePath)
-    createPanel(context, code);
+    createPanel(context, code, langSlug);
 }
 export async function submitCommand(questionsProvider: QuestionsProvider, text: string, filePath: string) {
     let message = '';

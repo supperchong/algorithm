@@ -1,14 +1,15 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { commands, Clipboard, env } from 'vscode';
+import { highlightCode } from '../util';
 const md = require('markdown-it')({
 	html: true,
 	inkify: true,
 	typographer: true
 });
 
-export function createPanel(context: vscode.ExtensionContext, text: string) {
-	BuildCodePanel.createOrShow(context, text);
+export function createPanel(context: vscode.ExtensionContext, text: string, langSlug: string) {
+	BuildCodePanel.createOrShow(context, text, langSlug);
 }
 
 class BuildCodePanel {
@@ -22,7 +23,8 @@ class BuildCodePanel {
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionPath: string;
 	private context: vscode.ExtensionContext
-	public static _text: string;
+	public text: string;
+	public langSlug: string;
 	private clipboard: Clipboard = env.clipboard;
 	private _disposables: vscode.Disposable[] = [];
 	public static commands = new Map<string, vscode.Disposable>();
@@ -36,14 +38,14 @@ class BuildCodePanel {
 			BuildCodePanel.commands.set(id, dispose);
 		}
 	}
-	public static createOrShow(context: vscode.ExtensionContext, text: string) {
+	public static createOrShow(context: vscode.ExtensionContext, text: string, langSlug: string) {
 		const column = vscode.ViewColumn.Two;
 		const extensionPath = context.extensionPath;
 		// If we already have a panel, show it.
 
 		if (BuildCodePanel.currentPanel) {
 			BuildCodePanel.currentPanel._panel.reveal(column);
-			BuildCodePanel.currentPanel.update(text);
+			BuildCodePanel.currentPanel.update(text, langSlug);
 			return;
 		}
 
@@ -59,17 +61,18 @@ class BuildCodePanel {
 			}
 		);
 
-		BuildCodePanel.currentPanel = new BuildCodePanel(panel, context, text);
+		BuildCodePanel.currentPanel = new BuildCodePanel(panel, context, text, langSlug);
 	}
 
 
-	private constructor(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, text: string) {
+	private constructor(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, text: string, langSlug: string) {
 		this._panel = panel;
 		this._extensionPath = context.extensionPath;
 		this.context = context
-		BuildCodePanel._text = text;
+		this.text = text;
+		this.langSlug = langSlug;
 		this.registerCommand('algorithm.copyCode', () => {
-			this.clipboard.writeText(BuildCodePanel._text);
+			this.clipboard.writeText(this.text);
 		});
 
 
@@ -119,8 +122,9 @@ class BuildCodePanel {
 			}
 		}
 	}
-	public update(text: string) {
-		BuildCodePanel._text = text;
+	public update(text: string, langSlug: string) {
+		this.text = text
+		this.langSlug = langSlug
 		this._update();
 	}
 	private _update() {
@@ -133,8 +137,7 @@ class BuildCodePanel {
 		const cssPathOnDisk = vscode.Uri.file(
 			path.join(this._extensionPath, 'media', 'highlight.css')
 		);
-		const temp = `\`\`\`js\n${BuildCodePanel._text}\n\`\`\``;
-		const code = md.render(temp);
+		const code = highlightCode(this.text, this.langSlug)
 		// And the uri we use to load this script in the webview
 		const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
 		const cssUri = webview.asWebviewUri(cssPathOnDisk);

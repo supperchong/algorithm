@@ -183,6 +183,15 @@ export function getFileLang(filePath: string) {
     }
     return langItem.lang
 }
+
+export function getFileLangSlug(filePath: string) {
+    const ext = path.extname(filePath)
+    const langItem = langExtMap[ext]
+    if (!langItem) {
+        throw new Error('file extname invalid')
+    }
+    return langItem.langSlug
+}
 export function isDataBase(filePath: string) {
     const ext = path.extname(filePath)
     return ext === '.sql'
@@ -210,6 +219,26 @@ export const enNameLangs = [CodeLang.Java, CodeLang["C++"]]
 export enum ExtraType {
     ListNode = 'ListNode',
     TreeNode = 'TreeNode'
+}
+export const highlightLangMap = {
+    cpp: 'cpp',
+    java: 'java',
+    python: 'python',
+    python3: 'python',
+    c: 'c',
+    csharp: 'csharp',
+    javascript: 'javascript',
+    ruby: 'ruby',
+    swift: 'swift',
+    golang: 'go',
+    scala: 'scala',
+    kotlin: 'kotlin',
+    rust: 'rust',
+    php: 'php',
+    typescript: 'typescript'
+}
+export function transformToHightlightLang(lang: string) {
+    return highlightLangMap[lang] || lang
 }
 // export function getPreImport(codeLang: CodeLang) {
 //     if (codeLang === CodeLang.Python3) {
