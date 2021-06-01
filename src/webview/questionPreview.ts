@@ -9,6 +9,7 @@ import { CodeLang, enNameLangs, isAlgorithm, isDataBase, LangBase, langMap } fro
 import { Service } from '../lang/common';
 import { pathExists } from 'fs-extra'
 import { BaseLang } from '../lang/base';
+import { getSolution } from '../common/website';
 export const QuestionPreview = 'algorithm.questionPreview';
 const defaultLang = 'JavaScript';
 
@@ -97,7 +98,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 		const question = await fetchQuestion(param)
 
 		if (question) {
-			const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle } = question;
+			const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle, titleSlug } = question;
 			//preview
 			let previewText = `# ${title}\n` + content
 			if (config.lang === 'cn') {
@@ -132,7 +133,7 @@ export async function createQuestionPanelCommand(extensionPath: string, param: P
 			}
 			const fileDocument = await vscode.workspace.openTextDocument(filePath)
 			await vscode.window.showTextDocument(fileDocument, vscode.ViewColumn.One)
-			QuestionPreviewPanel.createOrShow(extensionPath, previewText);
+			QuestionPreviewPanel.createOrShow(extensionPath, previewText, titleSlug);
 		} else {
 			console.log('parse question error:', question);
 		}
@@ -149,13 +150,13 @@ export async function getQuestionDescription(extensionPath: string, param: Param
 
 	const question = await fetchQuestion(param)
 	if (question) {
-		const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle } = question;
+		const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle, titleSlug } = question;
 		//preview
 		let previewText = `# ${title}\n` + content
 		if (config.lang === 'cn') {
 			previewText = `# ${translatedTitle}\n` + translatedContent;
 		}
-		QuestionPreviewPanel.createOrShow(extensionPath, previewText);
+		QuestionPreviewPanel.createOrShow(extensionPath, previewText, titleSlug);
 	} else {
 		console.log('question not found');
 	}
@@ -170,7 +171,8 @@ class QuestionPreviewPanel {
 	public static readonly commandText = QuestionPreview;
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionPath: string;
-	public static _text: string;
+	public text: string;
+	public titleSlug: string;
 	private _disposables: vscode.Disposable[] = [];
 	public static commands = new Map<string, vscode.Disposable>();
 	private setbuildCodeActiveContext(value: boolean) {
@@ -182,13 +184,13 @@ class QuestionPreviewPanel {
 			QuestionPreviewPanel.commands.set(id, dispose);
 		}
 	}
-	public static createOrShow(extensionPath: string, text: string) {
+	public static createOrShow(extensionPath: string, text: string, titleSlug: string) {
 		const column = vscode.ViewColumn.Two;
 		// If we already have a panel, show it.
 
 		if (QuestionPreviewPanel.currentPanel) {
 			QuestionPreviewPanel.currentPanel._panel.reveal(column);
-			QuestionPreviewPanel.currentPanel.update(text);
+			QuestionPreviewPanel.currentPanel.update(text, titleSlug);
 			return;
 		}
 
@@ -205,15 +207,16 @@ class QuestionPreviewPanel {
 			}
 		);
 
-		QuestionPreviewPanel.currentPanel = new QuestionPreviewPanel(panel, extensionPath, text);
+		QuestionPreviewPanel.currentPanel = new QuestionPreviewPanel(panel, extensionPath, text, titleSlug);
 	}
 
 
-	private constructor(panel: vscode.WebviewPanel, extensionPath: string, text: string) {
+	private constructor(panel: vscode.WebviewPanel, extensionPath: string, text: string, titleSlug: string) {
 		this._panel = panel;
 		this._extensionPath = extensionPath;
-		QuestionPreviewPanel._text = text;
-
+		// QuestionPreviewPanel._text = text;
+		this.text = text;
+		this.titleSlug = titleSlug;
 		// Set the webview's initial html content
 		this._update();
 
@@ -266,8 +269,9 @@ class QuestionPreviewPanel {
 			}
 		}
 	}
-	public update(text: string) {
-		QuestionPreviewPanel._text = text;
+	public update(text: string, titleSlug: string) {
+		this.text = text;
+		this.titleSlug = titleSlug;
 		this._update();
 	}
 	private _update() {
@@ -283,8 +287,11 @@ class QuestionPreviewPanel {
 		const cssMdOnDisk = vscode.Uri.file(
 			path.join(this._extensionPath, 'media', 'markdown.css')
 		);
-		let temp = QuestionPreviewPanel._text;
-		temp = temp.replace(/<pre>/g, '<pre><code>')
+		const text = this.text
+		const titleSlug = this.titleSlug
+		const solutionUrl = getSolution(titleSlug)
+		// let temp = QuestionPreviewPanel._text;
+		const temp = text.replace(/<pre>/g, '<pre><code>')
 			.replace(/<\/pre>/g, '</code></pre>');
 		const code = md.render(temp);
 		const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -311,6 +318,10 @@ class QuestionPreviewPanel {
 		}
 		</style>
             ${code}
+			<br>
+			<a href="${solutionUrl}">
+			Solution
+			</a>
         </body>
         </html>`;
 	}
