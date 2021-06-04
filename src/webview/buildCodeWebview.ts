@@ -75,7 +75,7 @@ class BuildCodePanel {
 			this.clipboard.writeText(this.text);
 		});
 
-
+		this.initView();
 		// Set the webview's initial html content
 		this._update();
 
@@ -87,18 +87,8 @@ class BuildCodePanel {
 		this._panel.onDidChangeViewState(
 			e => {
 				this.setbuildCodeActiveContext(e.webviewPanel.active);
-			},
-			null,
-			this._disposables
-		);
-
-		// Handle messages from the webview
-		this._panel.webview.onDidReceiveMessage(
-			message => {
-				switch (message.command) {
-					case 'alert':
-						vscode.window.showErrorMessage(message.text);
-						return;
+				if (e.webviewPanel.active) {
+					this._update()
 				}
 			},
 			null,
@@ -124,20 +114,21 @@ class BuildCodePanel {
 		this.langSlug = langSlug
 		this._update();
 	}
-	private _update() {
-		this.setbuildCodeActiveContext(true);
+	private getWebviewUri(name: string) {
 		const webview = this._panel.webview;
-		const nonce = getNonce();
 		const scriptPathOnDisk = vscode.Uri.file(
-			path.join(this._extensionPath, 'media', 'highlight.min.js')
+			path.join(this._extensionPath, 'media', name)
 		);
-		const cssPathOnDisk = vscode.Uri.file(
-			path.join(this._extensionPath, 'media', 'highlight.css')
-		);
-		const code = highlightCode(this.text, this.langSlug)
+		return webview.asWebviewUri(scriptPathOnDisk);
+	}
+	private initView() {
+
+		const nonce = getNonce();
+
 		// And the uri we use to load this script in the webview
-		const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
-		const cssUri = webview.asWebviewUri(cssPathOnDisk);
+		const buildCodeUri = this.getWebviewUri('buildcode.js')
+		const scriptUri = this.getWebviewUri('highlight.min.js')
+		const cssUri = this.getWebviewUri('highlight.css')
 		this._panel.webview.html = `<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -152,12 +143,18 @@ class BuildCodePanel {
             <link  rel="stylesheet" type="text/css"  href="${cssUri}">
         </head>
         <body>
-            ${code}
-
+			<div id="buildCode">
+			</div>
+		<script nonce=${nonce} src="${buildCodeUri}"></script>
         <script nonce=${nonce} src="${scriptUri}"></script>
         <script nonce=${nonce}>hljs.initHighlightingOnLoad();</script>
         </body>
         </html>`;
+	}
+	private _update() {
+		this.setbuildCodeActiveContext(true);
+		const code = highlightCode(this.text, this.langSlug)
+		this._panel.webview.postMessage({ command: 'newCode', data: code });
 	}
 
 }
