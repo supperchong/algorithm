@@ -313,10 +313,16 @@
     "vscode:prepublish": "yarn run compile",
     "compile": "tsc -p ./",
     "lint": "eslint src --fix --ext ts",
+    "prettier-format": "prettier --config .prettierrc.json src/**/*.ts --write",
     "watch": "tsc -watch -p ./",
     "pretest": "yarn run compile && yarn run lint",
     "test": "node ./out/test/runTest.js",
     "unitTest": "node node_modules/mocha/bin/mocha  ./src/test/unit"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run prettier-format && npm run lint"
+    }
   },
   "devDependencies": {
     "@types/babel__core": "^7.1.9",
@@ -326,12 +332,16 @@
     "@types/node": "^13.11.0",
     "@types/request": "^2.48.5",
     "@types/vscode": "^1.46.0",
-    "@typescript-eslint/eslint-plugin": "^2.30.0",
-    "@typescript-eslint/parser": "^2.30.0",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
     "eslint": "^6.8.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
     "glob": "^7.1.6",
+    "husky": "^6.0.0",
     "mocha": "^7.1.2",
-    "typescript": "^3.8.3",
+    "prettier": "^2.3.0",
+    "typescript": "^4.3.2",
     "vscode-test": "^1.3.0"
   },
   "dependencies": {

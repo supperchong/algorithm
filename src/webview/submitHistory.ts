@@ -1,38 +1,38 @@
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { api } from '../api/index';
-import { config } from '../config';
-import { getHistory, getRemoteSubmits, updateComment } from '../history';
-import { highlightCode } from '../util';
+import * as path from 'path'
+import * as vscode from 'vscode'
+import { api } from '../api/index'
+import { config } from '../config'
+import { getHistory, getRemoteSubmits, updateComment } from '../history'
+import { highlightCode } from '../util'
 
 export function createSubmitHistoryPanel(context: vscode.ExtensionContext, question_id: string) {
-	BuildSubmitHistoryPanel.createOrShow(context, question_id);
+	BuildSubmitHistoryPanel.createOrShow(context, question_id)
 }
 
 class BuildSubmitHistoryPanel {
 	/**
 	 * Track the currently panel. Only allow a single panel to exist at a time.
 	 */
-	public static currentPanel: BuildSubmitHistoryPanel | undefined;
-	public static readonly viewType = 'submitHistoryView';
+	public static currentPanel: BuildSubmitHistoryPanel | undefined
+	public static readonly viewType = 'submitHistoryView'
 
-	private readonly _panel: vscode.WebviewPanel;
-	private readonly _extensionPath: string;
+	private readonly _panel: vscode.WebviewPanel
+	private readonly _extensionPath: string
 	private context: vscode.ExtensionContext
-	public static _text: string;
-	private _disposables: vscode.Disposable[] = [];
-	public static commands = new Map<string, vscode.Disposable>();
+	public static _text: string
+	private _disposables: vscode.Disposable[] = []
+	public static commands = new Map<string, vscode.Disposable>()
 	private question_id: string
 
 	public static createOrShow(context: vscode.ExtensionContext, question_id: string) {
-		const column = vscode.ViewColumn.Two;
-		const extensionPath = context.extensionPath;
+		const column = vscode.ViewColumn.Two
+		const extensionPath = context.extensionPath
 		// If we already have a panel, show it.
 
 		if (BuildSubmitHistoryPanel.currentPanel) {
-			BuildSubmitHistoryPanel.currentPanel._panel.reveal(column);
-			BuildSubmitHistoryPanel.currentPanel.update(question_id);
-			return;
+			BuildSubmitHistoryPanel.currentPanel._panel.reveal(column)
+			BuildSubmitHistoryPanel.currentPanel.update(question_id)
+			return
 		}
 
 		// Otherwise, create a new panel.
@@ -43,83 +43,89 @@ class BuildSubmitHistoryPanel {
 			{
 				// Enable javascript in the webview
 				enableScripts: true,
-				localResourceRoots: [vscode.Uri.file(path.join(extensionPath, 'media'))]
+				localResourceRoots: [vscode.Uri.file(path.join(extensionPath, 'media'))],
 			}
-		);
+		)
 
-		BuildSubmitHistoryPanel.currentPanel = new BuildSubmitHistoryPanel(panel, context, question_id);
+		BuildSubmitHistoryPanel.currentPanel = new BuildSubmitHistoryPanel(panel, context, question_id)
 	}
 
-
 	private constructor(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, question_id: string) {
-		this._panel = panel;
-		this._extensionPath = context.extensionPath;
+		this._panel = panel
+		this._extensionPath = context.extensionPath
 		this.context = context
 		this.question_id = question_id
 		this.initView()
 		this._update()
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programatically
-		this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+		this._panel.onDidDispose(() => this.dispose(), null, this._disposables)
 		this._panel.webview.onDidReceiveMessage(
-			message => {
+			(message) => {
 				switch (message.command) {
 					case 'getSubmissionCode':
-						api.fetchSubmissionDetail({ id: message.id }).then(code => {
-							this._panel.webview.postMessage({
-								command: 'submissionDetail', data: {
-									code: highlightCode(code, message.lang),
-									id: message.id,
-									uuid: message.uuid
-								}
-							});
-
-						}).catch(err => {
-							this._panel.webview.postMessage({
-								command: 'submissionDetail', data: {
-									code: err,
-									id: message.id,
-									uuid: message.uuid
-								}
-							});
-						})
-						return;
+						api.fetchSubmissionDetail({ id: message.id })
+							.then((code) => {
+								this._panel.webview.postMessage({
+									command: 'submissionDetail',
+									data: {
+										code: highlightCode(code, message.lang),
+										id: message.id,
+										uuid: message.uuid,
+									},
+								})
+							})
+							.catch((err) => {
+								this._panel.webview.postMessage({
+									command: 'submissionDetail',
+									data: {
+										code: err,
+										id: message.id,
+										uuid: message.uuid,
+									},
+								})
+							})
+						return
 					case 'updateComment': {
-						updateComment(message.type, message.params).then(v => {
-							this._panel.webview.postMessage({
-								command: 'updateComment', data: {
-									code: 200,
-									msg: 'ok',
-									uuid: message.uuid
-								}
+						updateComment(message.type, message.params)
+							.then((v) => {
+								this._panel.webview.postMessage({
+									command: 'updateComment',
+									data: {
+										code: 200,
+										msg: 'ok',
+										uuid: message.uuid,
+									},
+								})
 							})
-						}).catch(err => {
-							this._panel.webview.postMessage({
-								command: 'updateComment', data: {
-									code: 201,
-									msg: 'update fail',
-									uuid: message.uuid
-								}
+							.catch((err) => {
+								this._panel.webview.postMessage({
+									command: 'updateComment',
+									data: {
+										code: 201,
+										msg: 'update fail',
+										uuid: message.uuid,
+									},
+								})
+								config.log.appendLine(err)
 							})
-							config.log.appendLine(err)
-						})
 					}
 				}
 			},
 			null,
 			this._disposables
-		);
+		)
 	}
 
 	public dispose() {
-		BuildSubmitHistoryPanel.currentPanel = undefined;
+		BuildSubmitHistoryPanel.currentPanel = undefined
 
 		// Clean up our resources
-		this._panel.dispose();
+		this._panel.dispose()
 		while (this._disposables.length) {
-			const x = this._disposables.pop();
+			const x = this._disposables.pop()
 			if (x) {
-				x.dispose();
+				x.dispose()
 			}
 		}
 	}
@@ -128,19 +134,16 @@ class BuildSubmitHistoryPanel {
 			this.question_id = question_id
 			// BuildSubmitHistoryPanel._text = text;
 
-			this._update();
+			this._update()
 		}
-
 	}
 	private getWebviewUri(name: string) {
-		const webview = this._panel.webview;
-		const scriptPathOnDisk = vscode.Uri.file(
-			path.join(this._extensionPath, 'media', name)
-		);
-		return webview.asWebviewUri(scriptPathOnDisk);
+		const webview = this._panel.webview
+		const scriptPathOnDisk = vscode.Uri.file(path.join(this._extensionPath, 'media', name))
+		return webview.asWebviewUri(scriptPathOnDisk)
 	}
 	private initView() {
-		const nonce = getNonce();
+		const nonce = getNonce()
 
 		const historyUri = this.getWebviewUri('history.js')
 		const scriptUri = this.getWebviewUri('highlight.min.js')
@@ -179,24 +182,26 @@ class BuildSubmitHistoryPanel {
 		<script nonce=${nonce}>hljs.initHighlightingOnLoad();</script>
 		<script nonce=${nonce} src="${historyUri}"></script>
         </body>
-        </html>`;
+        </html>`
 	}
 	private async _update() {
 		const question_id = this.question_id
 		const data = await getHistory(question_id, highlightCode)
-		this._panel.webview.postMessage({ command: 'init', data: data });
-		getRemoteSubmits(question_id).then(data => {
-			this._panel.webview.postMessage({ command: 'remoteStorageData', data: data });
+		this._panel.webview.postMessage({ command: 'init', data: data })
+		getRemoteSubmits(question_id).then((data) => {
+			this._panel.webview.postMessage({
+				command: 'remoteStorageData',
+				data: data,
+			})
 		})
 	}
-
 }
 
 function getNonce() {
-	let text = '';
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	let text = ''
+	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 	for (let i = 0; i < 32; i++) {
-		text += possible.charAt(Math.floor(Math.random() * possible.length));
+		text += possible.charAt(Math.floor(Math.random() * possible.length))
 	}
-	return text;
+	return text
 }

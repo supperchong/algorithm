@@ -15,13 +15,13 @@ import { LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 
 export class PythonParse extends BaseLang {
-    static getPreImport() {
-        return 'from mod.preImport import *'
-    }
-    private cwd: string
-    funcRegExp = /^(\s*class Solution)/
-    testRegExp = /#\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
-    handleTypeCode = tag`
+	static getPreImport() {
+		return 'from mod.preImport import *'
+	}
+	private cwd: string
+	funcRegExp = /^(\s*class Solution)/
+	testRegExp = /#\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
+	handleTypeCode = tag`
     class TreeNode:
         def __init__(self, val=0, left=None, right=None):
             self.val = val
@@ -121,130 +121,164 @@ export class PythonParse extends BaseLang {
             return arr[0]+"."+decimalStr[0:5]
     `
 
-    constructor(public filePath: string, public text?: string) {
-        super(filePath, text)
-        this.cwd = path.join(config.algDir, 'Python3')
-    }
+	constructor(public filePath: string, public text?: string) {
+		super(filePath, text)
+		this.cwd = path.join(config.algDir, 'Python3')
+	}
 
-    handleParam(index: number, paramType: string): string {
+	handleParam(index: number, paramType: string): string {
+		const handleConfig = [
+			{
+				type: 'ListNode',
+				handleFn: 'parseListNode',
+			},
+			{
+				type: 'TreeNode',
+				handleFn: 'parseTreeNode',
+			},
+			{
+				type: 'ListNode[]',
+				handleFn: 'parseListNodeArr',
+			},
+			{
+				type: 'TreeNode[]',
+				handleFn: 'parseTreeNodeArr',
+			},
+		]
+		const jsonType = [
+			'integer',
+			'string',
+			'integer[]',
+			'string[]',
+			'integer[][]',
+			'string[][]',
+			'list<string>',
+			'list<integer>',
+			'list<list<integer>>',
+			'list<list<string>>',
+			'character[][]"',
+			'boolean',
+			'double',
+		]
+		if (jsonType.includes(paramType)) {
+			return `arg${index} = unitArgs[${index}]`
+		} else {
+			for (const { type, handleFn } of handleConfig) {
+				if (type === paramType) {
+					return `arg${index} =${handleFn}(unitArgs[${index}])`
+				}
+			}
+		}
 
-        const handleConfig = [{
-            type: "ListNode",
-            handleFn: "parseListNode"
-        }, {
-            type: "TreeNode",
-            handleFn: "parseTreeNode"
-        }, {
-            type: "ListNode[]",
-            handleFn: "parseListNodeArr"
-        }, {
-            type: "TreeNode[]",
-            handleFn: "parseTreeNodeArr"
-        }]
-        const jsonType = ['integer', 'string', 'integer[]', 'string[]', 'integer[][]', 'string[][]', 'list<string>', 'list<integer>', 'list<list<integer>>', 'list<list<string>>', 'character[][]"', "boolean", "double"]
-        if (jsonType.includes(paramType)) {
-            return `arg${index} = unitArgs[${index}]`
-        } else {
-            for (const { type, handleFn } of handleConfig) {
-                if (type === paramType) {
-                    return `arg${index} =${handleFn}(unitArgs[${index}])`
-                }
-            }
-        }
+		throw new Error(`paramType ${paramType} not support`)
+	}
+	handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string): string {
+		let isVoid = returnType === 'void'
+		if (isVoid) {
+			returnType = firstParamType
+		}
 
-        throw new Error(`paramType ${paramType} not support`)
-    }
-    handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string): string {
-        let isVoid = returnType === 'void'
-        if (isVoid) {
-            returnType = firstParamType
-        }
+		const handleConfig = [
+			{
+				type: 'ListNode',
+				handleFn: 'serializeListNode',
+			},
+			{
+				type: 'TreeNode',
+				handleFn: 'serializeTreeNode',
+			},
+			{
+				type: 'ListNode[]',
+				handleFn: 'serializeListNodeArr',
+			},
+			{
+				type: 'TreeNode[]',
+				handleFn: 'serializeTreeNodeArr',
+			},
+			{
+				type: 'double',
+				handleFn: 'serializeFloat',
+			},
+		]
+		const jsonType = [
+			'integer',
+			'string',
+			'integer[]',
+			'string[]',
+			'integer[][]',
+			'string[][]',
+			'list<string>',
+			'list<integer>',
+			'list<list<integer>>',
+			'list<list<string>>',
+			'character[][]"',
+			'boolean',
+		]
 
-        const handleConfig = [{
-            type: "ListNode",
-            handleFn: "serializeListNode"
-        }, {
-            type: "TreeNode",
-            handleFn: "serializeTreeNode"
-        },
-        {
-            type: "ListNode[]",
-            handleFn: "serializeListNodeArr"
-        }, {
-            type: "TreeNode[]",
-            handleFn: "serializeTreeNodeArr"
-        }, {
-            type: 'double',
-            handleFn: 'serializeFloat'
-        }]
-        const jsonType = ['integer', 'string', 'integer[]', 'string[]', 'integer[][]', 'string[][]', 'list<string>', 'list<integer>', 'list<list<integer>>', 'list<list<string>>', 'character[][]"', 'boolean']
-
-        const argStr = Array(paramCount).fill(0).map((v, i) => `arg${i}`).join(',')
-        if (jsonType.includes(returnType)) {
-            if (!isVoid) {
-                const funcExpression = tag`
+		const argStr = Array(paramCount)
+			.fill(0)
+			.map((v, i) => `arg${i}`)
+			.join(',')
+		if (jsonType.includes(returnType)) {
+			if (!isVoid) {
+				const funcExpression = tag`
                 result=s.${funcName}(${argStr})
                 resultabc =json.dumps(result,separators=(',', ':'))
                 `
-                return funcExpression
-            } else {
-                const funcExpression = tag`
+				return funcExpression
+			} else {
+				const funcExpression = tag`
                 s.${funcName}(${argStr})
                 resultabc =json.dumps(arg0,separators=(',', ':'))
                 `
-                return funcExpression
-            }
-
-        } else {
-            for (const { type, handleFn } of handleConfig) {
-                if (type === returnType) {
-                    if (!isVoid) {
-                        const funcExpression = tag`
+				return funcExpression
+			}
+		} else {
+			for (const { type, handleFn } of handleConfig) {
+				if (type === returnType) {
+					if (!isVoid) {
+						const funcExpression = tag`
                         result=s.${funcName}(${argStr})
                         resultabc =${handleFn}(result)
                         `
-                        return funcExpression
-                    } else {
-                        const funcExpression = tag`
+						return funcExpression
+					} else {
+						const funcExpression = tag`
                         s.${funcName}(${argStr})
                         resultabc =${handleFn}(arg0)
                         `
-                        return funcExpression
-                    }
+						return funcExpression
+					}
+				}
+			}
+		}
 
+		throw new Error(`returnType ${returnType} not support`)
+	}
 
-                }
-            }
-        }
+	async handleArgsType(argsStr: string) {
+		const meta = (await this.getQuestionMeta()) as LanguageMetaData | undefined
 
-        throw new Error(`returnType ${returnType} not support`)
-    }
+		if (!meta) {
+			throw new Error('question meta not found')
+		}
+		const params = meta.params || []
+		let rt = meta.return.type
+		const funcName = meta.name
+		const argExpressions: string[] = []
+		const paramCount = params.length
+		for (let i = 0; i < paramCount; i++) {
+			const { name, type } = params[i]
+			argExpressions[i] = this.handleParam(i, type)
+		}
+		const filePathParse = path.parse(this.filePath)
+		const dir = path.parse(filePathParse.dir).name
 
-    async handleArgsType(argsStr: string) {
-        const meta = (await this.getQuestionMeta()) as LanguageMetaData | undefined
-
-        if (!meta) {
-            throw new Error('question meta not found')
-        }
-        const params = meta.params || []
-        let rt = meta.return.type
-        const funcName = meta.name
-        const argExpressions: string[] = []
-        const paramCount = params.length
-        for (let i = 0; i < paramCount; i++) {
-            const { name, type } = params[i]
-            argExpressions[i] = this.handleParam(i, type)
-
-        }
-        const filePathParse = path.parse(this.filePath)
-        const dir = path.parse(filePathParse.dir).name
-
-
-        const name = filePathParse.name
-        const argExpression = argExpressions.join('\n')
-        const rtExpression = this.handleReturn(paramCount, funcName, rt, params[0].type)
-        const cwd = this.cwd.replace(/\\/g, '\\\\')
-        return tag`
+		const name = filePathParse.name
+		const argExpression = argExpressions.join('\n')
+		const rtExpression = this.handleReturn(paramCount, funcName, rt, params[0].type)
+		const cwd = this.cwd.replace(/\\/g, '\\\\')
+		return tag`
         import sys
         import json
         sys.path.append("${cwd}")
@@ -260,49 +294,49 @@ export class PythonParse extends BaseLang {
             ${rtExpression}
             print("resultabc"+str(i)+":"+resultabc+"resultend") 
         `
+	}
+	async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+		const argsArr = caseList.map((v) => v.args.map((str) => JSON.parse(str)))
+		const argsStr = JSON.stringify(argsArr)
+		await this.buildMainFile(argsStr)
+		let pythonPath = 'python3'
+		if (platform() === 'win32') {
+			pythonPath = 'python'
+		}
+		const testFilePath = this.getTestFilePath()
+		const cwd = this.cwd
+		try {
+			const { stdout, stderr } = await execFileAsync(pythonPath, [testFilePath], {
+				cwd: cwd,
+				shell: true,
+			})
+			let testResultList = this.handleResult(stdout, caseList)
+			return handleMsg(testResultList)
+		} catch (err) {
+			log.appendLine(err)
+		}
+	}
+	async buildMainFile(argsStr: string) {
+		await this.writeTestCase(argsStr)
+	}
+	shouldRemoveInBuild(line: string): boolean {
+		const preImportStr = PythonParse.getPreImport()
+		return line.trimLeft().startsWith(preImportStr)
+	}
 
-
-    }
-    async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
-        const argsArr = caseList.map(v => v.args.map(str => JSON.parse(str)))
-        const argsStr = JSON.stringify(argsArr)
-        await this.buildMainFile(argsStr)
-        let pythonPath = 'python3'
-        if (platform() === 'win32') {
-            pythonPath = 'python'
-        }
-        const testFilePath = this.getTestFilePath()
-        const cwd = this.cwd
-        try {
-            const { stdout, stderr } = await execFileAsync(pythonPath, [testFilePath], { cwd: cwd, shell: true })
-            let testResultList = this.handleResult(stdout, caseList)
-            return handleMsg(testResultList)
-        } catch (err) {
-            log.appendLine(err)
-        }
-
-    }
-    async buildMainFile(argsStr: string) {
-        await this.writeTestCase(argsStr)
-    }
-    shouldRemoveInBuild(line: string): boolean {
-        const preImportStr = PythonParse.getPreImport()
-        return line.trimLeft().startsWith(preImportStr)
-    }
-
-    async runInNewContext(args: string[], originCode: string, funcName: string) {
-        return ''
-    }
-    async handlePreImport() {
-        const dir = config.questionDir
-        const preImportFile = path.join(dir, 'mod', 'preImport.py')
-        const exist = await pathExists(preImportFile)
-        if (exist) {
-            return
-        } else {
-            await ensureFile(preImportFile)
-        }
-        const data = tag`
+	async runInNewContext(args: string[], originCode: string, funcName: string) {
+		return ''
+	}
+	async handlePreImport() {
+		const dir = config.questionDir
+		const preImportFile = path.join(dir, 'mod', 'preImport.py')
+		const exist = await pathExists(preImportFile)
+		if (exist) {
+			return
+		} else {
+			await ensureFile(preImportFile)
+		}
+		const data = tag`
         from typing import List
         class ListNode:
             def __init__(self, val=0, next=None):
@@ -314,39 +348,36 @@ export class PythonParse extends BaseLang {
                 self.left = left
                 self.right = right
         `
-        if (!exist) {
-            await writeFileAsync(preImportFile, data, { encoding: 'utf8' })
-        }
-    }
-    private getTestFilePath() {
-        const cwd = this.cwd
-        const testFilePath = path.join(cwd, 'out', 'out.py')
-        return testFilePath
-    }
-    // do some thing before debug,eg. get testcase 
-    async beforeDebug(breaks: vscode.SourceBreakpoint[]) {
-        const args = await this.resolveArgsFromBreaks(breaks)
-        const str = JSON.stringify([args.map(v => JSON.parse(v))])
-        await this.writeTestCase(str)
-    }
-    async writeTestCase(argsStr: string) {
-
-        argsStr = argsStr.replace(/\\|"/g, s => `\\${s}`)
-        const finalCode = await this.handleArgsType(argsStr)
-        const testFilePath = this.getTestFilePath()
-        await ensureFile(testFilePath)
-        await writeFileAsync(testFilePath, finalCode)
-
-    }
-    getDebugConfig() {
-        const outputFile = path.join(this.cwd, 'out', 'out.py')
-        return {
-            "name": "Python: Current File (Integrated Terminal)",
-            "type": "python",
-            "request": "launch",
-            "program": outputFile,
-            "console": "integratedTerminal"
-        }
-    }
-
+		if (!exist) {
+			await writeFileAsync(preImportFile, data, { encoding: 'utf8' })
+		}
+	}
+	private getTestFilePath() {
+		const cwd = this.cwd
+		const testFilePath = path.join(cwd, 'out', 'out.py')
+		return testFilePath
+	}
+	// do some thing before debug,eg. get testcase
+	async beforeDebug(breaks: vscode.SourceBreakpoint[]) {
+		const args = await this.resolveArgsFromBreaks(breaks)
+		const str = JSON.stringify([args.map((v) => JSON.parse(v))])
+		await this.writeTestCase(str)
+	}
+	async writeTestCase(argsStr: string) {
+		argsStr = argsStr.replace(/\\|"/g, (s) => `\\${s}`)
+		const finalCode = await this.handleArgsType(argsStr)
+		const testFilePath = this.getTestFilePath()
+		await ensureFile(testFilePath)
+		await writeFileAsync(testFilePath, finalCode)
+	}
+	getDebugConfig() {
+		const outputFile = path.join(this.cwd, 'out', 'out.py')
+		return {
+			name: 'Python: Current File (Integrated Terminal)',
+			type: 'python',
+			request: 'launch',
+			program: outputFile,
+			console: 'integratedTerminal',
+		}
+	}
 }

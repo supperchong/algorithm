@@ -4,7 +4,7 @@ import { CaseList, existFile, readFileAsync, TestCase, TestCaseParam, writeFileA
 import { tag } from 'pretty-tag'
 import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/util'
 import { log, config } from '../config'
-import { getDb } from '../db';
+import { getDb } from '../db'
 import { api } from '../api/index'
 import { resolve } from 'path'
 import { rejects } from 'assert'
@@ -22,221 +22,249 @@ import { LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 const GCC = 'g++'
 const langTypeMap: Record<string, string> = {
-    'integer': 'int',
-    'string': 'string',
-    'boolean': 'bool',
-    'integer[]': 'vector<int>',
-    'string[]': 'vector<string>',
-    'integer[][]': 'vector<vector<int>>',
-    'double': 'double',
-    'ListNode': 'ListNode *',
-    'TreeNode': 'TreeNode *',
-    'ListNode[]': 'vector<ListNode *>',
-    'TreeNode[]': 'vector<TreeNode *>',
-    'character[][]': 'vector<vector<string>>',
-    'string[][]': 'vector<vector<string>>',
-    'list<integer>': 'vector<int>',
-    'list<string>': 'vector<string>',
-    'list<list<integer>>': 'vector<vector<int>>',
-    'list<list<string>>': 'vector<vector<string>>',
-    'list<ListNode>': 'vector<ListNode *>',
-    'list<TreeNode>': 'vector<TreeNode *>'
+	integer: 'int',
+	string: 'string',
+	boolean: 'bool',
+	'integer[]': 'vector<int>',
+	'string[]': 'vector<string>',
+	'integer[][]': 'vector<vector<int>>',
+	double: 'double',
+	ListNode: 'ListNode *',
+	TreeNode: 'TreeNode *',
+	'ListNode[]': 'vector<ListNode *>',
+	'TreeNode[]': 'vector<TreeNode *>',
+	'character[][]': 'vector<vector<string>>',
+	'string[][]': 'vector<vector<string>>',
+	'list<integer>': 'vector<int>',
+	'list<string>': 'vector<string>',
+	'list<list<integer>>': 'vector<vector<int>>',
+	'list<list<string>>': 'vector<vector<string>>',
+	'list<ListNode>': 'vector<ListNode *>',
+	'list<TreeNode>': 'vector<TreeNode *>',
 }
 
 export class CppParse extends BaseLang {
-    // static preImport: string = 'package main'
-    static getPreImport(name: string, extraTypeSet: Set<ExtraType>) {
-
-        return tag`
+	// static preImport: string = 'package main'
+	static getPreImport(name: string, extraTypeSet: Set<ExtraType>) {
+		return tag`
         #include <iostream>
         #include <vector>
         #include <string>
         #include "algm/algm.h"
         using namespace std;
         `
-    }
-    funcRegExp = /^(\s*class Solution)/
-    testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
-    private cwd: string
-    private mainFilePath: string
-    constructor(public filePath: string, public text?: string) {
-        super(filePath, text)
-        this.cwd = path.join(filePath, '..', '..')
-        this.mainFilePath = path.join('main', 'main.cpp')
-    }
-    handleParam(index: number, paramType: string): string {
-        const langType = langTypeMap[paramType]
-        if (!langType) {
-            throw new Error("not support param type:" + paramType)
-        }
-        const handleConfig = [{
-            type: 'integer',
-            handleFn: 'parseInteger'
-        }, {
-            type: 'string',
-            handleFn: 'parseString'
-        }, {
-            type: 'integer[]',
-            handleFn: 'parseIntegerArr'
-        }, {
-            type: 'string[]',
-            handleFn: 'parseStringArr'
-        }, {
-            type: 'integer[][]',
-            handleFn: 'parseIntegerArrArr'
-        }, {
-            type: 'double',
-            handleFn: 'parseFloat'
-        }, {
-            type: "ListNode",
-            handleFn: "parseListNode"
-        }, {
-            type: "TreeNode",
-            handleFn: "parseTreeNode"
-        }, {
-            type: "ListNode[]",
-            handleFn: "parseListNodeArr"
-        }, {
-            type: "TreeNode[]",
-            handleFn: "parseTreeNodeArr"
-        }, {
-            type: "character[][]",
-            handleFn: "parseStringArrArr"
-        }, {
-            type: "string[][]",
-            handleFn: "parseStringArrArr"
-        }, {
-            type: "list<string>",
-            handleFn: 'parseStringArr'
-        }, {
-            type: 'list<list<string>>',
-            handleFn: 'parseStringArrArr'
-        }, {
-            type: 'list<integer>',
-            handleFn: 'parseIntegerArr'
-        }, {
-            type: 'list<list<integer>>',
-            handleFn: 'parseIntegerArrArr'
-        }]
-        for (const { type, handleFn } of handleConfig) {
-            if (type === paramType) {
-                return `${langType} arg${index} = ${handleFn}(args[${index}]);`
-            }
-        }
-        throw new Error(`paramType ${paramType} not support`)
-    }
-    handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string): string {
-        let isVoid = returnType === 'void'
-        if (isVoid) {
-            returnType = firstParamType
-        }
-        const langType = langTypeMap[returnType]
-        if (!langType) {
-            throw new Error("not support return type:" + returnType)
-        }
-        const handleConfig = [{
-            type: 'integer',
-            handleFn: 'serializeInteger',
-        }, {
-            type: 'string',
-            handleFn: 'serializeString',
-        }, {
-            type: 'double',
-            handleFn: 'serializeFloat',
-        }, {
-            type: 'boolean',
-            handleFn: 'serializeBool',
-        }, {
-            type: "ListNode",
-            handleFn: "serializeListNode"
-        }, {
-            type: "TreeNode",
-            handleFn: "serializeTreeNode"
-        },
-        {
-            type: 'integer[]',
-            handleFn: 'serializeIntegerArr'
-        }, {
-            type: 'list<integer>',
-            handleFn: 'serializeIntegerArr'
-        },
-        {
-            type: 'string[]',
-            handleFn: 'serializeStringArr'
-        }, {
-            type: 'list<string>',
-            handleFn: 'serializeStringArr'
-        },
-        {
-            type: "ListNode[]",
-            handleFn: "serializeListNodeArr"
-        }, {
-            type: "TreeNode[]",
-            handleFn: "serializeTreeNodeArr"
-        }, {
-            type: 'integer[][]',
-            handleFn: 'serializeIntegerArrArr'
-        },
-        {
-            type: 'list<list<integer>>',
-            handleFn: 'serializeIntegerArrArr'
-        },
-        {
-            type: "character[][]",
-            handleFn: "serializeStringArrArr"
-        }, {
-            type: "string[][]",
-            handleFn: "serializeStringArrArr"
-        }, {
-            type: 'list<list<string>>',
-            handleFn: 'serializeStringArrArr'
-        }]
-        const argStr = Array(paramCount).fill(0).map((_, i) => `arg${i}`).join(',')
+	}
+	funcRegExp = /^(\s*class Solution)/
+	testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
+	private cwd: string
+	private mainFilePath: string
+	constructor(public filePath: string, public text?: string) {
+		super(filePath, text)
+		this.cwd = path.join(filePath, '..', '..')
+		this.mainFilePath = path.join('main', 'main.cpp')
+	}
+	handleParam(index: number, paramType: string): string {
+		const langType = langTypeMap[paramType]
+		if (!langType) {
+			throw new Error('not support param type:' + paramType)
+		}
+		const handleConfig = [
+			{
+				type: 'integer',
+				handleFn: 'parseInteger',
+			},
+			{
+				type: 'string',
+				handleFn: 'parseString',
+			},
+			{
+				type: 'integer[]',
+				handleFn: 'parseIntegerArr',
+			},
+			{
+				type: 'string[]',
+				handleFn: 'parseStringArr',
+			},
+			{
+				type: 'integer[][]',
+				handleFn: 'parseIntegerArrArr',
+			},
+			{
+				type: 'double',
+				handleFn: 'parseFloat',
+			},
+			{
+				type: 'ListNode',
+				handleFn: 'parseListNode',
+			},
+			{
+				type: 'TreeNode',
+				handleFn: 'parseTreeNode',
+			},
+			{
+				type: 'ListNode[]',
+				handleFn: 'parseListNodeArr',
+			},
+			{
+				type: 'TreeNode[]',
+				handleFn: 'parseTreeNodeArr',
+			},
+			{
+				type: 'character[][]',
+				handleFn: 'parseStringArrArr',
+			},
+			{
+				type: 'string[][]',
+				handleFn: 'parseStringArrArr',
+			},
+			{
+				type: 'list<string>',
+				handleFn: 'parseStringArr',
+			},
+			{
+				type: 'list<list<string>>',
+				handleFn: 'parseStringArrArr',
+			},
+			{
+				type: 'list<integer>',
+				handleFn: 'parseIntegerArr',
+			},
+			{
+				type: 'list<list<integer>>',
+				handleFn: 'parseIntegerArrArr',
+			},
+		]
+		for (const { type, handleFn } of handleConfig) {
+			if (type === paramType) {
+				return `${langType} arg${index} = ${handleFn}(args[${index}]);`
+			}
+		}
+		throw new Error(`paramType ${paramType} not support`)
+	}
+	handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string): string {
+		let isVoid = returnType === 'void'
+		if (isVoid) {
+			returnType = firstParamType
+		}
+		const langType = langTypeMap[returnType]
+		if (!langType) {
+			throw new Error('not support return type:' + returnType)
+		}
+		const handleConfig = [
+			{
+				type: 'integer',
+				handleFn: 'serializeInteger',
+			},
+			{
+				type: 'string',
+				handleFn: 'serializeString',
+			},
+			{
+				type: 'double',
+				handleFn: 'serializeFloat',
+			},
+			{
+				type: 'boolean',
+				handleFn: 'serializeBool',
+			},
+			{
+				type: 'ListNode',
+				handleFn: 'serializeListNode',
+			},
+			{
+				type: 'TreeNode',
+				handleFn: 'serializeTreeNode',
+			},
+			{
+				type: 'integer[]',
+				handleFn: 'serializeIntegerArr',
+			},
+			{
+				type: 'list<integer>',
+				handleFn: 'serializeIntegerArr',
+			},
+			{
+				type: 'string[]',
+				handleFn: 'serializeStringArr',
+			},
+			{
+				type: 'list<string>',
+				handleFn: 'serializeStringArr',
+			},
+			{
+				type: 'ListNode[]',
+				handleFn: 'serializeListNodeArr',
+			},
+			{
+				type: 'TreeNode[]',
+				handleFn: 'serializeTreeNodeArr',
+			},
+			{
+				type: 'integer[][]',
+				handleFn: 'serializeIntegerArrArr',
+			},
+			{
+				type: 'list<list<integer>>',
+				handleFn: 'serializeIntegerArrArr',
+			},
+			{
+				type: 'character[][]',
+				handleFn: 'serializeStringArrArr',
+			},
+			{
+				type: 'string[][]',
+				handleFn: 'serializeStringArrArr',
+			},
+			{
+				type: 'list<list<string>>',
+				handleFn: 'serializeStringArrArr',
+			},
+		]
+		const argStr = Array(paramCount)
+			.fill(0)
+			.map((_, i) => `arg${i}`)
+			.join(',')
 
-        for (const { type, handleFn } of handleConfig) {
-            if (type === returnType) {
-                if (!isVoid) {
-                    const funcExpression = tag`
+		for (const { type, handleFn } of handleConfig) {
+			if (type === returnType) {
+				if (!isVoid) {
+					const funcExpression = tag`
                     ${langType} result=s->${funcName}(${argStr});
                     string resultabc =${handleFn}(result);
                     `
-                    return funcExpression
-                } else {
-                    const funcExpression = tag`
+					return funcExpression
+				} else {
+					const funcExpression = tag`
                     s->${funcName}(${argStr});
                     string resultabc =${handleFn}(arg0);
                     `
-                    return funcExpression
-                }
+					return funcExpression
+				}
+			}
+		}
+		throw new Error(`returnType ${returnType} not support`)
+	}
 
+	async handleArgsType(argsStr: string) {
+		const meta = (await this.getQuestionMeta()) as LanguageMetaData | undefined
+		if (!meta) {
+			throw new Error('question meta not found')
+		}
+		const params = meta.params || []
+		let rt = meta.return.type
+		const funcName = meta.name
+		const argExpressions: string[] = []
+		const paramCount = params.length
+		for (let i = 0; i < paramCount; i++) {
+			const { name, type } = params[i]
+			argExpressions[i] = this.handleParam(i, type)
+		}
 
-            }
-        }
-        throw new Error(`returnType ${returnType} not support`)
-    }
+		const name = path.parse(this.filePath).name
+		const argExpression = argExpressions.join('\n')
+		const rtExpression = this.handleReturn(paramCount, funcName, rt, params[0].type)
 
-
-    async handleArgsType(argsStr: string) {
-        const meta = (await this.getQuestionMeta()) as LanguageMetaData | undefined
-        if (!meta) {
-            throw new Error('question meta not found')
-        }
-        const params = meta.params || []
-        let rt = meta.return.type
-        const funcName = meta.name
-        const argExpressions: string[] = []
-        const paramCount = params.length
-        for (let i = 0; i < paramCount; i++) {
-            const { name, type } = params[i]
-            argExpressions[i] = this.handleParam(i, type)
-
-        }
-
-        const name = path.parse(this.filePath).name
-        const argExpression = argExpressions.join('\n')
-        const rtExpression = this.handleReturn(paramCount, funcName, rt, params[0].type)
-
-        return tag`
+		return tag`
         #include "question/${name}.cpp"
         #include "regex"
         #include "algm/parse.h"
@@ -255,106 +283,107 @@ export class CppParse extends BaseLang {
             return 0;
         } 
             `
+	}
 
+	private async ensureCommonModuleFile() {
+		// const dir = config.
+		const algmDir = path.resolve(this.filePath, '..', '..', 'algm')
+		// const files = await readdirAsync(algmDir)
+		const sourceDir = path.resolve(__dirname, '..', '..', 'template', 'cpp')
+		const names = ['algm.h', 'ListNode.h', 'TreeNode.h', 'parse.h']
 
-    }
+		await Promise.all(
+			names.map(async (name) => {
+				const src = path.join(sourceDir, name)
+				const dst = path.join(algmDir, name)
+				const isExist = await pathExists(dst)
+				if (!isExist) {
+					return copy(src, dst)
+				}
+			})
+		)
+	}
+	private getExecProgram() {
+		const cwd = this.cwd
+		return path.join(cwd, 'main', 'main')
+	}
+	async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+		const argsArr = caseList.map((v) => v.args)
+		const argsStr = JSON.stringify(argsArr)
+		await this.buildMainFile(argsStr)
+		const cwd = this.cwd
+		try {
+			const execProgram = this.getExecProgram()
+			const { stdout, stderr } = await execFileAsync(execProgram, {
+				cwd: cwd,
+				shell: true,
+			})
+			let testResultList = this.handleResult(stdout, caseList)
+			return handleMsg(testResultList)
+		} catch (err) {
+			log.appendLine(err)
+		}
+	}
+	async runInNewContext(args: string[], originCode: string, funcName: string) {
+		return ''
+	}
+	async handlePreImport() {
+		await this.ensureCommonModuleFile()
+		return
+	}
 
-    private async ensureCommonModuleFile() {
-        // const dir = config.
-        const algmDir = path.resolve(this.filePath, '..', '..', 'algm')
-        // const files = await readdirAsync(algmDir)
-        const sourceDir = path.resolve(__dirname, '..', '..', 'template', 'cpp')
-        const names = ['algm.h', 'ListNode.h', 'TreeNode.h', 'parse.h']
-
-        await Promise.all(names.map(async name => {
-            const src = path.join(sourceDir, name)
-            const dst = path.join(algmDir, name)
-            const isExist = await pathExists(dst)
-            if (!isExist) {
-                return copy(src, dst)
-            }
-
-        }))
-    }
-    private getExecProgram() {
-        const cwd = this.cwd
-        return path.join(cwd, 'main', 'main')
-    }
-    async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
-        const argsArr = caseList.map(v => v.args)
-        const argsStr = JSON.stringify(argsArr)
-        await this.buildMainFile(argsStr)
-        const cwd = this.cwd
-        try {
-            const execProgram = this.getExecProgram()
-            const { stdout, stderr } = await execFileAsync(execProgram, { cwd: cwd, shell: true })
-            let testResultList = this.handleResult(stdout, caseList)
-            return handleMsg(testResultList)
-        } catch (err) {
-            log.appendLine(err)
-        }
-    }
-    async runInNewContext(args: string[], originCode: string, funcName: string) {
-        return ''
-    }
-    async handlePreImport() {
-        await this.ensureCommonModuleFile()
-        return
-    }
-
-
-    // do some thing before debug,eg. get testcase 
-    async beforeDebug(breaks: vscode.SourceBreakpoint[]) {
-        const args = await this.resolveArgsFromBreaks(breaks)
-        const str = JSON.stringify([args])
-        await this.buildMainFile(str)
-    }
-    async buildMainFile(argsStr: string) {
-        argsStr = argsStr.replace(/\\|"/g, s => `\\${s}`)
-        await this.writeTestCase(argsStr)
-        const cwd = this.cwd
-        const mainFilePath = this.mainFilePath
-        await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '-o', 'main/main'], { cwd: cwd, shell: true })
-    }
-    private getTestFilePath() {
-        const cwd = this.cwd
-        const testFilePath = path.join(cwd, 'main', 'main.cpp')
-        return testFilePath
-    }
-    async writeTestCase(argsStr: string) {
-
-        await this.ensureCommonModuleFile()
-        const finalCode = await this.handleArgsType(argsStr)
-        const testFilePath = this.getTestFilePath()
-        await ensureFile(testFilePath)
-        await writeFileAsync(testFilePath, finalCode)
-    }
-    async getDebugConfig(breaks: vscode.SourceBreakpoint[]) {
-        const cwd = this.cwd
-        const execProgram = this.getExecProgram()
-        return {
-            "name": "g++ - Build and debug active file",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": execProgram,
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": cwd,
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-        }
-
-    }
-    shouldRemoveInBuild(line: string): boolean {
-        return line.trim().startsWith('#include "algm/algm.h"')
-    }
-
+	// do some thing before debug,eg. get testcase
+	async beforeDebug(breaks: vscode.SourceBreakpoint[]) {
+		const args = await this.resolveArgsFromBreaks(breaks)
+		const str = JSON.stringify([args])
+		await this.buildMainFile(str)
+	}
+	async buildMainFile(argsStr: string) {
+		argsStr = argsStr.replace(/\\|"/g, (s) => `\\${s}`)
+		await this.writeTestCase(argsStr)
+		const cwd = this.cwd
+		const mainFilePath = this.mainFilePath
+		await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '-o', 'main/main'], {
+			cwd: cwd,
+			shell: true,
+		})
+	}
+	private getTestFilePath() {
+		const cwd = this.cwd
+		const testFilePath = path.join(cwd, 'main', 'main.cpp')
+		return testFilePath
+	}
+	async writeTestCase(argsStr: string) {
+		await this.ensureCommonModuleFile()
+		const finalCode = await this.handleArgsType(argsStr)
+		const testFilePath = this.getTestFilePath()
+		await ensureFile(testFilePath)
+		await writeFileAsync(testFilePath, finalCode)
+	}
+	async getDebugConfig(breaks: vscode.SourceBreakpoint[]) {
+		const cwd = this.cwd
+		const execProgram = this.getExecProgram()
+		return {
+			name: 'g++ - Build and debug active file',
+			type: 'cppdbg',
+			request: 'launch',
+			program: execProgram,
+			args: [],
+			stopAtEntry: false,
+			cwd: cwd,
+			environment: [],
+			externalConsole: false,
+			MIMode: 'gdb',
+			setupCommands: [
+				{
+					description: 'Enable pretty-printing for gdb',
+					text: '-enable-pretty-printing',
+					ignoreFailures: true,
+				},
+			],
+		}
+	}
+	shouldRemoveInBuild(line: string): boolean {
+		return line.trim().startsWith('#include "algm/algm.h"')
+	}
 }

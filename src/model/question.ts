@@ -1,209 +1,204 @@
-import { SubmissionComment } from "./common";
+import { SubmissionComment } from './common'
 
 export interface Chapter {
-    descriptionText: string
-    id: string
-    slug: string
-    title: string
+	descriptionText: string
+	id: string
+	slug: string
+	title: string
 }
 export interface ChaptersRes {
-    chapters: Chapter[]
+	chapters: Chapter[]
 }
 interface ChapterQuestion {
-    chapterId: number
-    id: string
-    isEligibleForCompletion: boolean
-    paidOnly: boolean
-    prerequisites: any[]
-    title: string
-    type: number
+	chapterId: number
+	id: string
+	isEligibleForCompletion: boolean
+	paidOnly: boolean
+	prerequisites: any[]
+	title: string
+	type: number
 }
 interface ChapterDetail {
-    description: string
-    id: string
-    slug: string
-    title: string
-    items: ChapterQuestion[]
+	description: string
+	id: string
+	slug: string
+	title: string
+	items: ChapterQuestion[]
 }
 export interface ChapterRes {
-    chapter: ChapterDetail
-
+	chapter: ChapterDetail
 }
 interface GetOrCreateExploreSession {
-    progress: string
+	progress: string
 }
 
 interface DailyProgress {
-    is_complete: boolean
+	is_complete: boolean
 }
 interface DailyQuestionMap {
-    [key: string]: DailyProgress
+	[key: string]: DailyProgress
 }
 export interface DailyWeekMap {
-    [key: string]: DailyQuestionMap
+	[key: string]: DailyQuestionMap
 }
 export interface ChaptersProgressRes {
-    getOrCreateExploreSession: GetOrCreateExploreSession
+	getOrCreateExploreSession: GetOrCreateExploreSession
 }
 interface ChapterItem {
-    question: Pick<Question, 'questionId' | 'title' | 'titleSlug'>
+	question: Pick<Question, 'questionId' | 'title' | 'titleSlug'>
 }
 export interface ChapterItemRes {
-    item: ChapterItem
+	item: ChapterItem
 }
-
 
 export interface ConciseQuestion {
-    fid: string
-    level: number
-    id: number
-    title: string
-    slug: string
-    acs: number
-    submitted: number
-    paid_only: boolean
-    status: string
-    name: string
+	fid: string
+	level: number
+	id: number
+	title: string
+	slug: string
+	acs: number
+	submitted: number
+	paid_only: boolean
+	status: string
+	name: string
 }
 export interface MapIdConciseQuestion {
-    [id: number]: ConciseQuestion
+	[id: number]: ConciseQuestion
 }
 
 export interface TodayRecordData {
-    todayRecord: TodayRecord[]
+	todayRecord: TodayRecord[]
 }
 interface TodayRecord {
-    question: Pick<Question, 'questionFrontendId' | 'titleSlug' | 'translatedTitle'>
-    lastSubmission: LastSubmission
-    date: string
-    userStatus: UserStatus
-    __typename: string
+	question: Pick<Question, 'questionFrontendId' | 'titleSlug' | 'translatedTitle'>
+	lastSubmission: LastSubmission
+	date: string
+	userStatus: UserStatus
+	__typename: string
 }
 interface LastSubmission {
-    id: string
-    __typename: string
+	id: string
+	__typename: string
 }
-type UserStatus = 'FINISH' | 'NOT_START';
-
+type UserStatus = 'FINISH' | 'NOT_START'
 
 export interface QuestionTranslationData {
-    translations: Translation[]
+	translations: Translation[]
 }
 interface Translation {
-    questionId: string
-    title: string
+	questionId: string
+	title: string
 }
 
 export interface GraphqlResponse<T> {
-    data: T
+	data: T
 }
 export interface DailyQuestionRecordData {
-    dailyQuestionRecords: [DailyQuestionRecord]
+	dailyQuestionRecords: [DailyQuestionRecord]
 }
 export interface DailyQuestionRecord {
-    date: string
+	date: string
 
-    question: Pick<Question, 'questionId' | 'questionFrontendId' | 'titleSlug' | 'title' | 'translatedTitle'>
-    userStatus: string
-    __typename: string
+	question: Pick<Question, 'questionId' | 'questionFrontendId' | 'titleSlug' | 'title' | 'translatedTitle'>
+	userStatus: string
+	__typename: string
 }
 
 export interface GraphqlRequestData {
-    operationName: string | null
-    query: string
-    variables: object
+	operationName: string | null
+	query: string
+	variables: object
 }
 
 export interface QuestionData {
-    question: Question
+	question: Question
 }
 export interface Question {
-    questionId: string
-    questionFrontendId: string
-    boundTopicId: number
-    title: string
-    titleSlug: string
-    content: string
-    translatedTitle: string
-    translatedContent: string
-    isPaidOnly: boolean
-    difficulty: string
-    likes: number
-    dislikes: number
-    isLiked: any
-    similarQuestions: string
-    contributors: []
-    langToValidPlayground: string
-    topicTags: TopicTags[]
-    companyTagStats: any
-    codeSnippets: CodeSnippet[]
-    stats: string
-    hints: Hints[]
-    solution: Solution
-    status: Status
-    sampleTestCase: string
-    metaData: string
-    judgerAvailable: boolean
-    judgeType: string
-    mysqlSchemas: string[]
-    enableRunCode: boolean
-    envInfo: string
-    book: any
-    isSubscribed: boolean
-    isDailyQuestion: boolean
-    dailyRecordStatus: string
-    editorType: string
-    ugcQuestionId: any
-    style: string
-    __typename: string
+	questionId: string
+	questionFrontendId: string
+	boundTopicId: number
+	title: string
+	titleSlug: string
+	content: string
+	translatedTitle: string
+	translatedContent: string
+	isPaidOnly: boolean
+	difficulty: string
+	likes: number
+	dislikes: number
+	isLiked: any
+	similarQuestions: string
+	contributors: []
+	langToValidPlayground: string
+	topicTags: TopicTags[]
+	companyTagStats: any
+	codeSnippets: CodeSnippet[]
+	stats: string
+	hints: Hints[]
+	solution: Solution
+	status: Status
+	sampleTestCase: string
+	metaData: string
+	judgerAvailable: boolean
+	judgeType: string
+	mysqlSchemas: string[]
+	enableRunCode: boolean
+	envInfo: string
+	book: any
+	isSubscribed: boolean
+	isDailyQuestion: boolean
+	dailyRecordStatus: string
+	editorType: string
+	ugcQuestionId: any
+	style: string
+	__typename: string
 
-    // questionTitleSlug: string
+	// questionTitleSlug: string
 }
 interface Solution {
-    canSeeDetail: boolean
-    id: string
+	canSeeDetail: boolean
+	id: string
 }
-type Status = 'ac' | 'notac' | null;
-interface Hints {
-}
+type Status = 'ac' | 'notac' | null
+interface Hints {}
 export interface CodeSnippet {
-    lang: string
-    langSlug: string
-    code: string
-    __typename: string
+	lang: string
+	langSlug: string
+	code: string
+	__typename: string
 }
 interface TopicTags {
-    name: string
-    slug: string
-    translatedName: string
-    questions: number[] //question id
-    __typename: string
+	name: string
+	slug: string
+	translatedName: string
+	questions: number[] //question id
+	__typename: string
 }
-
 
 export interface ContestData {
-    allContests: Pick<Contest, 'title' | 'titleSlug' | 'startTime' | 'duration' | 'originStartTime' | 'isVirtual'>[]
+	allContests: Pick<Contest, 'title' | 'titleSlug' | 'startTime' | 'duration' | 'originStartTime' | 'isVirtual'>[]
 }
 interface Contest {
-    containsPremium: boolean
-    title: string
-    cardImg: string
-    titleSlug: string
-    description: string
-    startTime: number
-    duration: number
-    originStartTime: number
-    isVirtual: boolean
-    company: Company
-    __typename: string
+	containsPremium: boolean
+	title: string
+	cardImg: string
+	titleSlug: string
+	description: string
+	startTime: number
+	duration: number
+	originStartTime: number
+	isVirtual: boolean
+	company: Company
+	__typename: string
 }
 interface Company {
-    watermark: string
-    __typename: string
+	watermark: string
+	__typename: string
 }
 
 export interface TagData {
-    topics: TopicTags[]
+	topics: TopicTags[]
 }
 // interface Topics {
 //     slug: string
@@ -213,112 +208,112 @@ export interface TagData {
 // }
 
 export interface SubmitOptions {
-    titleSlug: string
-    typed_code: string
-    question_id: string
-    lang?: string
+	titleSlug: string
+	typed_code: string
+	question_id: string
+	lang?: string
 }
 export interface SubmitContestOptions extends SubmitOptions {
-    weekname: string
+	weekname: string
 }
 export interface SubmitResponse {
-    submission_id: number
+	submission_id: number
 }
 export interface CheckResponse {
-    status_code: number
-    lang: string
-    run_success: boolean
-    status_runtime: string
-    memory: number
-    question_id: string
-    elapsed_time: number
-    compare_result: string
-    code_output: string
-    std_output: string
-    last_testcase: string
-    task_finish_time: number
-    task_name: string
-    finished: boolean
-    status_msg: string
-    state: State
-    fast_submit: boolean
-    total_correct: number
-    total_testcases: number
-    submission_id: string
-    runtime_percentile: number
-    status_memory: string
-    memory_percentile: number
-    pretty_lang: string
+	status_code: number
+	lang: string
+	run_success: boolean
+	status_runtime: string
+	memory: number
+	question_id: string
+	elapsed_time: number
+	compare_result: string
+	code_output: string
+	std_output: string
+	last_testcase: string
+	task_finish_time: number
+	task_name: string
+	finished: boolean
+	status_msg: string
+	state: State
+	fast_submit: boolean
+	total_correct: number
+	total_testcases: number
+	submission_id: string
+	runtime_percentile: number
+	status_memory: string
+	memory_percentile: number
+	pretty_lang: string
 }
 
 export interface CheckContestResponse {
-    state: State
+	state: State
 }
-type State = 'PENDING' | 'STARTED' | 'SUCCESS';
+type State = 'PENDING' | 'STARTED' | 'SUCCESS'
 
 export interface CheckOptions {
-    submission_id: number
-    titleSlug: string
+	submission_id: number
+	titleSlug: string
 }
 export interface CheckContestOptions extends CheckOptions {
-    weekname: string
+	weekname: string
 }
 
 export interface SubmissionsResponse {
-    submissionList: SubmissionList
+	submissionList: SubmissionList
 }
 export interface SubmissionsOptions {
-    lastKey?: string
-    limit?: number
-    offset?: number
-    titleSlug: string
+	lastKey?: string
+	limit?: number
+	offset?: number
+	titleSlug: string
 }
 interface SubmissionList {
-    lastKey: string
-    hasNext: boolean
-    submissions: Submissions[]
+	lastKey: string
+	hasNext: boolean
+	submissions: Submissions[]
 }
 export interface Submissions {
-    id: string
-    statusDisplay: string
-    lang: string
-    runtime: string
-    timestamp: string
-    url: string
-    isPending: string
-    memory: string
-    submissionComment?: SubmissionComment
+	id: string
+	statusDisplay: string
+	lang: string
+	runtime: string
+	timestamp: string
+	url: string
+	isPending: string
+	memory: string
+	submissionComment?: SubmissionComment
 }
 export interface SubmissionDetailOptions {
-    id: string
+	id: string
 }
 
 export interface SubmissionDetailPageData {
-    submissionData: SubmissionData;
-    questionId: string;
-    sessionId: string;
-    getLangDisplay: string;
-    submissionCode: string;
-    editCodeUrl: string;
-    checkUrl: string;
-    runtimeDistributionFormatted: string;
-    memoryDistributionFormatted: string;
-    langs: any[];
-    runtime: string;
-    memory: string;
-    enableMemoryDistribution: string;
-    nonSufficientMsg: string;
+	submissionData: SubmissionData
+	questionId: string
+	sessionId: string
+	getLangDisplay: string
+	submissionCode: string
+	editCodeUrl: string
+	checkUrl: string
+	runtimeDistributionFormatted: string
+	memoryDistributionFormatted: string
+	langs: any[]
+	runtime: string
+	memory: string
+	enableMemoryDistribution: string
+	nonSufficientMsg: string
 }
 interface SubmissionData {
-    status_code: number;
-    runtime: string;
-    memory: string;
-    total_correct: string;
-    total_testcases: string;
-    compare_result: string;
-    input_formatted: string;
-    input: string;
-    expected_output: string;
-    code_output: string;
-    last_testcase: string;
+	status_code: number
+	runtime: string
+	memory: string
+	total_correct: string
+	total_testcases: string
+	compare_result: string
+	input_formatted: string
+	input: string
+	expected_output: string
+	code_output: string
+	last_testcase: string
 }

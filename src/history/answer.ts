@@ -1,14 +1,14 @@
-import { generateId, getDesc, getFuncNames, QuestionMeta, readFileAsync, writeFileAsync } from "../common/util";
-import { submitStorage } from "./storage";
+import { generateId, getDesc, getFuncNames, QuestionMeta, readFileAsync, writeFileAsync } from '../common/util'
+import { submitStorage } from './storage'
 import * as path from 'path'
 import { config } from '../config'
 import { fetchQuestion, getName } from '../webview/questionPreview'
-import { preprocessCode } from "../util";
-import { CodeLang, isAlgorithm, langMap } from "../common/langConfig";
-import { Service } from "../lang/common";
-import { writeFile, parseHtml } from '../common/util';
+import { preprocessCode } from '../util'
+import { CodeLang, isAlgorithm, langMap } from '../common/langConfig'
+import { Service } from '../lang/common'
+import { writeFile, parseHtml } from '../common/util'
 import { pathExists, readJson, writeJson, ensureFile } from 'fs-extra'
-import { UpdateCommentOption } from "../model/common";
+import { UpdateCommentOption } from '../model/common'
 interface Answer {
 	id: string
 	code: string
@@ -32,7 +32,7 @@ export class AnswerStorage {
 			filePath: filePath,
 			text,
 			result,
-			desc
+			desc,
 		})
 	}
 	async read(questionId: string): Promise<Answer[]> {
@@ -56,7 +56,7 @@ export class AnswerStorage {
 			timestamp: Math.floor(Date.now() / 1000).toString(),
 			lang: questionMeta.lang,
 			questionId: id,
-			titleSlug: questionMeta.titleSlug
+			titleSlug: questionMeta.titleSlug,
 		}
 		arr.push(newAnswer)
 		await ensureFile(historyfilePath)
@@ -65,7 +65,7 @@ export class AnswerStorage {
 	async updateComment({ id, questionId, comment }: UpdateCommentOption) {
 		const arr = await this.read(questionId)
 		const historyfilePath = this.getFilePath(questionId)
-		let item = arr.find(v => v.id === id)
+		let item = arr.find((v) => v.id === id)
 		if (item) {
 			item.desc = comment
 		}
@@ -84,26 +84,25 @@ export class AnswerStorage {
 		const param = {
 			titleSlug: questionMeta.titleSlug,
 			weekname: questionMeta.weekname,
-			questionId: questionMeta.id
+			questionId: questionMeta.id,
 		}
 		const question = await fetchQuestion(param)
 		const { codeSnippets, questionFrontendId, title, translatedTitle } = question
-		const codeSnippet = codeSnippets.find(codeSnippet => codeSnippet.langSlug === langSlug)
+		const codeSnippet = codeSnippets.find((codeSnippet) => codeSnippet.langSlug === langSlug)
 		if (codeSnippet) {
-			const langSlug = codeSnippet.langSlug;
-			const langConfig = langMap[langSlug];
+			const langSlug = codeSnippet.langSlug
+			const langConfig = langMap[langSlug]
 			const { name } = getName(questionFrontendId, title, translatedTitle, codeSnippet)
-			let code = preprocessCode(question, weekname, codeSnippet, name);
+			let code = preprocessCode(question, weekname, codeSnippet, name)
 			if (langConfig.lang === CodeLang.Java) {
-				code = code.replace('class Solution', 'public class Solution');
+				code = code.replace('class Solution', 'public class Solution')
 			}
 			if (isAlgorithm(langConfig.lang)) {
 				await Service.handlePreImport(filePath)
 			}
 
-			await writeFile(filePath, code);
+			await writeFile(filePath, code)
 		}
-
 	}
 }
 export const answerStorage = AnswerStorage.answerStorage

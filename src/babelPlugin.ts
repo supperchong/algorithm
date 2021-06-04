@@ -1,22 +1,18 @@
-import { types as t } from "@babel/core";
+import { types as t } from '@babel/core'
 const regexp = /^@get\((-?\d+|Infinity|-Infinity)\)$/
 
 function generatelogicalExpression(arr: any[]) {
 	if (arr.length === 2) {
-		return t.logicalExpression("&&", arr[0], arr[1])
+		return t.logicalExpression('&&', arr[0], arr[1])
 	} else if (arr.length > 2) {
-		return t.logicalExpression(
-			"&&",
-			arr[0],
-			generatelogicalExpression(arr.slice(1))
-		)
+		return t.logicalExpression('&&', arr[0], generatelogicalExpression(arr.slice(1)))
 	} else {
 		return arr[0]
 	}
 }
 
 function toBinaryExpression(node) {
-	return t.binaryExpression(">=", node, t.numericLiteral(0))
+	return t.binaryExpression('>=', node, t.numericLiteral(0))
 }
 type NumberProperty = t.Identifier | t.NumericLiteral | t.BinaryExpression
 type ComputeProperty = t.Identifier | t.BinaryExpression
@@ -35,16 +31,14 @@ export function outBoundArrayPlugin() {
 					path.node.leadingComments &&
 					path.node.leadingComments.find((v) => regexp.test(v.value))
 				) {
-					let comment = path.node.leadingComments.find((v) =>
-						regexp.test(v.value)
-					) as t.Comment
+					let comment = path.node.leadingComments.find((v) => regexp.test(v.value)) as t.Comment
 					const regexpResult = regexp.exec(comment.value) as RegExpExecArray
 					const numStr = regexpResult[1]
 					let numNode: t.Identifier | t.UnaryExpression | t.NumericLiteral
-					if (numStr === "Infinity") {
-						numNode = t.identifier("Infinity")
-					} else if (numStr === "-Infinity") {
-						numNode = t.unaryExpression("-", t.identifier("Infinity"))
+					if (numStr === 'Infinity') {
+						numNode = t.identifier('Infinity')
+					} else if (numStr === '-Infinity') {
+						numNode = t.unaryExpression('-', t.identifier('Infinity'))
 					} else {
 						numNode = t.numericLiteral(parseInt(numStr))
 					}
@@ -58,10 +52,7 @@ export function outBoundArrayPlugin() {
 					const referencePaths = bind.referencePaths
 					referencePaths.forEach((r) => {
 						let nodes: ComputeProperty[] = []
-						while (
-							r.parentPath.node.type === 'MemberExpression' &&
-							r.parentPath.node.computed
-						) {
+						while (r.parentPath.node.type === 'MemberExpression' && r.parentPath.node.computed) {
 							const node = r.parentPath.node
 							if (!isValidNumberProperty(node.property)) {
 								return
@@ -69,7 +60,6 @@ export function outBoundArrayPlugin() {
 							if (isValidComputeProperty(node.property)) {
 								nodes.push(node.property)
 							}
-
 
 							r = r.parentPath
 						}
@@ -96,8 +86,12 @@ export function generateAddTestCommentPlugin(funcName: string, comment: string) 
 		return {
 			visitor: {
 				VariableDeclaration(path: babel.NodePath<babel.types.VariableDeclaration>) {
-					const funcDeclaration = path.node.declarations.find(dec => {
-						return dec.id.type === 'Identifier' && dec.id.name === funcName && dec.init?.type === 'FunctionExpression'
+					const funcDeclaration = path.node.declarations.find((dec) => {
+						return (
+							dec.id.type === 'Identifier' &&
+							dec.id.name === funcName &&
+							dec.init?.type === 'FunctionExpression'
+						)
 					})
 					if (funcDeclaration) {
 						path.addComment('leading', comment, true)
@@ -110,21 +104,21 @@ export function generateAddTestCommentPlugin(funcName: string, comment: string) 
 						path.addComment('leading', comment, true)
 						path.stop()
 					}
-				}
-			}
+				},
+			},
 		}
 	}
 }
 
-export function removeExtraTypePlugin(){
+export function removeExtraTypePlugin() {
 	return {
 		visitor: {
 			ClassDeclaration(path: babel.NodePath<babel.types.DeclareClass>) {
-				const extraTypes=['ListNode','TreeNode']
-				if(path.node.id&&extraTypes.includes(path.node.id.name)){
+				const extraTypes = ['ListNode', 'TreeNode']
+				if (path.node.id && extraTypes.includes(path.node.id.name)) {
 					path.remove()
 				}
-			}
+			},
 		},
 	}
 }
