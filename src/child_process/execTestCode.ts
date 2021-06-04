@@ -6,13 +6,13 @@ import virtual = require('@rollup/plugin-virtual')
 import * as path from 'path'
 import * as fs from 'fs'
 import sourceMap = require('source-map')
-import { parseTestCase, TestResult, normalize, getResultType, deserializeParam, handleArgsType } from '../common/util'
+import { TestResult, handleArgsType } from '../common/util'
 import { outBoundArrayPlugin } from '../babelPlugin'
 import { Script } from 'vm'
 import { handleMsg } from '../common/util'
-import { langExtMap, LangBase, CodeLang, getFileLang } from '../common/langConfig'
+import { CodeLang, getFileLang } from '../common/langConfig'
 import presetTs = require('@babel/preset-typescript')
-import { TestOptions, LanguageMetaData } from '../common/lang'
+import { TestOptions } from '../common/lang'
 const defaultTimeout = 10000
 const supportCodeLang = [CodeLang.JavaScript, CodeLang.TypeScript]
 let options = ''
@@ -28,7 +28,7 @@ process.stdin.on('end', async () => {
 	}
 })
 async function execTestCase(options: TestOptions) {
-	const { caseList, originCode, filePath, metaData } = options
+	const { caseList, filePath, metaData } = options
 	const lang = getFileLang(filePath)
 	if (!supportCodeLang.includes(lang)) {
 		return `${lang} is currently not supported`
@@ -71,7 +71,7 @@ async function buildCode(filePath: string, lang: CodeLang) {
 	return buildJsCode(filePath)
 }
 async function buildJsCode(filePath: string) {
-	let plugins = [
+	const plugins = [
 		resolve(),
 		rollupBabelPlugin({
 			babelHelpers: 'bundled',
@@ -121,13 +121,13 @@ async function buildTsCode(filePath: string) {
 async function handleErrPosition(err: Error, map: sourceMap.RawSourceMap, args: string[]) {
 	const consumer = await new sourceMap.SourceMapConsumer(map)
 
-	const regexp = /evalmachine\.<anonymous>\:(\d+)\:?(\d+)?/g
+	const regexp = /evalmachine\.<anonymous>:(\d+):?(\d+)?/g
 	let msg = `× @test(${args.join(',')})\n`
 	const stack: string = err.stack as string
 	msg += stack.replace(regexp, (_, line, column) => {
 		line = parseInt(line)
 		column = parseInt(column) || 0
-		let originPosition = consumer.originalPositionFor({
+		const originPosition = consumer.originalPositionFor({
 			line: line,
 			column: column,
 		})

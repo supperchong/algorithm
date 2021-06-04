@@ -1,4 +1,4 @@
-import { FlagType, SubmissionComment } from './common'
+import { CodeSnippet, FlagType, GraphqlVariables, SubmissionComment } from './common'
 
 export interface ConciseQuestion {
 	fid: string
@@ -19,7 +19,7 @@ export interface MapIdConciseQuestion {
 export interface TodayRecordData {
 	todayRecord: TodayRecord[]
 }
-interface TodayRecord {
+export interface TodayRecord {
 	question: Pick<Question, 'questionFrontendId' | 'titleSlug' | 'translatedTitle'>
 	lastSubmission: LastSubmission
 	date: string
@@ -35,7 +35,7 @@ type UserStatus = 'FINISH' | 'NOT_START'
 export interface QuestionTranslationData {
 	translations: Translation[]
 }
-interface Translation {
+export interface Translation {
 	questionId: string
 	title: string
 }
@@ -57,7 +57,7 @@ export interface DailyQuestionRecord {
 export interface GraphqlRequestData {
 	operationName: string | null
 	query: string
-	variables: object
+	variables: GraphqlVariables
 }
 
 export interface QuestionData {
@@ -77,15 +77,15 @@ export interface Question {
 	difficulty: string
 	likes: number
 	dislikes: number
-	isLiked: any
+	isLiked: unknown
 	similarQuestions: string
 	contributors: []
 	langToValidPlayground: string
 	topicTags: TopicTags[]
-	companyTagStats: any
+	companyTagStats: unknown
 	codeSnippets: CodeSnippet[]
 	stats: string
-	hints: Hints[]
+	hints: string[]
 	solution: Solution
 	status: Status
 	sampleTestCase: string
@@ -95,14 +95,13 @@ export interface Question {
 	mysqlSchemas: string[]
 	enableRunCode: boolean
 	envInfo: string
-	book: any
+	book: unknown
 	isSubscribed: boolean
 	isDailyQuestion: boolean
 	dailyRecordStatus: string
 	editorType: string
-	ugcQuestionId: any
+	ugcQuestionId: unknown
 	style: string
-	__typename: string
 
 	// questionTitleSlug: string
 }
@@ -111,13 +110,7 @@ interface Solution {
 	id: string
 }
 type Status = 'ac' | 'notac' | null
-interface Hints {}
-export interface CodeSnippet {
-	lang: string
-	langSlug: string
-	code: string
-	__typename: string
-}
+
 interface TopicTags {
 	name: string
 	slug: string
@@ -278,5 +271,5 @@ interface OutputDetail {
 	compileError: string
 	runtimeError: string
 	lastTestcase: string
-	__typename: String
+	__typename: string
 }

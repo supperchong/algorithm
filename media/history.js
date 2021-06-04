@@ -233,7 +233,7 @@ function initDiv(father, itemObj, code, headerArr, type, index) {
                         .catch((err) => {
                             if (codeId === newCodeId) {
                                 viewDiv.innerHTML = err;
-                                hljs.highlightBlock(viewDiv);
+                                // hljs.highlightBlock(viewDiv);
                                 setCode(err);
                             }
                         });

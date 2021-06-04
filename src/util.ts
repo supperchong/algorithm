@@ -2,20 +2,20 @@ import * as vscode from 'vscode'
 import { window } from 'vscode'
 import { transformAsync } from '@babel/core'
 import { generateAddTestCommentPlugin } from './babelPlugin'
-import { langMap, LangBase, getFileLang, CodeLang, ExtraType, transformToHightlightLang } from './common/langConfig'
+import { langMap, getFileLang, CodeLang, ExtraType, transformToHightlightLang } from './common/langConfig'
 import { ParseContent } from './common/parseContent'
 import { config, updateConfig, updateEnv, InstallState, log, checkEsbuildDir } from './config'
 import { tag } from 'pretty-tag'
-import { Question, CodeSnippet } from './model/question.cn'
-import { AskForImportState, ConciseQuestion } from './model/common'
+import { AskForImportState, CodeSnippet, CommonQuestion, ConciseQuestion } from './model/common'
 import { MemoFile } from './model/memo'
 import { Service } from './lang/common'
-import { DataBaseMetaData, LanguageMetaData, MetaData, ShellMetaData } from './common/lang'
+import { LanguageMetaData, MetaData } from './common/lang'
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const hljs = require('highlight.js')
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const md = require('markdown-it')({
 	highlight: function (str, lang) {
-		console.log(hljs)
 		if (lang && hljs.getLanguage(lang)) {
 			try {
 				return (
@@ -26,7 +26,9 @@ const md = require('markdown-it')({
 					}).value +
 					'</code></pre>'
 				)
-			} catch (__) {}
+			} catch (err) {
+				log.appendLine('highlight code error')
+			}
 		}
 
 		return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>'
@@ -47,7 +49,7 @@ export async function execWithProgress2<T>(promise: Promise<T>, message: string)
 	})
 }
 export async function appendComment(code: string, comment: string, funcName: string) {
-	let fileResult = await transformAsync(code, {
+	const fileResult = await transformAsync(code, {
 		// comments: true,
 		// compact: false,
 		plugins: [generateAddTestCommentPlugin(funcName, comment)],
@@ -107,27 +109,18 @@ function getImportStr(metaData: LanguageMetaData) {
 	return ''
 }
 
-function isShellMetaData(metaData: MetaData): metaData is ShellMetaData {
-	return 'shell' in metaData && metaData.shell
-}
-function isDataBaseMetaData(metaData: MetaData): metaData is DataBaseMetaData {
-	return 'database' in metaData && metaData.database
-}
 function isLanguageMetaData(metaData: MetaData): metaData is LanguageMetaData {
 	return 'name' in metaData
 }
 export function preprocessCode(
-	{ questionId, codeSnippets, metaData, content, titleSlug, questionSourceContent }: Question,
-	weekname: string = '',
+	{ questionId, metaData, content, titleSlug, questionSourceContent }: CommonQuestion,
+	weekname = '',
 	codeSnippet: CodeSnippet,
 	name: string
 ) {
-	const { codeLang } = config
-
-	let testCases = ParseContent.getTestCases(questionSourceContent || content)
+	const testCases = ParseContent.getTestCases(questionSourceContent || content)
 	const langSlug = codeSnippet.langSlug
 	const langConfig = langMap[langSlug]
-	const algorithmPath = config.algmModuleDir.replace(/\\/g, '\\\\')
 	const weektag = weekname ? `weekname=${weekname}` : ''
 
 	const metaDataParse: MetaData = JSON.parse(metaData)
@@ -171,8 +164,8 @@ export function preprocessCode(
 		console.log(err)
 	}
 
-	let code = codeSnippet.code
-	let newCode = flag + '\n' + codeTestSnippet + code
+	const code = codeSnippet.code
+	const newCode = flag + '\n' + codeTestSnippet + code
 	return newCode
 }
 export function getDebugConfig() {
@@ -209,8 +202,8 @@ export function sortFiles(files: MemoFile[]) {
 		const fid1: string = q1.name
 		const fid2: string = q2.name
 		const sortOrder = ['LCP', '剑指 Offer', '面试题']
-		let weight1 = sortOrder.findIndex((prefix) => fid1.startsWith(prefix))
-		let weight2 = sortOrder.findIndex((prefix) => fid2.startsWith(prefix))
+		const weight1 = sortOrder.findIndex((prefix) => fid1.startsWith(prefix))
+		const weight2 = sortOrder.findIndex((prefix) => fid2.startsWith(prefix))
 		if (weight1 !== weight2) {
 			return weight1 - weight2
 		} else {
@@ -226,8 +219,8 @@ export function sortQuestions(questions: ConciseQuestion[]) {
 		const fid1: string = q1.fid
 		const fid2: string = q2.fid
 		const sortOrder = ['LCP', '剑指 Offer', '面试题']
-		let weight1 = sortOrder.findIndex((prefix) => fid1.startsWith(prefix))
-		let weight2 = sortOrder.findIndex((prefix) => fid2.startsWith(prefix))
+		const weight1 = sortOrder.findIndex((prefix) => fid1.startsWith(prefix))
+		const weight2 = sortOrder.findIndex((prefix) => fid2.startsWith(prefix))
 		if (weight1 !== weight2) {
 			return weight1 - weight2
 		} else {

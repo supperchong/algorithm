@@ -1,27 +1,40 @@
-import { ConciseQuestion } from './model/common'
+import { ConciseQuestion, MapIdConciseQuestion, Tag } from './model/common'
 import fs = require('fs')
 import { config, Config, log } from './config'
 import { reRequire } from './util'
 const COOKIE = 'cookie'
 const TAG = 'tag'
 export const ALLQUESTIONS = 'allQuestions'
+export const MAPIDQUESTION = 'MapIdQuestion'
+interface CacheMap {
+	[COOKIE]: Cookie
+	[TAG]: Tag[]
+	[ALLQUESTIONS]: ConciseQuestion[]
+	[MAPIDQUESTION]: MapIdConciseQuestion
+	[titleSlug: string]: any
+}
+interface Cookie {
+	cookie: string
+	'x-csrftoken': string
+}
 class Cache {
-	private cacheMap: Map<string, any> = new Map()
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private cacheMap: Partial<CacheMap> = {}
 	config: Config
 	constructor() {
 		this.config = config
 	}
 	removeCache() {
-		this.cacheMap.clear()
+		this.cacheMap = {}
 	}
-	get(key: string) {
-		return this.cacheMap.get(key)
+	get<T extends keyof CacheMap>(key: T) {
+		return this.cacheMap[key]
 	}
-	set(key: string, value: any) {
-		this.cacheMap.set(key, value)
+	set<T extends keyof CacheMap, R extends CacheMap[T]>(key: T, value: R) {
+		this.cacheMap[key] = value
 	}
 	has(key: string) {
-		return this.cacheMap.has(key)
+		return key in this.cacheMap
 	}
 	async getCookie() {
 		const { cookiePath } = config
@@ -39,13 +52,13 @@ class Cache {
 	getQuestions(): ConciseQuestion[] {
 		const { questionPath } = config
 		if (this.has(ALLQUESTIONS)) {
-			return this.get(ALLQUESTIONS)
+			return this.get(ALLQUESTIONS) || []
 		}
 		try {
 			const allQuestions = reRequire(questionPath)
 			const filterPrivilegeQuestions = allQuestions.filter((v) => !v.paid_only)
 			this.set(ALLQUESTIONS, filterPrivilegeQuestions)
-			return this.get(ALLQUESTIONS)
+			return this.get(ALLQUESTIONS) || []
 		} catch (err) {
 			return []
 		}
@@ -68,12 +81,12 @@ class Cache {
 			}
 		)
 	}
-	updateQuestion(id: number, params) {
-		const questions: ConciseQuestion[] = this.get(ALLQUESTIONS)
+	updateQuestion(id: number, params: Partial<ConciseQuestion>) {
+		const questions: ConciseQuestion[] | undefined = this.get(ALLQUESTIONS)
 		if (questions) {
 			const question = questions.find((q) => q.id === id)
 			if (question) {
-				question.status = 'ac'
+				Object.assign(question, params)
 				this.setQuestions(questions)
 			}
 		}
@@ -91,7 +104,7 @@ class Cache {
 			return null
 		}
 	}
-	setTags(tags) {
+	setTags(tags: Tag[]) {
 		const { tagPath } = config
 		this.set(TAG, tags)
 		fs.writeFile(
@@ -107,6 +120,5 @@ class Cache {
 			}
 		)
 	}
-	getQuestionDescription() {}
 }
 export const cache = new Cache()

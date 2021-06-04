@@ -146,6 +146,7 @@ export const resolverCn: ResolverType = {
 			return questions.map((question) => ({
 				type: 'QuestionContest',
 				label: question.title,
+				id: 'QuestionContest' + question.id,
 				isLast: true,
 				param: {
 					titleSlug: question.title_slug,

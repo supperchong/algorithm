@@ -1,10 +1,7 @@
-import { log, config } from '../config'
+import { log } from '../config'
 import { OutputChannel } from 'vscode'
-import { getFileComment } from '../common/langConfig'
-import { BaseLang } from './base'
-import * as vscode from 'vscode'
-import { readFileAsync, TestCase, TestCaseParam, writeFileAsync, execFileAsync, CaseList } from '../common/util'
-import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/util'
+import { readFileAsync } from '../common/util'
+import { getFuncNames } from '../common/util'
 
 export class DataBaseParse {
 	public log: OutputChannel

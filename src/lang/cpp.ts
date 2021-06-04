@@ -1,23 +1,13 @@
 import * as cp from 'child_process'
-import { pathExists, ensureFile, ensureDir, copy } from 'fs-extra'
-import { CaseList, existFile, readFileAsync, TestCase, TestCaseParam, writeFileAsync } from '../common/util'
+import { pathExists, ensureFile, copy } from 'fs-extra'
+import { CaseList, writeFileAsync } from '../common/util'
 import { tag } from 'pretty-tag'
-import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/util'
-import { log, config } from '../config'
-import { getDb } from '../db'
-import { api } from '../api/index'
-import { resolve } from 'path'
-import { rejects } from 'assert'
-import { runInNewContext } from 'vm'
+import { handleMsg } from '../common/util'
+import { log } from '../config'
 import { promisify } from 'util'
-import { OutputChannel } from 'vscode'
 import * as vscode from 'vscode'
-import { tranfromToCustomBreakpoint } from '../debug/launch'
-import { stdout } from 'process'
 import * as path from 'path'
-import { ExtraType } from '../common/langConfig'
 import { BaseLang } from './base'
-import { parseCommentTest } from '../common/util'
 import { LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 const GCC = 'g++'
@@ -45,7 +35,7 @@ const langTypeMap: Record<string, string> = {
 
 export class CppParse extends BaseLang {
 	// static preImport: string = 'package main'
-	static getPreImport(name: string, extraTypeSet: Set<ExtraType>) {
+	static getPreImport() {
 		return tag`
         #include <iostream>
         #include <vector>
@@ -142,7 +132,7 @@ export class CppParse extends BaseLang {
 		throw new Error(`paramType ${paramType} not support`)
 	}
 	handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string): string {
-		let isVoid = returnType === 'void'
+		const isVoid = returnType === 'void'
 		if (isVoid) {
 			returnType = firstParamType
 		}
@@ -251,12 +241,12 @@ export class CppParse extends BaseLang {
 			throw new Error('question meta not found')
 		}
 		const params = meta.params || []
-		let rt = meta.return.type
+		const rt = meta.return.type
 		const funcName = meta.name
 		const argExpressions: string[] = []
 		const paramCount = params.length
 		for (let i = 0; i < paramCount; i++) {
-			const { name, type } = params[i]
+			const { type } = params[i]
 			argExpressions[i] = this.handleParam(i, type)
 		}
 
@@ -307,24 +297,24 @@ export class CppParse extends BaseLang {
 		const cwd = this.cwd
 		return path.join(cwd, 'main', 'main')
 	}
-	async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+	async runMultiple(caseList: CaseList, _originCode: string, _funcName: string) {
 		const argsArr = caseList.map((v) => v.args)
 		const argsStr = JSON.stringify(argsArr)
 		await this.buildMainFile(argsStr)
 		const cwd = this.cwd
 		try {
 			const execProgram = this.getExecProgram()
-			const { stdout, stderr } = await execFileAsync(execProgram, {
+			const { stdout } = await execFileAsync(execProgram, {
 				cwd: cwd,
 				shell: true,
 			})
-			let testResultList = this.handleResult(stdout, caseList)
+			const testResultList = this.handleResult(stdout, caseList)
 			return handleMsg(testResultList)
 		} catch (err) {
 			log.appendLine(err)
 		}
 	}
-	async runInNewContext(args: string[], originCode: string, funcName: string) {
+	async runInNewContext(_args: string[], _originCode: string, _funcName: string) {
 		return ''
 	}
 	async handlePreImport() {
@@ -343,10 +333,7 @@ export class CppParse extends BaseLang {
 		await this.writeTestCase(argsStr)
 		const cwd = this.cwd
 		const mainFilePath = this.mainFilePath
-		await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '-o', 'main/main'], {
-			cwd: cwd,
-			shell: true,
-		})
+		await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '-o', 'main/main'], { cwd: cwd, shell: true })
 	}
 	private getTestFilePath() {
 		const cwd = this.cwd
@@ -360,7 +347,7 @@ export class CppParse extends BaseLang {
 		await ensureFile(testFilePath)
 		await writeFileAsync(testFilePath, finalCode)
 	}
-	async getDebugConfig(breaks: vscode.SourceBreakpoint[]) {
+	async getDebugConfig(_breaks: vscode.SourceBreakpoint[]) {
 		const cwd = this.cwd
 		const execProgram = this.getExecProgram()
 		return {

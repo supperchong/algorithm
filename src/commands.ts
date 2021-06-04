@@ -1,54 +1,20 @@
-import * as path from 'path'
-import {
-	parseTestCase,
-	TestCase,
-	TestResult,
-	normalize,
-	getResultType,
-	getFuncNames,
-	deserializeParam,
-	QuestionMeta,
-	retry,
-	readFileAsync,
-} from './common/util'
-import { appendComment, checkBeforeDebug, execWithProgress, execWithProgress2, getDebugConfig } from './util'
+import { getFuncNames, QuestionMeta, retry } from './common/util'
+import { checkBeforeDebug, execWithProgress, execWithProgress2 } from './util'
 import { log, updateConfig } from './config'
-import { window, ExtensionContext } from 'vscode'
-import rollup = require('rollup')
-import resolve from '@rollup/plugin-node-resolve'
-import rollupBabelPlugin from '@rollup/plugin-babel'
-import virtual = require('@rollup/plugin-virtual')
+import { window } from 'vscode'
 import { createPanel } from './webview/buildCodeWebview'
-import babel = require('@babel/core')
 import { api, freshQuestions } from './api/index'
 import * as vscode from 'vscode'
-import cp = require('child_process')
-import { execTestChildProcess } from './execTestCode'
 import { QuestionsProvider, QuestionTree } from './provider/questionsProvider'
 import { cache } from './cache'
-import { CheckResponse, ErrorStatus, Lang } from './model/common'
-import { outBoundArrayPlugin } from './babelPlugin'
-import { addComment } from './common/transformCode'
+import { checkParams, CheckResponse, ErrorStatus, Lang } from './model/common'
 import { config } from './config'
-import { githubInput, selectLogin } from './login/input'
-import { githubLogin } from './login'
-import presetTs = require('@babel/preset-typescript')
+import { selectLogin } from './login/input'
 import { getQuestionDescription } from './webview/questionPreview'
-import {
-	builtInLang,
-	CodeLang,
-	databases,
-	enableLang,
-	getFileLang,
-	isAlgorithm,
-	isDataBase,
-	isShell,
-	langExtMap,
-	otherLang,
-} from './common/langConfig'
+import { databases, enableLang, getFileLang, isAlgorithm, isDataBase, isShell } from './common/langConfig'
 import { normalizeQuestionLabel, writeFileAsync } from './common/util'
 import { MemoFile } from './model/memo'
-import { addFolder, addFolderFile, addQuestion } from './memo/index'
+import { addFolder, addQuestion } from './memo/index'
 import { MemoProvider, MemoTree } from './provider/memoProvider'
 import { ResolverParam } from './provider/resolver'
 import { Service } from './lang/common'
@@ -57,30 +23,23 @@ import { BashParse } from './lang/bash'
 import { createSubmitHistoryPanel } from './webview/submitHistory'
 import { submitStorage } from './history/storage'
 import { answerStorage } from './history/answer'
-import { formatMemory } from './history'
+import {
+	BuildCodeArguments,
+	GetDescriptionArguments,
+	SubmitCodeArguments,
+	TestCodeArguments,
+	ViewSubmitHistoryArguments,
+} from './model/command'
 
-type Requred<T, R extends keyof T> = {
-	[key in R]-?: T[key]
-} &
-	{
-		[key in keyof T]: T[key]
-	}
-function checkParams<T, R extends keyof T>(obj: T, attrs: R[]): asserts obj is Requred<T, R> {
-	let verify = attrs.every((attr) => !!obj[attr])
-	if (!verify) {
-		throw new Error('options error options:' + JSON.stringify(obj) + ',attrs:' + attrs)
-	}
-}
-export async function testCodeCommand(
-	line: number,
-	testCase: TestCase,
-	funcName: string,
-	paramsTypes: string[],
-	resultType: string,
-	filepath: string
-) {
+export async function testCodeCommand(...args: TestCodeArguments) {
+	const [
+		{
+			filePath,
+			testCaseParam: { testCase },
+		},
+	] = args
 	try {
-		const service = new Service(filepath)
+		const service = new Service(filePath)
 		const promise = service.execTest(testCase)
 		const msg = await execWithProgress(promise, 'wait test')
 		if (msg) {
@@ -99,10 +58,10 @@ async function openFolder() {
 		'add questions folder at the start of workspace folders',
 	]
 
-	let uri = vscode.Uri.file(config.baseDir)
+	const uri = vscode.Uri.file(config.baseDir)
 	const pickItem = await window.showQuickPick(items)
 	if (pickItem === items[0]) {
-		let uri = vscode.Uri.file(config.baseDir)
+		const uri = vscode.Uri.file(config.baseDir)
 		return vscode.commands.executeCommand('vscode.openFolder', uri, {
 			forceNewWindow: true,
 		})
@@ -114,10 +73,67 @@ async function openFolder() {
 		return vscode.workspace.updateWorkspaceFolders(0, 0, { uri })
 	}
 }
+
+export async function buildCode(text: string, filePath: string): Promise<BuildCode> {
+	if (isDataBase(filePath)) {
+		const parse = new DataBaseParse(filePath, text)
+		return parse.buildCode()
+	} else if (isShell(filePath)) {
+		const parse = new BashParse(filePath, text)
+		return parse.buildCode()
+	}
+	const service = new Service(filePath, text)
+
+	return service.buildCode()
+}
+
+// TODO
+async function submitAsync(code: string, questionMeta: QuestionMeta): Promise<CheckResponse> {
+	checkParams(questionMeta, ['titleSlug', 'id'])
+	const { titleSlug, id } = questionMeta
+	const res = await api.submit({
+		titleSlug: titleSlug,
+		question_id: id,
+		typed_code: code,
+		lang: questionMeta.lang,
+	})
+	if (!res.submission_id) {
+		log.appendLine(JSON.stringify(res))
+		log.show()
+		return Promise.reject(new Error('submit error'))
+	}
+	const fn = async () => {
+		const res2 = await api.check({
+			submission_id: res.submission_id,
+			titleSlug: titleSlug,
+		})
+		if (['PENDING', 'STARTED', 'SUCCESS'].includes(res2.state)) {
+			return res2
+		} else {
+			console.log('check res', res2)
+			log.appendLine(JSON.stringify(res2))
+			return Promise.reject(new Error('submit error'))
+		}
+	}
+	const verifyFn = (res: CheckResponse) => res.state === 'SUCCESS'
+	const result = await retry({ fn, verifyFn, time: 6 })
+	return result
+}
+async function submitCode(text: string, filePath: string) {
+	const buildResult = await buildCode(text, filePath)
+
+	const code = buildResult.code
+	const questionMeta = buildResult.questionMeta
+	const result = await submitAsync(code, questionMeta)
+	return {
+		result,
+		code,
+		questionMeta,
+	}
+}
 export async function debugCodeCommand(filePath: string) {
-	const { nodeBinPath } = config
-	let uri = vscode.Uri.file(config.baseDir)
-	let p = vscode.workspace.getWorkspaceFolder(uri)
+	const uri = vscode.Uri.file(config.baseDir)
+	const p = vscode.workspace.getWorkspaceFolder(uri)
 	const workspaceFolders = vscode.workspace.workspaceFolders
 	if (!workspaceFolders?.find((w) => w.uri === p?.uri)) {
 		return openFolder()
@@ -134,11 +150,17 @@ export async function debugCodeCommand(filePath: string) {
 	const service = new Service(filePath)
 	service.debugCodeCommand(p!, breaks)
 }
-export async function buildCodeCommand(context: ExtensionContext, text: string, filePath: string, langSlug: string) {
+export async function buildCodeCommand(...args: BuildCodeArguments) {
+	const [context, { text, filePath, langSlug }] = args
 	const { code } = await buildCode(text, filePath)
 	createPanel(context, code, langSlug)
 }
-export async function submitCommand(questionsProvider: QuestionsProvider, text: string, filePath: string) {
+// export async function buildCodeCommand(context: ExtensionContext, text: string, filePath: string, langSlug: string) {
+// 	const { code } = await buildCode(text, filePath)
+// 	createPanel(context, code, langSlug)
+// }
+export async function submitCommand(...args: SubmitCodeArguments) {
+	const [questionsProvider, { text, filePath }] = args
 	let message = ''
 	try {
 		const { result, questionMeta } = await execWithProgress(submitCode(text, filePath), 'wait submit')
@@ -147,22 +169,20 @@ export async function submitCommand(questionsProvider: QuestionsProvider, text: 
 		submitStorage.saveSubmit({
 			filePath: filePath,
 			text,
-			result: {
-				...result,
-				memory: formatMemory(result.memory),
-			},
+			result,
 			desc: questionMeta.desc,
 		})
 		if (message === 'Accepted') {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			cache.updateQuestion(parseInt(questionMeta.id!), { status: 'ac' })
 			questionsProvider.refresh()
 		} else {
 			if (result.status_code === 11) {
 				//'Wrong Answer'
-				let inputLength = result?.input_formatted?.length || 0
+				const inputLength = result?.input_formatted?.length || 0
 				const maxLength = 300
 				if (inputLength <= maxLength) {
-					let msg = `× @test(${result.input_formatted})  result: ${result.code_output} ,expect: ${result.expected_output}\n`
+					const msg = `× @test(${result.input_formatted})  result: ${result.code_output} ,expect: ${result.expected_output}\n`
 					log.appendLine(msg)
 					log.show()
 					const codeLang = getFileLang(filePath)
@@ -197,100 +217,15 @@ export async function submitCommand(questionsProvider: QuestionsProvider, text: 
 
 	window.showInformationMessage(message)
 }
-async function submitCode(text: string, filePath: string) {
-	const buildResult = await buildCode(text, filePath)
 
-	const code = buildResult.code
-	const questionMeta = buildResult.questionMeta
-	const result = await submitAsync(code, questionMeta)
-	return {
-		result,
-		code,
-		questionMeta,
-	}
-}
-// TODO
-async function submitContest(code: string, questionMeta: QuestionMeta): Promise<any> {
-	checkParams(questionMeta, ['titleSlug', 'id', 'weekname'])
-
-	const res = await api.submitContest({
-		titleSlug: questionMeta.titleSlug,
-		question_id: questionMeta.id,
-		typed_code: code,
-		weekname: questionMeta.weekname,
-	})
-	if (!res.submission_id) {
-		console.log('submit res', res)
-		log.appendLine(res as any)
-
-		return Promise.reject(new Error('submit error'))
-	}
-	let fn = async () => {
-		const res2 = await api.checkContest({
-			submission_id: res.submission_id,
-			titleSlug: questionMeta.titleSlug,
-			weekname: questionMeta.weekname,
-		})
-		if (['STARTED', 'SUCCESS', 'PENDING'].includes(res2.state)) {
-			return res2
-		} else {
-			return Promise.reject(new Error(res2.status_msg))
-		}
-	}
-	let verifyFn = (res: CheckResponse) => res.state === 'SUCCESS'
-	const result = await retry({ fn, verifyFn, time: 5 })
-	return result
-}
-async function submitAsync(code: string, questionMeta: QuestionMeta): Promise<CheckResponse> {
-	checkParams(questionMeta, ['titleSlug', 'id'])
-	const { titleSlug, id } = questionMeta
-	const res = await api.submit({
-		titleSlug: titleSlug,
-		question_id: id,
-		typed_code: code,
-		lang: questionMeta.lang,
-	})
-	if (!res.submission_id) {
-		console.log('submit res', res)
-		log.appendLine(res as any)
-		log.show()
-		return Promise.reject(new Error('submit error'))
-	}
-	let fn = async () => {
-		const res2 = await api.check({
-			submission_id: res.submission_id,
-			titleSlug: titleSlug,
-		})
-		if (['PENDING', 'STARTED', 'SUCCESS'].includes(res2.state)) {
-			return res2
-		} else {
-			console.log('check res', res2)
-			log.appendLine(JSON.stringify(res2))
-			return Promise.reject(new Error('submit error'))
-		}
-	}
-	let verifyFn = (res: CheckResponse) => res.state === 'SUCCESS'
-	const result = await retry({ fn, verifyFn, time: 6 })
-	return result
-}
 interface BuildCode {
 	code: string
 	questionMeta: QuestionMeta
 }
-export async function buildCode(text: string, filePath: string): Promise<BuildCode> {
-	if (isDataBase(filePath)) {
-		const parse = new DataBaseParse(filePath, text)
-		return parse.buildCode()
-	} else if (isShell(filePath)) {
-		const parse = new BashParse(filePath, text)
-		return parse.buildCode()
-	}
-	const service = new Service(filePath, text)
 
-	return service.buildCode()
-}
-
-export async function getDescriptionCommand(extensionPath: string, text: string, filePath: string) {
+export async function getDescriptionCommand(...args: GetDescriptionArguments) {
+	const [extensionPath, { text, filePath }] = args
+	//extensionPath: string, text: string, filePath: string
 	const { questionMeta } = getFuncNames(text, filePath)
 	getQuestionDescription(extensionPath, {
 		questionId: questionMeta.id,
@@ -318,7 +253,7 @@ export async function signInCommand(questionsProvider: QuestionsProvider) {
 class LangItem implements vscode.QuickPickItem {
 	constructor(public label: string, public description: string, public detail: string) {}
 }
-export async function switchEndpointCommand(questionsProvider: QuestionsProvider) {
+export async function switchEndpointCommand() {
 	const LangConfigs = [
 		{
 			lang: Lang.en,
@@ -351,7 +286,7 @@ export async function switchEndpointCommand(questionsProvider: QuestionsProvider
 class CodeLangItem implements vscode.QuickPickItem {
 	constructor(public label: string, public description: string) {}
 }
-export async function switchCodeLangCommand(questionsProvider: QuestionsProvider) {
+export async function switchCodeLangCommand() {
 	// const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript, CodeLang.Python3, CodeLang.Go]
 	const curLang = config.codeLang
 	const langLabels = enableLang.map((lang) => {
@@ -414,7 +349,6 @@ export async function addFolderCommand(memoProvider: MemoProvider) {
 export async function memoFilePreviewCommand(memoFile: MemoFile) {
 	if (memoFile.type === 'question') {
 		vscode.commands.executeCommand('algorithm.questionPreview', memoFile.param)
-	} else if (memoFile.type === 'other') {
 	}
 }
 
@@ -439,7 +373,9 @@ export async function removeMemoFileCommand(memoProvider: MemoProvider, param: M
 	}
 }
 
-export async function viewSubmitHistoryCommand(context: ExtensionContext, text: string, filePath: string) {
+export async function viewSubmitHistoryCommand(...args: ViewSubmitHistoryArguments) {
+	const [context, { text, filePath }] = args
+
 	const { questionMeta } = getFuncNames(text, filePath)
 	if (!questionMeta.id) {
 		return

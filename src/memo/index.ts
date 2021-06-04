@@ -48,6 +48,7 @@ export function addQuestion(folderName: string, name: string, param: Partial<Res
 		updateEnv('memo', memo)
 	}
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function deleteFile(folderName: string, fileName: string) {
 	const memo = config.env.memo
 	const folder = memo.find((item) => item.name === folderName)

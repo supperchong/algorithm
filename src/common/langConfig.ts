@@ -141,11 +141,15 @@ const langsConfig = {
 		},
 	],
 }
+enum LangBaseComment {
+	Slash = '//',
+	Pound = '#',
+}
 export interface LangBase {
 	lang: CodeLang
 	langSlug: string
 	ext: string
-	comment: '#' | '//'
+	comment: LangBaseComment
 	fileNameSep: '.' | '_'
 }
 export interface LangMap {
@@ -180,7 +184,7 @@ export enum DataBase {
 	'Oracle' = 'Oracle',
 }
 
-export function getFileLang(filePath: string) {
+export function getFileLang(filePath: string): CodeLang {
 	const ext = path.extname(filePath)
 	const langItem = langExtMap[ext]
 	if (!langItem) {
@@ -189,7 +193,7 @@ export function getFileLang(filePath: string) {
 	return langItem.lang
 }
 
-export function getFileLangSlug(filePath: string) {
+export function getFileLangSlug(filePath: string): string {
 	const ext = path.extname(filePath)
 	const langItem = langExtMap[ext]
 	if (!langItem) {
@@ -197,18 +201,18 @@ export function getFileLangSlug(filePath: string) {
 	}
 	return langItem.langSlug
 }
-export function isDataBase(filePath: string) {
+export function isDataBase(filePath: string): boolean {
 	const ext = path.extname(filePath)
 	return ext === '.sql'
 }
-export function isShell(filePath: string) {
+export function isShell(filePath: string): boolean {
 	const ext = path.extname(filePath)
 	return ext === '.sh'
 }
-export function isAlgorithm(lang: CodeLang) {
+export function isAlgorithm(lang: CodeLang): boolean {
 	return !!langsConfig.algorithms.find((alg) => alg.lang === lang)
 }
-export function getFileComment(filePath: string) {
+export function getFileComment(filePath: string): LangBaseComment {
 	const ext = path.extname(filePath)
 	const langItem = langExtMap[ext]
 	if (!langItem) {
@@ -242,7 +246,7 @@ export const highlightLangMap = {
 	php: 'php',
 	typescript: 'typescript',
 }
-export function transformToHightlightLang(lang: string) {
+export function transformToHightlightLang(lang: string): string {
 	return highlightLangMap[lang] || lang
 }
 // export function getPreImport(codeLang: CodeLang) {

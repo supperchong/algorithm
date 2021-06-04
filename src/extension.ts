@@ -1,6 +1,5 @@
 import * as vscode from 'vscode'
-import path = require('path')
-import { workspace, languages, window, commands, ExtensionContext, Disposable, debug } from 'vscode'
+import { languages, commands } from 'vscode'
 import { CodelensProvider } from './provider/codelensProvider'
 import {
 	testCodeCommand,
@@ -24,7 +23,6 @@ import {
 import { QuestionsProvider } from './provider/questionsProvider'
 import { createQuestionPanelCommand } from './webview/questionPreview'
 import { config, onChangeConfig } from './config'
-import { tag } from 'pretty-tag'
 import { registerForSnippetProviders } from './provider/snippetProvider'
 import { registerDebug } from './debug/launch'
 import { registerCompletionItemProvider } from './provider/completionProvider'

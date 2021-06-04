@@ -3,15 +3,15 @@ import { escape2html } from './util'
 const isSpace = (c) => /\s/.test(c)
 const isWord = (c) => /\w/.test(c)
 function delComment(src) {
-	var commentRegExp = /(\/\*([\s\S]*?)\*\/|('.*?')|(".*?")|\/\/(.*)$)/gm
+	const commentRegExp = /(\/\*([\s\S]*?)\*\/|('.*?')|(".*?")|\/\/(.*)$)/gm
 	return src.replace(commentRegExp, commentReplace)
 }
-function commentReplace(match, multi, multiText, singlePrefix, double) {
+function commentReplace(_match, _multi, _multiText, singlePrefix, double) {
 	return singlePrefix || double || ''
 }
 interface Demo {
 	input: Input[]
-	output: any
+	output: string
 }
 enum Kind {
 	scanContinue,
@@ -34,10 +34,10 @@ interface Input {
 export class ParseContent {
 	public step: (char: string, next: string, i: number) => Kind = this.stateBegin
 	public prevStep: (char: string, next?: string) => Kind = this.stateBegin
-	public word: string = ''
+	public word = ''
 	public words: string[] = []
-	public tagStatus: number = 0
-	public exampleState: number = 0
+	public tagStatus = 0
+	public exampleState = 0
 	public demos: Demo[] = []
 	constructor(public readonly content: string) {
 		this.content = delComment(escape2html(content.replace(/<[^>]*>/g, '')))
@@ -45,11 +45,9 @@ export class ParseContent {
 	}
 	init() {
 		this.step = this.stateBegin
-		let word = ''
 		let input: Input[] = []
-		const inputFlag = 'Input'
 		const linkReg = /^\s*-?\d+->/
-		let demos: Demo[] = []
+		const demos: Demo[] = []
 		let identify
 		let i = 0
 		try {
@@ -123,17 +121,15 @@ export class ParseContent {
 		return p.demos
 	}
 	parseLink(index) {
-		let str = ''
 		let numStr = ''
-		let output: number[] = []
-		let start = index
+		const output: number[] = []
+		const start = index
 
 		while (index < this.content.length && isSpace(this.content[index])) {
 			index++
 		}
 		while (index < this.content.length && /[\d->N]/.test(this.content[index])) {
-			let char = this.content[index]
-			str += char
+			const char = this.content[index]
 			if (/\d/.test(char)) {
 				numStr += char
 			} else if (char === '-') {
@@ -203,23 +199,23 @@ export class ParseContent {
 		if (this.content.slice(i, i + 7) === 'Output:') {
 			//Compatibility Special Conditions id:53
 			/**
-             * content Given an integer array nums, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.
+			 * content Given an integer array nums, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.
 
-                Example:
+				Example:
 
 
-                Input: [-2,1,-3,4,-1,2,1,-5,4],
-                Output: 6
-                Explanation: [4,-1,2,1] has the largest sum = 6.
+				Input: [-2,1,-3,4,-1,2,1,-5,4],
+				Output: 6
+				Explanation: [4,-1,2,1] has the largest sum = 6.
 
-             */
+			 */
 			this.step = this.stateOut
 			return this.step(char, n, i)
 		}
 		this.step = this.stateInputIdentity
 		return this.step(char, n, i)
 	}
-	stateInputIdentity(char: string, n: string, i: number): Kind {
+	stateInputIdentity(char: string, _n: string, _i: number): Kind {
 		if (isSpace(char)) {
 			if (!this.word) {
 				return Kind.scanSpace

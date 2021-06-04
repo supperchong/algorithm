@@ -1,9 +1,6 @@
-import { downloadAndUnzipVSCode } from 'vscode-test'
-
 import * as vscode from 'vscode'
 import { config, updateEnv } from '../config'
-import { memoFilePreviewCommand } from '../commands'
-import { sortFiles, sortQuestions } from '../util'
+import { sortFiles } from '../util'
 const MemoFilePreviewCommand = 'algorithm.memoFilePreview'
 const MemoFileContext = 'memoFile'
 enum MemoLevel {
@@ -15,6 +12,20 @@ enum RemoveMemoMsg {
 	Folder = 'Are you sure you want to delete the folder?',
 	File = 'Are you sure you want to delete the file?',
 }
+
+export class MemoTree extends vscode.TreeItem {
+	constructor(
+		public label: string,
+		public id: string,
+		public paths: string[],
+		public collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.Collapsed,
+		public command?: vscode.Command
+	) {
+		super(label, vscode.TreeItemCollapsibleState.Collapsed)
+	}
+	contextValue = 'memo'
+}
+
 export class MemoProvider implements vscode.TreeDataProvider<MemoTree> {
 	private _onDidChangeTreeData: vscode.EventEmitter<MemoTree | undefined> = new vscode.EventEmitter<
 		MemoTree | undefined
@@ -126,7 +137,7 @@ export class MemoProvider implements vscode.TreeDataProvider<MemoTree> {
 		const level = MemoProvider.getElementLevel(element)
 		const config = msgConfigs.find((c) => c.level === level)
 		if (config) {
-			let msg = config.msg
+			const msg = config.msg
 			const r = await vscode.window.showWarningMessage(msg, { modal: true }, Remove)
 			return r === Remove
 		}
@@ -156,17 +167,4 @@ export class MemoProvider implements vscode.TreeDataProvider<MemoTree> {
 		}
 		config.log.appendLine('file not exist')
 	}
-}
-
-export class MemoTree extends vscode.TreeItem {
-	constructor(
-		public label: string,
-		public id: string,
-		public paths: string[],
-		public collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.Collapsed,
-		public command?: vscode.Command
-	) {
-		super(label, vscode.TreeItemCollapsibleState.Collapsed)
-	}
-	contextValue = 'memo'
 }

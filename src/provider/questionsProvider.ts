@@ -4,7 +4,19 @@ import { config } from '../config'
 import { resolverEn, ResolverFn, ResolverParam, ResolverType } from './resolver'
 import { resolverCn } from './resolver.cn'
 import * as path from 'path'
-
+export class QuestionTree extends vscode.TreeItem {
+	constructor(
+		public readonly label: string,
+		public readonly id: string,
+		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+		public readonly type: string,
+		public readonly key?: string,
+		public readonly param?: Partial<ResolverParam>,
+		public readonly command?: vscode.Command
+	) {
+		super(label, collapsibleState)
+	}
+}
 export class QuestionsProvider implements vscode.TreeDataProvider<QuestionTree> {
 	private _onDidChangeTreeData: vscode.EventEmitter<QuestionTree | undefined> = new vscode.EventEmitter<
 		QuestionTree | undefined
@@ -17,7 +29,7 @@ export class QuestionsProvider implements vscode.TreeDataProvider<QuestionTree> 
 	refresh(): void {
 		this._onDidChangeTreeData.fire(undefined)
 	}
-	async previewQuestion(element: QuestionTree) {}
+
 	getTreeItem(element: QuestionTree): vscode.TreeItem {
 		return element
 	}
@@ -46,7 +58,7 @@ export class QuestionsProvider implements vscode.TreeDataProvider<QuestionTree> 
 					const isLastChild = arr[0].isLast
 					if (isLastChild) {
 						return arr.map((v) => {
-							let dep = new QuestionTree(
+							const dep = new QuestionTree(
 								v.label,
 								v.id,
 								vscode.TreeItemCollapsibleState.None,
@@ -101,19 +113,5 @@ export class QuestionsProvider implements vscode.TreeDataProvider<QuestionTree> 
 				)
 			)
 		}
-	}
-}
-
-export class QuestionTree extends vscode.TreeItem {
-	constructor(
-		public readonly label: string,
-		public readonly id: string,
-		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-		public readonly type: string,
-		public readonly key?: string,
-		public readonly param?: Partial<ResolverParam>,
-		public readonly command?: vscode.Command
-	) {
-		super(label, collapsibleState)
 	}
 }

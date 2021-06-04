@@ -1,23 +1,14 @@
 import * as cp from 'child_process'
-import { pathExists, ensureFile, ensureDir, copy } from 'fs-extra'
-import { CaseList, existFile, readFileAsync, TestCase, TestCaseParam, writeFileAsync } from '../common/util'
+import { pathExists, ensureFile, copy } from 'fs-extra'
+import { CaseList, writeFileAsync } from '../common/util'
 import { tag } from 'pretty-tag'
-import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/util'
+import { handleMsg } from '../common/util'
 import { log, config } from '../config'
-import { getDb } from '../db'
-import { api } from '../api/index'
-import { resolve } from 'path'
-import { rejects } from 'assert'
-import { runInNewContext } from 'vm'
 import { promisify } from 'util'
-import { OutputChannel } from 'vscode'
 import * as vscode from 'vscode'
-import { tranfromToCustomBreakpoint } from '../debug/launch'
-import { stdout } from 'process'
 import * as path from 'path'
 import { ExtraType } from '../common/langConfig'
 import { BaseLang } from './base'
-import { parseCommentTest } from '../common/util'
 import { LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 const langTypeMap = {
@@ -141,7 +132,7 @@ export class JavaParse extends BaseLang {
 		throw new Error(`paramType ${paramType} not support`)
 	}
 	handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string): string {
-		let isVoid = returnType === 'void'
+		const isVoid = returnType === 'void'
 		if (isVoid) {
 			returnType = firstParamType
 		}
@@ -225,7 +216,7 @@ export class JavaParse extends BaseLang {
 		]
 		const argStr = Array(paramCount)
 			.fill(0)
-			.map((v, i) => `arg${i}`)
+			.map((_v, i) => `arg${i}`)
 			.join(',')
 
 		for (const { type, handleFn } of handleConfig) {
@@ -254,12 +245,12 @@ export class JavaParse extends BaseLang {
 			throw new Error('question meta not found')
 		}
 		const params = meta.params || []
-		let rt = meta.return.type
+		const rt = meta.return.type
 		const funcName = meta.name
 		const argExpressions: string[] = []
 		const paramCount = params.length
 		for (let i = 0; i < paramCount; i++) {
-			const { name, type } = params[i]
+			const { type } = params[i]
 			argExpressions[i] = this.handleParam(i, type)
 		}
 		const dir = path.parse(path.parse(this.filePath).dir).name
@@ -307,24 +298,24 @@ export class JavaParse extends BaseLang {
 			})
 		)
 	}
-	async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+	async runMultiple(caseList: CaseList, _originCode: string, _funcName: string) {
 		const argsArr = caseList.map((v) => v.args)
 		const argsStr = JSON.stringify(argsArr)
 		await this.buildMainFile(argsStr)
 		const javaPath = config.javaPath
 		const cwd = this.cwd
 		try {
-			const { stdout, stderr } = await execFileAsync(javaPath, [`test/Test`], {
+			const { stdout } = await execFileAsync(javaPath, [`test/Test`], {
 				cwd: cwd,
 				shell: true,
 			})
-			let testResultList = this.handleResult(stdout, caseList)
+			const testResultList = this.handleResult(stdout, caseList)
 			return handleMsg(testResultList)
 		} catch (err) {
 			log.appendLine(err)
 		}
 	}
-	async runInNewContext(args: string[], originCode: string, funcName: string) {
+	async runInNewContext(_args: string[], _originCode: string, _funcName: string) {
 		return ''
 	}
 	async handlePreImport() {
@@ -359,7 +350,7 @@ export class JavaParse extends BaseLang {
 			shell: true,
 		})
 	}
-	async getDebugConfig(breaks: vscode.SourceBreakpoint[]) {
+	async getDebugConfig(_breaks: vscode.SourceBreakpoint[]) {
 		const testFilePath = this.getTestFilePath()
 		const cwd = this.cwd
 		return {

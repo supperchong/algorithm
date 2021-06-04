@@ -69,14 +69,13 @@ suite('Util Test Suite', () => {
 	})
 	test('test void return', () => {
 		const testCaseList = getTestCaseList(cases[1])
-		const { testCase, funcName, paramsTypes, resultType } = testCaseList[0]
+		const { paramsTypes, resultType } = testCaseList[0]
 		assert.equal(testCaseList.length, 1)
 		assert.equal(resultType, 'void')
 		assert.deepEqual(paramsTypes, ['TreeNode'])
 	})
 	test('test ', () => {
 		const testCaseList = getTestCaseList(cases[2])
-		const { testCase, funcName, paramsTypes, resultType } = testCaseList[0]
 		assert.equal(testCaseList.length, 1)
 		// assert.equal(resultType, 'void')
 		// assert.deepEqual(paramsTypes, ['TreeNode'])
@@ -91,7 +90,7 @@ suite('Util Test Suite', () => {
 
         }
         `
-		let result = `
+		const result = `
         //hhh
         //this is a test
         /**
@@ -101,7 +100,7 @@ suite('Util Test Suite', () => {
 
         }
         `
-		let out = addComment(source, 'hhh', 'main')
+		const out = addComment(source, 'hhh', 'main')
 		assert.deepStrictEqual(out, result)
 	})
 	test('test unionArr', () => {

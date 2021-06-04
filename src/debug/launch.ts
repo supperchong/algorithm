@@ -1,17 +1,32 @@
-import { fstat, writeSync } from 'fs'
+/* eslint-disable indent */
 import { Breakpoint, debug, SourceBreakpoint } from 'vscode'
-import { existFile, mkdirSync } from '../common/util'
 import { config } from '../config'
 import * as vscode from 'vscode'
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode'
 import * as path from 'path'
 import { getDebugConfig } from '../util'
 import { writeFileSync } from '../common/util'
+// import { Map } from '../common/map'
+interface Map<K, V> {
+	has<KnownKeys extends K, CheckedString extends K>(
+		this: MapWith<K, V, KnownKeys>,
+		key: CheckedString
+	): this is MapWith<K, V, CheckedString | KnownKeys>
+
+	has<CheckedString extends K>(this: Map<K, V>, key: CheckedString): this is MapWith<K, V, CheckedString>
+}
+
+interface MapWith<K, V, DefiniteKey extends K> extends Map<K, V> {
+	get(k: DefiniteKey): V
+	get(k: K): V | undefined
+}
 export function registerDebug() {
+	let breaks: Breakpoint[] = []
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	class ConfigurationProvider implements vscode.DebugConfigurationProvider {
 		provideDebugConfigurations(
-			folder: WorkspaceFolder | undefined,
-			token?: CancellationToken
+			_folder: WorkspaceFolder | undefined,
+			_token?: CancellationToken
 		): ProviderResult<DebugConfiguration[]> {
 			const debugConfiguration = getDebugConfig()
 			return [debugConfiguration]
@@ -21,9 +36,9 @@ export function registerDebug() {
 		 * e.g. add all missing attributes to the debug configuration.
 		 */
 		resolveDebugConfigurationWithSubstitutedVariables(
-			folder: WorkspaceFolder | undefined,
+			_folder: WorkspaceFolder | undefined,
 			debugConfig: DebugConfiguration,
-			token?: CancellationToken
+			_token?: CancellationToken
 		): ProviderResult<DebugConfiguration> {
 			const { nodeBinPath } = config
 			debugConfig.runtimeExecutable = nodeBinPath
@@ -36,7 +51,7 @@ export function registerDebug() {
 			const { debugOptionsFilePath, nodeBinPath } = config
 			const debugTaskFilePath = path.resolve(__dirname, '../debugTask', 'index.js')
 			const taskName = 'build'
-			let tasks = [
+			const tasks = [
 				new vscode.Task(
 					{
 						type: TaskProvider.TaskType,
@@ -51,11 +66,11 @@ export function registerDebug() {
 			writeFileSync(debugOptionsFilePath, param, { encoding: 'utf8' })
 			return tasks
 		}
-		resolveTask(task: vscode.Task, token?: CancellationToken | undefined): ProviderResult<vscode.Task> {
+		resolveTask(task: vscode.Task, _token?: CancellationToken | undefined): ProviderResult<vscode.Task> {
 			return task
 		}
 	}
-	let breaks: Breakpoint[] = []
+
 	debug.onDidChangeBreakpoints((e) => {
 		breaks = breaks.concat(e.added)
 		const removePoints = e.removed
@@ -74,7 +89,7 @@ interface CustomBreakpoint {
 	lines: number[]
 }
 function serializeBreaks(breaks: SourceBreakpoint[]): string {
-	let pathMap = new Map<string, number[]>()
+	const pathMap = new Map<string, number[]>()
 	breaks.forEach((b) => {
 		const p = b.location.uri.fsPath
 		const line = b.location.range.start.line
@@ -84,24 +99,25 @@ function serializeBreaks(breaks: SourceBreakpoint[]): string {
 			pathMap.get(p)!.push(line)
 		}
 	})
-	let r: CustomBreakpoint[] = []
+	const r: CustomBreakpoint[] = []
 	for (const key of pathMap.keys()) {
 		r.push({ path: key, lines: pathMap.get(key)! })
 	}
 	return JSON.stringify(r)
 }
 export function tranfromToCustomBreakpoint(breaks: SourceBreakpoint[]) {
-	let pathMap = new Map<string, number[]>()
+	const pathMap = new Map<string, number[]>()
 	breaks.forEach((b) => {
 		const p = b.location.uri.fsPath
 		const line = b.location.range.start.line
+
 		if (!pathMap.has(p)) {
 			pathMap.set(p, [line])
 		} else {
 			pathMap.get(p)!.push(line)
 		}
 	})
-	let r: CustomBreakpoint[] = []
+	const r: CustomBreakpoint[] = []
 	for (const key of pathMap.keys()) {
 		r.push({ path: key, lines: pathMap.get(key)! })
 	}

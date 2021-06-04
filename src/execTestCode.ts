@@ -6,9 +6,9 @@ import { window } from 'vscode'
 import { TestOptions } from './common/lang'
 const notFoundReg = /node: not found/
 export function execTestChildProcess(options: TestOptions): Promise<string> {
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve) => {
 		const { nodeBinPath } = config
-		let cmd = cp.spawn(nodeBinPath, [path.join(__dirname, './child_process/execTestCode.js')])
+		const cmd = cp.spawn(nodeBinPath, [path.join(__dirname, './child_process/execTestCode.js')])
 		let msg = ''
 		cmd.stdout.on('data', (data) => {
 			console.log('data', data)

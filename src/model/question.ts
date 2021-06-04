@@ -1,4 +1,4 @@
-import { SubmissionComment } from './common'
+import { CodeSnippet, GraphqlVariables, SubmissionComment } from './common'
 
 export interface Chapter {
 	descriptionText: string
@@ -14,7 +14,7 @@ interface ChapterQuestion {
 	id: string
 	isEligibleForCompletion: boolean
 	paidOnly: boolean
-	prerequisites: any[]
+	prerequisites: unknown[]
 	title: string
 	type: number
 }
@@ -108,7 +108,7 @@ export interface DailyQuestionRecord {
 export interface GraphqlRequestData {
 	operationName: string | null
 	query: string
-	variables: object
+	variables: GraphqlVariables
 }
 
 export interface QuestionData {
@@ -127,15 +127,15 @@ export interface Question {
 	difficulty: string
 	likes: number
 	dislikes: number
-	isLiked: any
+	isLiked: unknown
 	similarQuestions: string
 	contributors: []
 	langToValidPlayground: string
 	topicTags: TopicTags[]
-	companyTagStats: any
+	companyTagStats: unknown
 	codeSnippets: CodeSnippet[]
 	stats: string
-	hints: Hints[]
+	hints: string[]
 	solution: Solution
 	status: Status
 	sampleTestCase: string
@@ -145,12 +145,12 @@ export interface Question {
 	mysqlSchemas: string[]
 	enableRunCode: boolean
 	envInfo: string
-	book: any
+	book: unknown
 	isSubscribed: boolean
 	isDailyQuestion: boolean
 	dailyRecordStatus: string
 	editorType: string
-	ugcQuestionId: any
+	ugcQuestionId: unknown
 	style: string
 	__typename: string
 
@@ -161,13 +161,7 @@ interface Solution {
 	id: string
 }
 type Status = 'ac' | 'notac' | null
-interface Hints {}
-export interface CodeSnippet {
-	lang: string
-	langSlug: string
-	code: string
-	__typename: string
-}
+
 interface TopicTags {
 	name: string
 	slug: string
@@ -298,7 +292,7 @@ export interface SubmissionDetailPageData {
 	checkUrl: string
 	runtimeDistributionFormatted: string
 	memoryDistributionFormatted: string
-	langs: any[]
+	langs: unknown[]
 	runtime: string
 	memory: string
 	enableMemoryDistribution: string

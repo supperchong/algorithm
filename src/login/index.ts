@@ -104,7 +104,7 @@ async function githubAuth(html: string, request: RequestAsync, user) {
 		})
 	}
 	// enable two-factor
-	let twoFactorRegExp = /Two-factor authentication/
+	const twoFactorRegExp = /Two-factor authentication/
 	if (twoFactorRegExp.test(body)) {
 		body = await githubTwoFactorAuth(body, request)
 	}
@@ -143,9 +143,9 @@ async function githubTwoFactorAuth(html: string, request: RequestAsync) {
 	return res.body
 }
 async function githubRedirectBack(body: string, request: RequestAsync) {
-	let redirectRegExp = /<a id="js-manual-authorize-redirect" href="(.*?)"/
+	const redirectRegExp = /<a id="js-manual-authorize-redirect" href="(.*?)"/
 
-	let redirectRes = redirectRegExp.exec(body)
+	const redirectRes = redirectRegExp.exec(body)
 	if (!redirectRes) {
 		return Promise.reject({
 			message: 'github login redirect fail',
@@ -183,7 +183,7 @@ export async function githubLogin(user: User) {
 		})
 	}
 	const html = res.body
-	let body = await githubAuth(html, request, user)
+	const body = await githubAuth(html, request, user)
 	await githubRedirectBack(body, request)
 }
 

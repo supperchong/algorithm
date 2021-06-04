@@ -1,15 +1,13 @@
 import * as cp from 'child_process'
 import { pathExists, ensureFile } from 'fs-extra'
-import { CaseList, existFile, readFileAsync, TestCase, TestCaseParam, writeFileAsync } from '../common/util'
+import { CaseList, writeFileAsync } from '../common/util'
 import { tag } from 'pretty-tag'
-import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/util'
+import { handleMsg } from '../common/util'
 import { log, config } from '../config'
 import { promisify } from 'util'
 import * as vscode from 'vscode'
-import { tranfromToCustomBreakpoint } from '../debug/launch'
 import * as path from 'path'
 import { BaseLang } from './base'
-import { parseCommentTest } from '../common/util'
 import { platform } from 'os'
 import { LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
@@ -173,7 +171,7 @@ export class PythonParse extends BaseLang {
 		throw new Error(`paramType ${paramType} not support`)
 	}
 	handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string): string {
-		let isVoid = returnType === 'void'
+		const isVoid = returnType === 'void'
 		if (isVoid) {
 			returnType = firstParamType
 		}
@@ -217,7 +215,7 @@ export class PythonParse extends BaseLang {
 
 		const argStr = Array(paramCount)
 			.fill(0)
-			.map((v, i) => `arg${i}`)
+			.map((_v, i) => `arg${i}`)
 			.join(',')
 		if (jsonType.includes(returnType)) {
 			if (!isVoid) {
@@ -263,16 +261,15 @@ export class PythonParse extends BaseLang {
 			throw new Error('question meta not found')
 		}
 		const params = meta.params || []
-		let rt = meta.return.type
+		const rt = meta.return.type
 		const funcName = meta.name
 		const argExpressions: string[] = []
 		const paramCount = params.length
 		for (let i = 0; i < paramCount; i++) {
-			const { name, type } = params[i]
+			const { type } = params[i]
 			argExpressions[i] = this.handleParam(i, type)
 		}
 		const filePathParse = path.parse(this.filePath)
-		const dir = path.parse(filePathParse.dir).name
 
 		const name = filePathParse.name
 		const argExpression = argExpressions.join('\n')
@@ -295,7 +292,7 @@ export class PythonParse extends BaseLang {
             print("resultabc"+str(i)+":"+resultabc+"resultend") 
         `
 	}
-	async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+	async runMultiple(caseList: CaseList, _originCode: string, _funcName: string) {
 		const argsArr = caseList.map((v) => v.args.map((str) => JSON.parse(str)))
 		const argsStr = JSON.stringify(argsArr)
 		await this.buildMainFile(argsStr)
@@ -306,11 +303,11 @@ export class PythonParse extends BaseLang {
 		const testFilePath = this.getTestFilePath()
 		const cwd = this.cwd
 		try {
-			const { stdout, stderr } = await execFileAsync(pythonPath, [testFilePath], {
+			const { stdout } = await execFileAsync(pythonPath, [testFilePath], {
 				cwd: cwd,
 				shell: true,
 			})
-			let testResultList = this.handleResult(stdout, caseList)
+			const testResultList = this.handleResult(stdout, caseList)
 			return handleMsg(testResultList)
 		} catch (err) {
 			log.appendLine(err)
@@ -324,7 +321,7 @@ export class PythonParse extends BaseLang {
 		return line.trimLeft().startsWith(preImportStr)
 	}
 
-	async runInNewContext(args: string[], originCode: string, funcName: string) {
+	async runInNewContext(_args: string[], _originCode: string, _funcName: string) {
 		return ''
 	}
 	async handlePreImport() {

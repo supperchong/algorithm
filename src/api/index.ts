@@ -2,8 +2,6 @@ import { config } from '../config'
 import * as apiCn from './api.cn'
 import * as apiEn from './api'
 import { getDb } from '../db'
-import { ConciseQuestion, Problems } from '../model/common'
-import { cache, ALLQUESTIONS } from '../cache'
 import * as modelCn from '../model/question.cn'
 import * as modelEn from '../model/question'
 
@@ -102,6 +100,7 @@ export async function freshQuestions() {
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handleCategorieQuestions(data) {
 	const { stat_status_pairs } = data
 	const questions = stat_status_pairs.map((v) => ({

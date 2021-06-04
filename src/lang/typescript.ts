@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
 import { BaseLang } from './base'
 import { execTestChildProcess } from '../execTestCode'
 import { TestOptions, LanguageMetaData, DebugOptions } from '../common/lang'
-import { buildTsCode, main } from '../debugTask/index'
+import { main } from '../debugTask/index'
 import * as path from 'path'
 import babel = require('@babel/core')
 import presetTs = require('@babel/preset-typescript')
@@ -22,7 +22,7 @@ export class TypescriptParse extends BaseLang {
 	funcRegExp = /^(?:(\s*function)|(.*=\s*function))/
 	testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
 
-	async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+	async runMultiple(caseList: CaseList, originCode: string, _funcName: string) {
 		const metaData = (await this.getQuestionMeta()) as LanguageMetaData | undefined
 		if (!metaData) {
 			throw new Error('question meta not found')
@@ -48,14 +48,14 @@ export class TypescriptParse extends BaseLang {
 			const { funcNames, questionMeta } = getFuncNames(text, filePath)
 			const funcRunStr = 'console.log(' + funcNames.map((f) => f + '()').join('+') + ')'
 			// The rollup will not transform code in virtual entry
-			let entry: any = await babel.transformAsync(text, {
+			const entry: babel.BabelFileResult | null = await babel.transformAsync(text, {
 				filename: filePath,
 				comments: false,
 				compact: false,
 				presets: [presetTs],
 				plugins: [outBoundArrayPlugin],
 			})
-			entry = entry?.code + `\n${funcRunStr}`
+			const entryCode = entry?.code + `\n${funcRunStr}`
 			const bundle = await rollup.rollup({
 				input: 'entry',
 
@@ -63,7 +63,7 @@ export class TypescriptParse extends BaseLang {
 				plugins: [
 					// It use virtual entry because treeshake will remove unuse code.
 					virtual({
-						entry: entry,
+						entry: entryCode,
 					}),
 
 					resolve({ rootDir: dir, modulesOnly: true }),
@@ -95,10 +95,12 @@ export class TypescriptParse extends BaseLang {
 		return /import\s*{\s*(ListNode|TreeNode)\s*}\s*from\s*'algm'/.test(line.trimLeft())
 	}
 
-	async runInNewContext(args: string[], originCode: string, funcName: string) {
+	async runInNewContext(_args: string[], _originCode: string, _funcName: string) {
 		return ''
 	}
-	async handlePreImport() {}
+	async handlePreImport() {
+		return
+	}
 
 	// do some thing before debug,eg. get testcase
 	async beforeDebug(breaks: vscode.SourceBreakpoint[]) {

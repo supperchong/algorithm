@@ -1,6 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosError } from 'axios'
-import fs = require('fs')
-import { cache, ALLQUESTIONS } from '../cache'
+import { cache } from '../cache'
 import {
 	ChapterItemRes,
 	ChaptersRes,
@@ -14,11 +13,7 @@ import {
 	SubmitOptions,
 	SubmitResponse,
 	TagData,
-	GraphqlResponse,
-	QuestionTranslationData,
-	TodayRecordData,
 	DailyQuestionRecordData,
-	DailyQuestionRecord,
 	QuestionData,
 	GraphqlRequestData,
 	ContestData,
@@ -26,18 +21,17 @@ import {
 	SubmissionsOptions,
 	SubmissionsResponse,
 	SubmissionDetailOptions,
+	Question,
 } from '../model/question'
-import { Problems } from '../model/common'
+import { checkParams, ContestDetail, Problems, Tag } from '../model/common'
 import { getDb } from '../db'
 import { GraphRes, ErrorStatus } from '../model/common'
 import { showLoginMessage } from '../login/index'
-import { window } from 'vscode'
-import { signInCommand } from '../commands'
 import { log } from '../config'
 import { sortQuestions } from '../util'
-import { parseHtml, parseSubmissionDetailHtml } from '../common/util'
+import { parseSubmissionDetailHtml } from '../common/util'
+import { MAPIDQUESTION } from './api.cn'
 
-const MAPIDQUESTION = 'MapIdQuestion'
 const monthEns = [
 	'january',
 	'february',
@@ -52,16 +46,8 @@ const monthEns = [
 	'november',
 	'december',
 ]
-const categories: Category[] = ['algorithms', 'database', 'shell', 'concurrency', 'all']
 
 type Category = 'algorithms' | 'database' | 'shell' | 'concurrency' | 'all'
-
-function checkParams<T extends keyof R, R>(obj: R, attrs: T[]) {
-	let verify = attrs.every((attr) => obj[attr])
-	if (!verify) {
-		throw new Error('options有误 options:' + obj + ',attrs:' + attrs)
-	}
-}
 
 async function getHeaders() {
 	const cookie = await cache.getCookie()
@@ -71,19 +57,6 @@ async function getHeaders() {
 		// 'x-requested-with': "XMLHttpRequest",
 		...cookie,
 	}
-}
-export async function fetchAllQuestions() {
-	const url = 'https://leetcode.com/graphql'
-	const headers = await getHeaders()
-	axios.request({
-		url,
-		headers,
-		data: {
-			operationName: 'getQuestionTranslation',
-			query: `query getQuestionTranslation($lang: String) {\n  translations: allAppliedQuestionTranslations(lang: $lang) {\n    title\n    questionId\n    __typename\n  }\n}\n`,
-			variables: {},
-		},
-	})
 }
 
 async function request<T>(config: AxiosRequestConfig): Promise<T> {
@@ -130,6 +103,7 @@ async function graphql<T>(data: GraphqlRequestData): Promise<T> {
 		return res.data
 	})
 }
+
 const config = {
 	allQuestions: {
 		operationName: 'getQuestionTranslation',
@@ -314,130 +288,9 @@ const config = {
 		}
 	},
 }
-export async function getAllQuestions() {
-	let questions = cache.getQuestions()
-	if (questions.length) {
-		return questions
-	}
-	await freshQuestions()
-	return cache.getQuestions()
-}
-export async function freshQuestions() {
-	let questions: ConciseQuestion[] = []
-	const data = await api.fetchCategorieQuestions('all')
-	questions = handleCategorieQuestions(data)
-	sortQuestions(questions)
-	cache.setQuestions(questions)
-}
-async function getMapIdQuestion(): Promise<object> {
-	if (cache.has(MAPIDQUESTION)) {
-		return cache.get(MAPIDQUESTION)
-	}
-	const questions = await getAllQuestions()
-	let map: MapIdConciseQuestion = {}
-	for (let i = 0; i < questions.length; i++) {
-		const question = questions[i]
-		map[question.id] = question
-	}
-	cache.set(MAPIDQUESTION, map)
-	return map
-}
-export async function getDifficulty() {
-	const questions = await getAllQuestions()
-}
-export async function getQuestionDetailById(id: string) {
-	const db = await getDb()
-	const out = await db.read(parseInt(id))
-	if (out) {
-		return JSON.parse(out)
-	}
-}
-export async function saveQuestionDetail(question) {
-	const db = await getDb()
-	await db.add(JSON.stringify(question), Number(question.questionId), Number(question.questionFrontendId))
-}
-export async function getTags() {
-	let tags: Tag[] = cache.getTags()
-	if (!tags) {
-		const data = await api.fetchTags()
-		tags = data.topics
-		cache.setTags(tags)
-	}
-
-	return tags.map((tag) => tag.translatedName || tag.name)
-}
-export async function getQuestionsByTag(translatedName: string) {
-	let tags = cache.getTags()
-	let tag = tags.find((tag) => tag.translatedName === translatedName || tag.name === translatedName)
-
-	if (tag && tag.questions) {
-		const map = await getMapIdQuestion()
-		return tag.questions.map((id) => map[id]).filter((v) => !!v)
-	}
-	return []
-}
-export async function getQuestionsByDifficult(difficult) {
-	const mapDifficultLevel = {
-		easy: 1,
-		medium: 2,
-		hard: 3,
-	}
-	const questions = await getAllQuestions()
-	return questions.filter((q) => q.level === mapDifficultLevel[difficult])
-}
-function handleCategorieQuestions(data) {
-	const { stat_status_pairs } = data
-	const questions = stat_status_pairs.map((v) => ({
-		fid: String(v.stat.frontend_question_id),
-		level: v.difficulty.level,
-		id: v.stat.question_id,
-		title: v.stat.question__title,
-		slug: v.stat.question__title_slug,
-		acs: v.stat.total_acs,
-		submitted: v.stat.total_submitted,
-		paid_only: v.paid_only,
-		status: v.status,
-		name: v.stat.question__title,
-	}))
-	return questions
-}
-async function setTranslations(questions) {
-	const translationsQuestions = await api.fetchTranslations()
-	let mapIdTitle = {}
-	for (let i = 0; i < translationsQuestions.length; i++) {
-		const { questionId, title } = translationsQuestions[i]
-		mapIdTitle[questionId] = title
-	}
-	for (let i = 0; i < questions.length; i++) {
-		const question = questions[i]
-		question.name = mapIdTitle[question.id] || question.title
-	}
-}
-
-function handleSubmissionDetail(html: string): string | undefined {
-	const question = parseSubmissionDetailHtml(html)
-	if (question) {
-		return question.submissionCode
-	} else {
-		return
-	}
-}
-interface Question {
-	questionId: string
-	title: string
-}
-interface Tag {
-	slug: string
-	name: string
-	questions: number[]
-	translatedName: string
-}
 export const api = {
 	freshQuestions,
 	getAllQuestions,
-	fetchTranslations(): Promise<Question[]> {
-		return graphql<QuestionTranslationData>(config.allQuestions).then((data) => data.translations)
-	},
 	fetchCategorieQuestions(categorie: Category) {
 		return request<Problems>(config.getQuestionsByCategory(categorie))
 	},
@@ -448,7 +301,7 @@ export const api = {
 		return request<TagData>(config.tags)
 	},
 	fetchContest(titleSlug: string) {
-		return request<any>(config.getContest(titleSlug))
+		return request<ContestDetail>(config.getContest(titleSlug))
 	},
 	fetchChapters() {
 		return graphql<ChaptersRes>(config.getChapters())
@@ -508,4 +361,112 @@ export const api = {
 		}
 		return detail
 	},
+}
+export async function fetchAllQuestions() {
+	const url = 'https://leetcode.com/graphql'
+	const headers = await getHeaders()
+	axios.request({
+		url,
+		headers,
+		data: {
+			operationName: 'getQuestionTranslation',
+			query: `query getQuestionTranslation($lang: String) {\n  translations: allAppliedQuestionTranslations(lang: $lang) {\n    title\n    questionId\n    __typename\n  }\n}\n`,
+			variables: {},
+		},
+	})
+}
+
+export async function getAllQuestions() {
+	const questions = cache.getQuestions()
+	if (questions.length) {
+		return questions
+	}
+	await freshQuestions()
+	return cache.getQuestions()
+}
+export async function freshQuestions() {
+	let questions: ConciseQuestion[] = []
+	const data = await api.fetchCategorieQuestions('all')
+	questions = handleCategorieQuestions(data)
+	sortQuestions(questions)
+	cache.setQuestions(questions)
+}
+async function getMapIdQuestion(): Promise<MapIdConciseQuestion> {
+	if (cache.has(MAPIDQUESTION)) {
+		return cache.get(MAPIDQUESTION)!
+	}
+	const questions = await getAllQuestions()
+	const map: MapIdConciseQuestion = {}
+	for (let i = 0; i < questions.length; i++) {
+		const question = questions[i]
+		map[question.id] = question
+	}
+	cache.set(MAPIDQUESTION, map)
+	return map
+}
+
+export async function getQuestionDetailById(id: string) {
+	const db = await getDb()
+	const out = await db.read(parseInt(id))
+	if (out) {
+		return JSON.parse(out)
+	}
+}
+export async function saveQuestionDetail(question) {
+	const db = await getDb()
+	await db.add(JSON.stringify(question), Number(question.questionId), Number(question.questionFrontendId))
+}
+export async function getTags() {
+	let tags: Tag[] = cache.getTags() || []
+	if (!tags) {
+		const data = await api.fetchTags()
+		tags = data.topics
+		cache.setTags(tags)
+	}
+
+	return tags.map((tag) => tag.translatedName || tag.name)
+}
+export async function getQuestionsByTag(translatedName: string) {
+	const tags = cache.getTags() || []
+	const tag = tags.find((tag) => tag.translatedName === translatedName || tag.name === translatedName)
+
+	if (tag && tag.questions) {
+		const map = await getMapIdQuestion()
+		return tag.questions.map((id) => map[id]).filter((v) => !!v)
+	}
+	return []
+}
+export async function getQuestionsByDifficult(difficult) {
+	const mapDifficultLevel = {
+		easy: 1,
+		medium: 2,
+		hard: 3,
+	}
+	const questions = await getAllQuestions()
+	return questions.filter((q) => q.level === mapDifficultLevel[difficult])
+}
+function handleCategorieQuestions(data) {
+	const { stat_status_pairs } = data
+	const questions = stat_status_pairs.map((v) => ({
+		fid: String(v.stat.frontend_question_id),
+		level: v.difficulty.level,
+		id: v.stat.question_id,
+		title: v.stat.question__title,
+		slug: v.stat.question__title_slug,
+		acs: v.stat.total_acs,
+		submitted: v.stat.total_submitted,
+		paid_only: v.paid_only,
+		status: v.status,
+		name: v.stat.question__title,
+	}))
+	return questions
+}
+
+function handleSubmissionDetail(html: string): string | undefined {
+	const question = parseSubmissionDetailHtml(html)
+	if (question) {
+		return question.submissionCode
+	} else {
+		return
+	}
 }

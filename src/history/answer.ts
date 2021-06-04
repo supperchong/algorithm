@@ -1,4 +1,4 @@
-import { generateId, getDesc, getFuncNames, QuestionMeta, readFileAsync, writeFileAsync } from '../common/util'
+import { generateId, getDesc, getFuncNames, QuestionMeta, readFileAsync } from '../common/util'
 import { submitStorage } from './storage'
 import * as path from 'path'
 import { config } from '../config'
@@ -6,8 +6,8 @@ import { fetchQuestion, getName } from '../webview/questionPreview'
 import { preprocessCode } from '../util'
 import { CodeLang, isAlgorithm, langMap } from '../common/langConfig'
 import { Service } from '../lang/common'
-import { writeFile, parseHtml } from '../common/util'
-import { pathExists, readJson, writeJson, ensureFile } from 'fs-extra'
+import { writeFile } from '../common/util'
+import { readJson, writeJson, ensureFile } from 'fs-extra'
 import { UpdateCommentOption } from '../model/common'
 interface Answer {
 	id: string
@@ -46,6 +46,7 @@ export class AnswerStorage {
 		}
 	}
 	async save(data: string, questionMeta: QuestionMeta) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const id = questionMeta.id!
 		const historyfilePath = this.getFilePath(id)
 		const arr = await this.read(id)
@@ -65,7 +66,7 @@ export class AnswerStorage {
 	async updateComment({ id, questionId, comment }: UpdateCommentOption) {
 		const arr = await this.read(questionId)
 		const historyfilePath = this.getFilePath(questionId)
-		let item = arr.find((v) => v.id === id)
+		const item = arr.find((v) => v.id === id)
 		if (item) {
 			item.desc = comment
 		}
@@ -87,6 +88,9 @@ export class AnswerStorage {
 			questionId: questionMeta.id,
 		}
 		const question = await fetchQuestion(param)
+		if (!question) {
+			return
+		}
 		const { codeSnippets, questionFrontendId, title, translatedTitle } = question
 		const codeSnippet = codeSnippets.find((codeSnippet) => codeSnippet.langSlug === langSlug)
 		if (codeSnippet) {

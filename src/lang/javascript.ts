@@ -22,7 +22,7 @@ export class JavascriptParse extends BaseLang {
 	funcRegExp = /^(?:(\s*function)|(.*=\s*function))/
 	testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
 
-	async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+	async runMultiple(caseList: CaseList, originCode: string, _funcName: string) {
 		const metaData = (await this.getQuestionMeta()) as LanguageMetaData | undefined
 		if (!metaData) {
 			throw new Error('question meta not found')
@@ -36,28 +36,30 @@ export class JavascriptParse extends BaseLang {
 		return await execTestChildProcess(options)
 	}
 
-	shouldRemoveInBuild(line: string): boolean {
+	shouldRemoveInBuild(_line: string): boolean {
 		return false
 	}
 
-	async runInNewContext(args: string[], originCode: string, funcName: string) {
+	async runInNewContext(_args: string[], _originCode: string, _funcName: string) {
 		return ''
 	}
-	async handlePreImport() {}
+	async handlePreImport() {
+		return
+	}
 	async buildCode() {
 		try {
 			const filePath = this.filePath
-			let text = this.text!
+			const text = this.text!
 			const dir = path.parse(filePath).dir
 			const { funcNames, questionMeta } = getFuncNames(text, filePath)
 			const funcRunStr = 'console.log(' + funcNames.map((f) => f + '()').join('+') + ')'
 			// The rollup will not transform code in virtual entry
-			let entry: any = await babel.transformAsync(text, {
+			const entry: babel.BabelFileResult | null = await babel.transformAsync(text, {
 				comments: false,
 				compact: false,
 				plugins: [outBoundArrayPlugin],
 			})
-			entry = entry?.code + `\n${funcRunStr}`
+			const entryCode = entry?.code + `\n${funcRunStr}`
 			const bundle = await rollup.rollup({
 				input: 'entry',
 
@@ -65,7 +67,7 @@ export class JavascriptParse extends BaseLang {
 				plugins: [
 					// It use virtual entry because treeshake will remove unuse code.
 					virtual({
-						entry: entry,
+						entry: entryCode,
 					}),
 					resolve({ rootDir: dir }),
 					rollupBabelPlugin({

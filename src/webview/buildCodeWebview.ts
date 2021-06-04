@@ -1,16 +1,8 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
-import { commands, Clipboard, env } from 'vscode'
+import { Clipboard, env } from 'vscode'
 import { highlightCode } from '../util'
-const md = require('markdown-it')({
-	html: true,
-	inkify: true,
-	typographer: true,
-})
-
-export function createPanel(context: vscode.ExtensionContext, text: string, langSlug: string) {
-	BuildCodePanel.createOrShow(context, text, langSlug)
-}
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 
 class BuildCodePanel {
 	/**
@@ -31,7 +23,7 @@ class BuildCodePanel {
 	private setbuildCodeActiveContext(value: boolean) {
 		vscode.commands.executeCommand('setContext', BuildCodePanel.buildCodeActiveContextKey, value)
 	}
-	private registerCommand(id: string, impl: (...args: any[]) => void, thisArg?: any) {
+	private registerCommand(id: string, impl: (...args: unknown[]) => void, thisArg?: unknown) {
 		if (!BuildCodePanel.commands.get(id)) {
 			const dispose = vscode.commands.registerCommand(id, impl, thisArg)
 			this.context.subscriptions.push(dispose)
@@ -156,4 +148,8 @@ function getNonce() {
 		text += possible.charAt(Math.floor(Math.random() * possible.length))
 	}
 	return text
+}
+
+export function createPanel(context: vscode.ExtensionContext, text: string, langSlug: string) {
+	BuildCodePanel.createOrShow(context, text, langSlug)
 }

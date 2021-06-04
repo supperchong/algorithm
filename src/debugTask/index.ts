@@ -1,15 +1,11 @@
-import { writeFileSync, readFileSync, fstat, promises } from 'fs'
+import { writeFileSync, promises } from 'fs'
 import { outBoundArrayPlugin } from '../babelPlugin'
 import rollup = require('rollup')
 import resolve from '@rollup/plugin-node-resolve'
 import rollupBabelPlugin from '@rollup/plugin-babel'
 import * as path from 'path'
-import babel = require('@babel/core')
-import presetTs = require('@babel/preset-typescript')
-import virtual = require('@rollup/plugin-virtual')
 import { CodeLang, getFileLang } from '../common/langConfig'
-import { TestOptions, LanguageMetaData, DebugOptions } from '../common/lang'
-import { tag } from 'pretty-tag'
+import { DebugOptions } from '../common/lang'
 import { handleArgsType } from '../common/util'
 
 export async function main(options: DebugOptions, args: string[]) {
@@ -29,7 +25,7 @@ export async function main(options: DebugOptions, args: string[]) {
 	const mainFileCode = options.originCode
 
 	const meta = options.metaData
-	let funName = meta.name
+	const funName = meta.name
 
 	if (codeLang === CodeLang.TypeScript) {
 		const finalCode = mainFileCode + '\n' + handleArgsType(meta, '', args, true)
@@ -55,7 +51,7 @@ export async function main(options: DebugOptions, args: string[]) {
 		},
 	})
 	let code = output[0].code
-	let map = output[0].map
+	const map = output[0].map
 	if (funName) {
 		code += handleArgsType(meta, '', args) + '\n'
 	}
@@ -70,6 +66,7 @@ export async function main(options: DebugOptions, args: string[]) {
 }
 
 export async function buildTsCode(text: string, filePath: string, dir: string) {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	return require('esbuild')
 		.build({
 			stdin: {

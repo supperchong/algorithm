@@ -5,7 +5,7 @@ export function registerForSnippetProviders(context: vscode.ExtensionContext) {
 	const forVariables = ['i', 'j', 'k']
 	const fns = forVariables.map((forVariable) => {
 		return function provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
-			let key = `for${forVariable}.`
+			const key = `for${forVariable}.`
 			let text = document.lineAt(position).text
 			if (!text.endsWith(key)) {
 				return
@@ -19,9 +19,9 @@ export function registerForSnippetProviders(context: vscode.ExtensionContext) {
 			}
 			text = text.trimLeft()
 			const snippetCompletion = new vscode.CompletionItem(text)
-			let range = document.lineAt(position).range
+			const range = document.lineAt(position).range
 			snippetCompletion.range = range
-			let prefix = text.slice(0, text.length - 5)
+			const prefix = text.slice(0, text.length - 5)
 			let snippetString = tag`
             for (let ${forVariable} = 0; ${forVariable} < ${prefix}.length; ${forVariable}++) {
                 let element = ${prefix}[${forVariable}]

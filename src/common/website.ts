@@ -8,9 +8,8 @@ export const WebsiteMap = {
 	[Lang.cn]: Website.LeetcodeCn,
 	[Lang.en]: Website.Leetcode,
 }
-function baseTag(strs: TemplateStringsArray, ...arr: any[]) {
+function baseTag(strs: TemplateStringsArray, ...arr: string[]): string {
 	const baseUrl = WebsiteMap[config.lang]
-	console.log(config.lang)
 	return baseUrl + '/' + arr.reduce((prev, cur, i) => prev + cur + strs[i + 1], strs[0])
 }
-export const getSolution = (titleSlug: string) => baseTag`problems/${titleSlug}/solution/`
+export const getSolution = (titleSlug: string): string => baseTag`problems/${titleSlug}/solution/`

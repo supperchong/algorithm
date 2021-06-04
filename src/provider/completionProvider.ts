@@ -14,6 +14,7 @@ export function registerCompletionItemProvider(context: vscode.ExtensionContext)
 			vscode.languages.registerCompletionItemProvider(
 				languages,
 				{
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
 						const snippetCompletion = new vscode.CompletionItem(prefix)
 						snippetCompletion.insertText = new vscode.SnippetString(body)

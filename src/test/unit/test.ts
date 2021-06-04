@@ -24,7 +24,7 @@ suite('Util Test Suite', () => {
 	test('test getTestCaseList', () => {
 		const testCaseList = getTestCaseList(cases[0])
 		assert.equal(testCaseList.length, 1)
-		const { testCase, funcName, paramsTypes, resultType } = testCaseList[0]
+		const { testCase } = testCaseList[0]
 		assert.deepEqual(testCase, [
 			'// @test(6,[[0,1],[1,3],[2,3],[4,0],[4,5]])=3',
 			'// @test(5,[[1,0],[1,2],[3,2],[3,4]])=2',

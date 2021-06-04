@@ -1,9 +1,15 @@
 import * as vscode from 'vscode'
-import { detectEnableExt, getTestCaseList, getTsTestCaseList, TestCaseParam } from '../common/util'
-import { CodeLang, getFileLang, getFileLangSlug, isAlgorithm, isDataBase, isShell } from '../common/langConfig'
-import * as path from 'path'
-import { PythonParse } from '../lang/python'
+import { detectEnableExt, TestCaseParam } from '../common/util'
+import { getFileLang, getFileLangSlug, isAlgorithm } from '../common/langConfig'
 import { Service } from '../lang/common'
+import {
+	CodeLensesOptions,
+	DebugLensesOptions,
+	GetDescriptionCodeLensesOptions,
+	SubmitCodeLensesOptions,
+	TestCodeLensesOptions,
+	ViewSubmitHistoryCodeLensesOptions,
+} from '../model/command'
 export class CodelensProvider implements vscode.CodeLensProvider {
 	private codeLenses: vscode.CodeLens[] = []
 	private regex: RegExp
@@ -17,59 +23,63 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 			this._onDidChangeCodeLenses.fire()
 		})
 	}
-	private getBuildCodeLenses(text: string, filePath: string, langSlug: string): vscode.CodeLens {
+	private getBuildCodeLenses(options: CodeLensesOptions): vscode.CodeLens {
 		const codeLens = new vscode.CodeLens(new vscode.Range(0, 0, 0, 7))
+
 		codeLens.command = {
 			title: 'build',
 			tooltip: 'build',
 			command: 'algorithm.buildCode',
-			arguments: [text, filePath, langSlug],
+			arguments: [options],
 		}
 		return codeLens
 	}
-	private getSubmitCodeLenses(text: string, filePath: string): vscode.CodeLens {
+	private getSubmitCodeLenses(options: SubmitCodeLensesOptions): vscode.CodeLens {
 		const codeLens = new vscode.CodeLens(new vscode.Range(0, 0, 0, 7))
+
 		codeLens.command = {
 			title: 'submit',
 			tooltip: 'submit',
 			command: 'algorithm.submit',
-			arguments: [text, filePath],
+			arguments: [options],
 		}
 		return codeLens
 	}
-	private getDescriptionCodeLenses(text: string, filePath: string) {
+	private getDescriptionCodeLenses(options: GetDescriptionCodeLensesOptions) {
 		const codeLens = new vscode.CodeLens(new vscode.Range(0, 0, 0, 7))
 		codeLens.command = {
 			title: 'description',
 			tooltip: 'description',
 			command: 'algorithm.getDescription',
-			arguments: [text, filePath],
+			arguments: [options],
 		}
 		return codeLens
 	}
-	private getHistoryCodeLenses(text: string, filePath: string) {
+	private getHistoryCodeLenses(options: ViewSubmitHistoryCodeLensesOptions) {
 		const codeLens = new vscode.CodeLens(new vscode.Range(0, 0, 0, 7))
 		codeLens.command = {
 			title: 'history',
 			tooltip: 'history',
 			command: 'algorithm.viewSubmitHistory',
-			arguments: [text, filePath],
+			arguments: [options],
 		}
 		return codeLens
 	}
-	private getTestCodeLenses(testCaseParam: TestCaseParam, filePath: string) {
-		const { line, testCase, funcName, paramsTypes, resultType } = testCaseParam
+	private getTestCodeLenses(options: TestCodeLensesOptions) {
+		const {
+			testCaseParam: { line },
+		} = options
 		const codeLens = new vscode.CodeLens(new vscode.Range(line, 0, line, 7))
 		codeLens.command = {
 			title: 'test',
 			tooltip: 'test',
 			command: 'algorithm.testCode',
-			arguments: [line, testCase, funcName, paramsTypes, resultType, filePath],
+			arguments: [options],
 		}
 		return codeLens
 	}
-	private getDebugCodeLenses(testCaseParam: TestCaseParam, filePath: string) {
-		const { line, testCase, funcName, paramsTypes, resultType } = testCaseParam
+	private getDebugCodeLenses(testCaseParam: TestCaseParam, filePath: DebugLensesOptions) {
+		const { line } = testCaseParam
 		const codeLens = new vscode.CodeLens(new vscode.Range(line, 0, line, 7))
 		codeLens.command = {
 			title: 'debug',
@@ -80,10 +90,7 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 		return codeLens
 	}
 
-	public provideCodeLenses(
-		document: vscode.TextDocument,
-		token: vscode.CancellationToken
-	): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
+	public provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
 		this.codeLenses = []
 		const text = document.getText()
 		const filePath = document.fileName
@@ -92,10 +99,23 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 		if (enableExt) {
 			const codeLang = getFileLang(filePath)
 			const langSlug = getFileLangSlug(filePath)
-			const submitCodeLenses = this.getSubmitCodeLenses(text, filePath)
-			const buildCodeLenses = this.getBuildCodeLenses(text, filePath, langSlug)
-			const desCodeLenses = this.getDescriptionCodeLenses(text, filePath)
-			const historyCodeLenses = this.getHistoryCodeLenses(text, filePath)
+			const codeLensesOptions: CodeLensesOptions = {
+				text,
+				filePath,
+				langSlug,
+			}
+			const submitCodeLenses = this.getSubmitCodeLenses({
+				...codeLensesOptions,
+			})
+			const buildCodeLenses = this.getBuildCodeLenses({
+				...codeLensesOptions,
+			})
+			const desCodeLenses = this.getDescriptionCodeLenses({
+				...codeLensesOptions,
+			})
+			const historyCodeLenses = this.getHistoryCodeLenses({
+				...codeLensesOptions,
+			})
 			this.codeLenses.push(submitCodeLenses)
 			this.codeLenses.push(buildCodeLenses)
 			this.codeLenses.push(desCodeLenses)
@@ -104,7 +124,11 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 				const lang = new Service(filePath, text)
 				const testCaseList = lang.getTestCaseList(text)
 				testCaseList.forEach((testCaseParam) => {
-					const testCodeLenses = this.getTestCodeLenses(testCaseParam, document.uri.fsPath)
+					const testCodeOptions: TestCodeLensesOptions = {
+						filePath: document.uri.fsPath,
+						testCaseParam,
+					}
+					const testCodeLenses = this.getTestCodeLenses(testCodeOptions)
 					const debugCodeLenses = this.getDebugCodeLenses(testCaseParam, document.uri.fsPath)
 					this.codeLenses.push(testCodeLenses)
 					this.codeLenses.push(debugCodeLenses)

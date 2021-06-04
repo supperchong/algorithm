@@ -3,37 +3,30 @@ import fs = require('fs')
 import fse = require('fs-extra')
 import { promisify } from 'util'
 import vm = require('vm')
-import { Question } from '../model/question.cn'
 import { SubmissionDetailPageData } from '../model/question'
-import { ConciseQuestion } from '../model/common'
+import { CnContestPageData, CodeDefinition, CommonQuestion, ConciseQuestion } from '../model/common'
 import * as path from 'path'
 import axios from 'axios'
 import * as compressing from 'compressing'
-import { CodeLang, getFileLang } from './langConfig'
 import { getFileComment } from './langConfig'
 import * as cp from 'child_process'
 import { tag } from 'pretty-tag'
 import { LanguageMetaData } from './lang'
 
-const rimraf = require('rimraf')
-const cheerio = require('cheerio')
+import rimraf = require('rimraf')
+import cheerio = require('cheerio')
 const access = promisify(fs.access)
 const mkdir = promisify(fs.mkdir)
 const writeFileAsync = promisify(fs.writeFile)
 const readFileAsync = promisify(fs.readFile)
-const rename = promisify(fs.rename)
-const rmdir = promisify(fs.rmdir)
 const execFileAsync = promisify(cp.execFile)
 const isSpace = (s: string) => /\s/.test(s)
-const algorithmToken = '// @algorithm'
 const testRegExp = /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
 const funcRegExp = /^(?:(\s*function)|(.*=\s*function))/
 const paramMetaRegExp = /@param {([^}]+)}/
 const returnRegExp = /@return {([^}]+)}/
-const lcToken = /^\/\/ @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-]+))?/
-const titleSlugToken = /^\/\/ @title ([\w-]+)/
 export const funcNameRegExp = /^(?:\s*function\s*([\w]+)\s*|\s*(?:(?:var|let|const)\s+([\w]+)\s*=\s*)?function)/
-export const tsFunctionRegExp = /function\s+(\w+)\((.*)\)\s*(?:\:(.+))?{/
+export const tsFunctionRegExp = /function\s+(\w+)\((.*)\)\s*(?::(.+))?{/
 export const isTreeNode = (str: string) => /^TreeNode\s*(\|\s*null)?$/.test(str)
 export const isListNode = (str: string) => /^ListNode\s*(\|\s*null)?$/.test(str)
 export type TestCase = string[]
@@ -61,6 +54,7 @@ export function isVersionGte(v1: string, v2: string) {
 	}
 	return true
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function writeFile(filepath: string, data: any) {
 	const dir = path.dirname(filepath)
 	await fs.promises.mkdir(dir, { recursive: true })
@@ -69,6 +63,7 @@ export async function writeFile(filepath: string, data: any) {
 export function mkdirSync(dir: string) {
 	fs.mkdirSync(dir, { recursive: true })
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function writeFileSync(filepath: string, data: any, options: fs.WriteFileOptions) {
 	fs.mkdirSync(path.dirname(filepath), { recursive: true })
 	fs.writeFileSync(filepath, data, options)
@@ -108,21 +103,21 @@ function detectEnableExt(text: string, filePath: string): boolean {
 	return true
 }
 function getJsTestCaseList(text: string): Array<TestCaseParam> {
-	let testCaseList: TestCaseParam[] = []
+	const testCaseList: TestCaseParam[] = []
 	const lines = text.split(/\n/)
 	let isTest = false
 	let testCase: TestCase = []
 	let paramsTypes: string[] = []
-	let resultType: string = ''
+	let resultType = ''
 	for (let i = 0; i < lines.length; i++) {
 		if (testRegExp.test(lines[i])) {
 			isTest = true
 			testCase.push(lines[i])
 		} else if (funcRegExp.test(lines[i])) {
 			if (isTest) {
-				let match = lines[i].match(funcNameRegExp)
+				const match = lines[i].match(funcNameRegExp)
 				if (match) {
-					let funcName = match[1] || match[2]
+					const funcName = match[1] || match[2]
 
 					testCaseList.push({
 						line: i,
@@ -139,12 +134,12 @@ function getJsTestCaseList(text: string): Array<TestCaseParam> {
 				testCase = []
 			}
 		} else if (paramMetaRegExp.test(lines[i])) {
-			let match = lines[i].match(paramMetaRegExp)
+			const match = lines[i].match(paramMetaRegExp)
 			if (match) {
 				paramsTypes.push(match[1])
 			}
 		} else if (returnRegExp.test(lines[i])) {
-			let match = lines[i].match(returnRegExp)
+			const match = lines[i].match(returnRegExp)
 			if (match) {
 				resultType = match[1]
 			}
@@ -162,7 +157,7 @@ function trimResultType(resultType: string | undefined) {
 	return resultType && resultType.trim()
 }
 export function parseTsFunctionType(line: string) {
-	let match = line.match(tsFunctionRegExp)
+	const match = line.match(tsFunctionRegExp)
 	if (match) {
 		return {
 			funcName: match[1],
@@ -173,7 +168,7 @@ export function parseTsFunctionType(line: string) {
 	return null
 }
 function getTsTestCaseList(text: string) {
-	let testCaseList: TestCaseParam[] = []
+	const testCaseList: TestCaseParam[] = []
 	let testCase: TestCase = []
 	let isTest = false
 	const lines = text.split(/\n/)
@@ -216,19 +211,19 @@ function parseCode(text: string, filePath: string): FunNamesMeta {
 	const lines = text.split(/\n/)
 	const funcNames: string[] = []
 	const comment = getFileComment(filePath)
-	let lcToken =
+	const lcToken =
 		comment === '//'
 			? /^\/\/ @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-]+))?/
 			: /^# @algorithm @lc id=(\d+) lang=([\w+#]+)(?:\sweekname=([\w-]+))?/
-	let titleSlugToken = comment === '//' ? /^\/\/ @title ([\w-]+)/ : /^# @title ([\w-]+)/
-	let descToken = comment === '//' ? /^\/\/ @desc (.+)/ : /^# @desc (.+)/
-	let questionMeta: QuestionMeta = {}
+	const titleSlugToken = comment === '//' ? /^\/\/ @title ([\w-]+)/ : /^# @title ([\w-]+)/
+	const descToken = comment === '//' ? /^\/\/ @desc (.+)/ : /^# @desc (.+)/
+	const questionMeta: QuestionMeta = {}
 	for (let i = 0; i < lines.length; i++) {
 		if (lcToken.test(lines[i])) {
 			const match = lines[i].match(lcToken) as RegExpMatchArray
-			let id = match[1]
-			let lang = match[2]
-			let weekname = match[3]
+			const id = match[1]
+			const lang = match[2]
+			const weekname = match[3]
 			questionMeta.id = id
 			questionMeta.lang = lang
 			questionMeta.weekname = weekname
@@ -255,7 +250,7 @@ function parseCode(text: string, filePath: string): FunNamesMeta {
 export function getDesc(text: string, filePath: string) {
 	const lines = text.split(/\n/)
 	const comment = getFileComment(filePath)
-	let descToken = comment === '//' ? /^\/\/ @desc (.+)/ : /^# @desc (.+)/
+	const descToken = comment === '//' ? /^\/\/ @desc (.+)/ : /^# @desc (.+)/
 
 	for (let i = 0; i < lines.length; i++) {
 		if (descToken.test(lines[i])) {
@@ -301,36 +296,37 @@ export async function existFile(filepath: string): Promise<boolean> {
 	}
 }
 
-export function parseHtml(html: string): Question | null {
+export function parseHtml(html: string): CommonQuestion | null {
 	const $ = cheerio.load(html, { decodeEntities: false })
-	const translatedContent = $('.question-content.default-content').html().trim()
-	const content = translatedContent
-	let scripts = $('script').filter(function () {
+
+	const translatedContent = $('.question-content.default-content').html()?.trim() || ''
+	const content = translatedContent || ''
+	const scripts = $('script').filter(function () {
 		const text = $(this).html()
-		return text.includes('pageData') && text.includes('questionId')
+		return !!(text?.includes('pageData') && text.includes('questionId'))
 	})
-	const questionFrontendId = parseInt($('.question-title h3').html())
-	let question = null
+	const questionFrontendId = parseInt($('.question-title h3').html() || '-1').toString()
+	let question: CommonQuestion | null = null
 	if (scripts.length === 1) {
-		let text = scripts.html()
+		const text = scripts.html()
 		const Script = vm.Script
 		const script = new Script(text + ';pageData')
 
-		const result = script.runInNewContext()
+		const result: CnContestPageData = script.runInNewContext()
 		if (result) {
 			question = {
 				...result,
 				translatedContent,
 				questionFrontendId,
 				metaData: JSON.stringify(result.metaData),
-				title: result.questionTitle || result.translatedTitle,
-				translatedTitle: result.questionTitle || result.translatedTitle,
+				title: result.questionSourceTitle,
+				translatedTitle: result.questionTitle,
 				content,
 				titleSlug: result.questionTitleSlug,
-				codeSnippets: result.codeDefinition.map((v: any) => ({
-					code: v.defaultCode || v.code,
-					lang: v.text || v.lang,
-					langSlug: v.value || v.langSlug,
+				codeSnippets: result.codeDefinition.map((v: CodeDefinition) => ({
+					code: v.defaultCode,
+					lang: v.text,
+					langSlug: v.value,
 				})),
 			}
 		}
@@ -339,13 +335,13 @@ export function parseHtml(html: string): Question | null {
 }
 export function parseSubmissionDetailHtml(html: string): SubmissionDetailPageData | null {
 	const $ = cheerio.load(html, { decodeEntities: false })
-	let scripts = $('script').filter(function () {
+	const scripts = $('script').filter(function () {
 		const text = $(this).html()
-		return text.includes('pageData') && text.includes('questionId')
+		return !!(text?.includes('pageData') && text.includes('questionId'))
 	})
 	let pageData: SubmissionDetailPageData | null = null
 	if (scripts.length === 1) {
-		let text = scripts.html()
+		const text = scripts.html()
 		const Script = vm.Script
 		const script = new Script(text + ';pageData')
 		pageData = script.runInNewContext()
@@ -353,12 +349,12 @@ export function parseSubmissionDetailHtml(html: string): SubmissionDetailPageDat
 	return pageData
 }
 export function escape2html(str: string) {
-	let map = { lt: '<', gt: '>', nbsp: ' ', amp: '&', quot: '"', '#39': "'" }
+	const map = { lt: '<', gt: '>', nbsp: ' ', amp: '&', quot: '"', '#39': "'" }
 	return str.replace(/&(lt|gt|nbsp|amp|quot|#39);/g, (_, key) => map[key])
 }
-export function combineCodeTest() {}
+
 async function sleep(ms: number) {
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve) => {
 		return setTimeout(resolve, ms)
 	})
 }
@@ -377,7 +373,7 @@ export async function retry<T>({
 	while (count > 0) {
 		count--
 		await sleep(delay)
-		let result = await fn()
+		const result = await fn()
 		if (verifyFn(result)) {
 			return result
 		}
@@ -386,7 +382,7 @@ export async function retry<T>({
 }
 
 function parseTestCase(testCase: TestCase): CaseList {
-	let caseList: CaseList = []
+	const caseList: CaseList = []
 	for (const argsLiteral of testCase) {
 		caseList.push(parseCommentTest(argsLiteral))
 	}
@@ -394,7 +390,7 @@ function parseTestCase(testCase: TestCase): CaseList {
 }
 export function parseCommentTest(testComment: string): Args {
 	let index = testComment.indexOf('@test') + 4
-	let params: any[] = []
+	const params: string[] = []
 	let result = ''
 	while (testComment[++index]) {
 		if (testComment[index] === '(') {
@@ -405,7 +401,7 @@ export function parseCommentTest(testComment: string): Args {
 	let { index: pos } = parse(testComment.slice(index), { partialIndex: true })
 	while (pos) {
 		pos = pos + index
-		let param = testComment.slice(index, pos)
+		const param = testComment.slice(index, pos)
 		// param = JSON.parse(param)
 		params.push(param.trim())
 		if (testComment[pos] === ',') {
@@ -442,7 +438,7 @@ export function normalize(result: any, returnType: string) {
 		return JSON.stringify(result)
 	}
 }
-export function parseLink() {}
+
 /**
  *
  * @param args the params of function
@@ -453,7 +449,7 @@ export function deserializeParam(args: string[], paramsTypes: string[], includeF
 	let hasTree = false
 	let hasList = false
 	for (let i = 0; i < paramsTypes.length; i++) {
-		let paramType = paramsTypes[i]
+		const paramType = paramsTypes[i]
 		if (isTreeNode(paramType)) {
 			hasTree = true
 			if (includeFunctionCall) {
@@ -538,7 +534,7 @@ export function uniqueArrByKey<Obj extends Record<Key, string>, Key extends keyo
 	arr.length = i + 1
 }
 export function unionArr<T>(arr1: T[], arr2: T[]) {
-	let set = new Set(arr1)
+	const set = new Set(arr1)
 	arr2.forEach((v) => set.add(v))
 	return [...set]
 }
@@ -562,7 +558,7 @@ export function handleMsg(testResultList: TestResult[]) {
 	return msg
 }
 
-function handleParam(index: number, paramType: string, esbuild: boolean = false): string {
+function handleParam(index: number, paramType: string, esbuild = false): string {
 	const prefix = esbuild ? 'a.' : ''
 	const handleConfig = [
 		{
@@ -615,9 +611,9 @@ function handleReturn(
 	funcName: string,
 	returnType: string,
 	firstParamType: string,
-	esbuild: boolean = false
+	esbuild = false
 ): string {
-	let isVoid = returnType === 'void'
+	const isVoid = returnType === 'void'
 	if (isVoid) {
 		returnType = firstParamType
 	}
@@ -699,14 +695,14 @@ function handleReturn(
 
 	throw new Error(`returnType ${returnType} not support`)
 }
-function handleArgsType(meta: LanguageMetaData, originCode: string, args: string[], isEsbuild: boolean = false) {
+function handleArgsType(meta: LanguageMetaData, originCode: string, args: string[], isEsbuild = false) {
 	const params = meta.params || []
-	let rt = meta.return.type
+	const rt = meta.return.type
 	const funcName = meta.name
 	const argExpressions: string[] = []
 	const paramCount = params.length
 	for (let i = 0; i < paramCount; i++) {
-		const { name, type } = params[i]
+		const { type } = params[i]
 		argExpressions[i] = handleParam(i, type, isEsbuild)
 	}
 	const argExpression = argExpressions.join('\n')

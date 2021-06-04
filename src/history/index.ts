@@ -1,7 +1,7 @@
 import { answerStorage } from './answer'
 import { submitStorage } from './storage'
 import { config } from '../config'
-import { HistoryType, Lang, UpdateCommentOption, UpdateRemoteCommentOption } from '../model/common'
+import { HistoryType, Lang, UpdateCommentOption } from '../model/common'
 import { api } from '../api/index'
 
 export async function getHistory(questionId: string, fn: (code: string, lang: string) => string) {
@@ -127,8 +127,11 @@ export async function getRemoteSubmits(questionId: string) {
 	}
 	return remoteStorageData
 }
-function formatTimestamp(time: string) {
-	const num = parseInt(time) * 1000
+export function formatTimestamp(time: string | number) {
+	if (typeof time === 'string') {
+		time = parseInt(time)
+	}
+	const num = time * 1000
 	const date = new Date(num)
 	const year = date.getFullYear()
 	const month = (date.getMonth() + 1).toString().padStart(2, '0')

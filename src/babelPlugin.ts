@@ -1,7 +1,7 @@
 import { types as t } from '@babel/core'
 const regexp = /^@get\((-?\d+|Infinity|-Infinity)\)$/
 
-function generatelogicalExpression(arr: any[]) {
+function generatelogicalExpression(arr: t.Expression[]) {
 	if (arr.length === 2) {
 		return t.logicalExpression('&&', arr[0], arr[1])
 	} else if (arr.length > 2) {
@@ -31,7 +31,7 @@ export function outBoundArrayPlugin() {
 					path.node.leadingComments &&
 					path.node.leadingComments.find((v) => regexp.test(v.value))
 				) {
-					let comment = path.node.leadingComments.find((v) => regexp.test(v.value)) as t.Comment
+					const comment = path.node.leadingComments.find((v) => regexp.test(v.value)) as t.Comment
 					const regexpResult = regexp.exec(comment.value) as RegExpExecArray
 					const numStr = regexpResult[1]
 					let numNode: t.Identifier | t.UnaryExpression | t.NumericLiteral

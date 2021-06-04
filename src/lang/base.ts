@@ -1,20 +1,11 @@
-import * as cp from 'child_process'
-import * as fs from 'fs'
-import { readFileAsync, TestCase, TestCaseParam, writeFileAsync, execFileAsync, CaseList } from '../common/util'
-import { tag } from 'pretty-tag'
+import { readFileAsync, TestCase, TestCaseParam, CaseList } from '../common/util'
 import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/util'
-import { log, config } from '../config'
-import { getDb } from '../db'
+import { log } from '../config'
 import { api } from '../api/index'
 import { resolve } from 'path'
-import { rejects } from 'assert'
-import { runInNewContext } from 'vm'
-import { promisify } from 'util'
 import { OutputChannel } from 'vscode'
 import * as vscode from 'vscode'
 import { tranfromToCustomBreakpoint } from '../debug/launch'
-import { stdout } from 'process'
-import * as path from 'path'
 import { getFileComment } from '../common/langConfig'
 import { parseCommentTest } from '../common/util'
 import { LanguageMetaData, MetaData } from '../common/lang'
@@ -26,9 +17,10 @@ export abstract class BaseLang {
 	public abstract funcRegExp: RegExp
 	public abstract testRegExp: RegExp
 	public abstract runInNewContext(args: string[], originCode: string, funcName: string): Promise<string>
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public abstract getDebugConfig(breaks?: vscode.SourceBreakpoint[]): any
 	public abstract beforeDebug(breaks: vscode.SourceBreakpoint[]): Promise<void>
-	public abstract handlePreImport(): any
+	public abstract handlePreImport(): void
 	public abstract shouldRemoveInBuild(line: string): boolean
 	constructor(public filePath: string, public text?: string) {
 		this.log = log
@@ -78,8 +70,7 @@ export abstract class BaseLang {
 		if (!questionMeta) {
 			throw new Error('questionMeta not found ')
 		}
-		const funcName = questionMeta.name
-		let codeLines = originCode.split('\n')
+		const codeLines = originCode.split('\n')
 
 		const lines = customBreakPoint.lines
 		const line = lines.find((num) => this.testRegExp.test(codeLines[num]))
@@ -90,40 +81,39 @@ export abstract class BaseLang {
 		return args
 	}
 	handleResult(stdout: string, caseList) {
-		let testResultList: TestResult[] = caseList.map((v) => {
+		const testResultList: TestResult[] = caseList.map((v) => {
 			return {
 				args: v.args,
 				expect: v.result,
 			}
 		})
-		let regexp = /resultabc(\d+):(.+?)resultend/g
+		const regexp = /resultabc(\d+):(.+?)resultend/g
 		let r
 		while ((r = regexp.exec(stdout))) {
-			let index = r[1]
-			let result = r[2]
+			const index = r[1]
+			const result = r[2]
 			testResultList[index].result = result
 		}
 		return testResultList
 	}
-	runMultiple(caseList: CaseList, originCode: string, funcName: string): Promise<string | undefined> {
-		let testResultList: TestResult[] = []
-		return new Promise(async (resolve, reject) => {
-			for (const { args, result: expect } of caseList) {
-				try {
-					let result = await this.runInNewContext(args, originCode, funcName)
-					testResultList.push({
-						args: args.join(','),
-						expect: expect,
-						result,
-					})
-				} catch (err) {
-					let msg = `× @test(${args.join(',')})\n`
-					resolve(msg + err.stderr)
-					return
-				}
+	async runMultiple(caseList: CaseList, originCode: string, funcName: string): Promise<string | undefined> {
+		const testResultList: TestResult[] = []
+
+		for (const { args, result: expect } of caseList) {
+			try {
+				const result = await this.runInNewContext(args, originCode, funcName)
+				testResultList.push({
+					args: args.join(','),
+					expect: expect,
+					result,
+				})
+			} catch (err) {
+				const msg = `× @test(${args.join(',')})\n`
+				resolve(msg + err.stderr)
+				return
 			}
-			resolve(handleMsg(testResultList))
-		})
+		}
+		return handleMsg(testResultList)
 	}
 	public async execTest(testCase: TestCase) {
 		const filePath = this.filePath
@@ -154,7 +144,7 @@ export abstract class BaseLang {
 				? /#\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
 				: /\/\/\s*@test\(((?:"(?:\\.|[^"])*"|[^)])*)\)/
 		const funcRegExp = this.funcRegExp
-		let testCase: TestCase = []
+		const testCase: TestCase = []
 		const lines = text.split(/\n/)
 
 		for (let i = 0; i < lines.length; i++) {
@@ -204,7 +194,7 @@ export abstract class BaseLang {
 			questionMeta,
 		}
 	}
-	public addComment(text: string, comment: string, funcName: string) {
+	public addComment(text: string, comment: string, _funcName: string) {
 		const lines = text.split('\n')
 		const n = lines.length
 		for (let i = n - 1; i >= 0; i--) {
@@ -224,8 +214,4 @@ export abstract class BaseLang {
 
 function isComment(line: string, commentToken: '#' | '//') {
 	return line.trimLeft().startsWith(commentToken)
-}
-
-function isPreImport(line: string, preImport: string) {
-	return line.trim().startsWith(preImport)
 }

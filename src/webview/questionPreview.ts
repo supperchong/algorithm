@@ -1,23 +1,31 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
-import { commands } from 'vscode'
-import { api, apiCn, apiEn } from '../api/index'
-import { config, log } from '../config'
+import { api } from '../api/index'
+import { config } from '../config'
 import { writeFile, parseHtml } from '../common/util'
 import { preprocessCode, shouldAskForImport, askForImport } from '../util'
-import { CodeLang, enNameLangs, isAlgorithm, isDataBase, LangBase, langMap } from '../common/langConfig'
+import { CodeLang, enNameLangs, isAlgorithm, langMap } from '../common/langConfig'
 import { Service } from '../lang/common'
 import { pathExists } from 'fs-extra'
-import { BaseLang } from '../lang/base'
 import { getSolution } from '../common/website'
+import { CodeSnippet, CommonQuestion } from '../model/common'
 export const QuestionPreview = 'algorithm.questionPreview'
-const defaultLang = 'JavaScript'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const md = require('markdown-it')({
 	html: true,
 	inkify: true,
 	typographer: true,
 })
+
+function getNonce() {
+	let text = ''
+	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+	for (let i = 0; i < 32; i++) {
+		text += possible.charAt(Math.floor(Math.random() * possible.length))
+	}
+	return text
+}
 // type Param = Pick<ResolverParam, 'titleSlug' | 'weekname' | 'questionId' | 'itemId'>
 interface Param {
 	titleSlug?: string
@@ -25,10 +33,10 @@ interface Param {
 	questionId?: number | string
 	itemId?: string
 }
-export async function fetchQuestion(param: Param) {
+export async function fetchQuestion(param: Param): Promise<CommonQuestion | null> {
 	let { titleSlug, weekname, questionId: id, itemId } = param
 	let data: string
-	let question
+	let question: CommonQuestion | null = null
 	if (itemId) {
 		const q = await api.fetchQuestionByItemId(itemId)
 		if (q) {
@@ -56,21 +64,30 @@ export async function fetchQuestion(param: Param) {
 function getCodeSnippet(codeSnippets) {
 	const langTypes = [config.codeLang, config.database]
 	for (const defaultLang of langTypes) {
-		let codeSnippet = codeSnippets.find((codeSnippet) => codeSnippet.lang === defaultLang)
+		const codeSnippet = codeSnippets.find((codeSnippet) => codeSnippet.lang === defaultLang)
 		if (codeSnippet) {
 			return codeSnippet
 		}
 	}
 	return codeSnippets[0]
 }
-export function getName(questionFrontendId: string, title: string, translatedTitle: string, codeSnippet: any) {
+export function getName(
+	questionFrontendId: string,
+	title: string,
+	translatedTitle: string,
+	codeSnippet: CodeSnippet
+): {
+	filePath: string
+	name: string
+	filename: string
+} {
 	const langSlug = codeSnippet.langSlug
 	const langConfig = langMap[langSlug]
 	let filename = questionFrontendId + langConfig.fileNameSep + title + langConfig.ext
 	if (config.lang === 'cn' && !enNameLangs.includes(langConfig.lang)) {
 		filename = questionFrontendId + langConfig.fileNameSep + translatedTitle + langConfig.ext
 	}
-	let questionDir = path.join(config.algDir, codeSnippet.lang)
+	const questionDir = path.join(config.algDir, codeSnippet.lang)
 
 	let filePath = path.join(questionDir, filename)
 	let name = path.parse(filename).name
@@ -90,73 +107,7 @@ export function getName(questionFrontendId: string, title: string, translatedTit
 		filename,
 	}
 }
-export async function createQuestionPanelCommand(extensionPath: string, param: Param) {
-	let { weekname } = param
-	try {
-		const question = await fetchQuestion(param)
 
-		if (question) {
-			const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle, titleSlug } =
-				question
-			//preview
-			let previewText = `# ${title}\n` + content
-			if (config.lang === 'cn') {
-				previewText = `# ${translatedTitle}\n` + translatedContent
-			}
-
-			const defaultLang = config.codeLang
-			let codeSnippet = getCodeSnippet(codeSnippets)
-			let questionDir = path.join(config.algDir, codeSnippet.lang)
-
-			const langSlug = codeSnippet.langSlug
-			const langConfig = langMap[langSlug]
-
-			//generate code
-			const { filePath, name, filename } = getName(questionFrontendId, title, translatedTitle, codeSnippet)
-			const exist = await pathExists(filePath)
-
-			if (!exist) {
-				const supportImport = ['JavaScript', 'TypeScript'].includes(langConfig.lang)
-				if (supportImport && shouldAskForImport()) {
-					askForImport()
-				}
-				let code = preprocessCode(question, weekname, codeSnippet, name)
-				if (langConfig.lang === CodeLang.Java) {
-					code = code.replace('class Solution', 'public class Solution')
-				}
-				if (isAlgorithm(langConfig.lang)) {
-					await Service.handlePreImport(filePath)
-				}
-
-				await writeFile(filePath, code)
-			}
-			const fileDocument = await vscode.workspace.openTextDocument(filePath)
-			await vscode.window.showTextDocument(fileDocument, vscode.ViewColumn.One)
-			QuestionPreviewPanel.createOrShow(extensionPath, previewText, titleSlug)
-		} else {
-			console.log('parse question error:', question)
-		}
-
-		return
-	} catch (err) {
-		console.log(err)
-	}
-}
-export async function getQuestionDescription(extensionPath: string, param: Param) {
-	const question = await fetchQuestion(param)
-	if (question) {
-		const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle, titleSlug } =
-			question
-		//preview
-		let previewText = `# ${title}\n` + content
-		if (config.lang === 'cn') {
-			previewText = `# ${translatedTitle}\n` + translatedContent
-		}
-		QuestionPreviewPanel.createOrShow(extensionPath, previewText, titleSlug)
-	} else {
-		console.log('question not found')
-	}
-}
 class QuestionPreviewPanel {
 	/**
 	 * Track the currently panel. Only allow a single panel to exist at a time.
@@ -174,12 +125,7 @@ class QuestionPreviewPanel {
 	private setbuildCodeActiveContext(value: boolean) {
 		vscode.commands.executeCommand('setContext', QuestionPreviewPanel.buildCodeActiveContextKey, value)
 	}
-	private registerCommand(id: string, impl: (...args: any[]) => void, thisArg?: any) {
-		if (!QuestionPreviewPanel.commands.get(id)) {
-			const dispose = vscode.commands.registerCommand(id, impl, thisArg)
-			QuestionPreviewPanel.commands.set(id, dispose)
-		}
-	}
+
 	public static createOrShow(extensionPath: string, text: string, titleSlug: string) {
 		const column = vscode.ViewColumn.Two
 		// If we already have a panel, show it.
@@ -268,7 +214,9 @@ class QuestionPreviewPanel {
 		this.setbuildCodeActiveContext(true)
 		const webview = this._panel.webview
 		const nonce = getNonce()
-		const scriptPathOnDisk = vscode.Uri.file(path.join(this._extensionPath, 'media', 'highlight.min.js'))
+		// const scriptPathOnDisk = vscode.Uri.file(
+		// 	path.join(this._extensionPath, 'media', 'highlight.min.js')
+		// )
 		const cssPathOnDisk = vscode.Uri.file(path.join(this._extensionPath, 'media', 'highlight.css'))
 		const cssMdOnDisk = vscode.Uri.file(path.join(this._extensionPath, 'media', 'markdown.css'))
 		const text = this.text
@@ -277,7 +225,6 @@ class QuestionPreviewPanel {
 		// let temp = QuestionPreviewPanel._text;
 		const temp = text.replace(/<pre>/g, '<pre><code>').replace(/<\/pre>/g, '</code></pre>')
 		const code = md.render(temp)
-		const scriptUri = webview.asWebviewUri(scriptPathOnDisk)
 		const cssUri = webview.asWebviewUri(cssPathOnDisk)
 		const cssMd = webview.asWebviewUri(cssMdOnDisk)
 		this._panel.webview.html = `<!DOCTYPE html>
@@ -309,12 +256,67 @@ class QuestionPreviewPanel {
         </html>`
 	}
 }
+export async function createQuestionPanelCommand(extensionPath: string, param: Param): Promise<void> {
+	const { weekname } = param
+	try {
+		const question = await fetchQuestion(param)
 
-function getNonce() {
-	let text = ''
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-	for (let i = 0; i < 32; i++) {
-		text += possible.charAt(Math.floor(Math.random() * possible.length))
+		if (question) {
+			const { codeSnippets, questionFrontendId, title, content, translatedContent, translatedTitle, titleSlug } =
+				question
+			//preview
+			let previewText = `# ${title}\n` + content
+			if (config.lang === 'cn') {
+				previewText = `# ${translatedTitle}\n` + translatedContent
+			}
+
+			const codeSnippet = getCodeSnippet(codeSnippets)
+
+			const langSlug = codeSnippet.langSlug
+			const langConfig = langMap[langSlug]
+
+			//generate code
+			const { filePath, name } = getName(questionFrontendId, title, translatedTitle, codeSnippet)
+			const exist = await pathExists(filePath)
+
+			if (!exist) {
+				const supportImport = ['JavaScript', 'TypeScript'].includes(langConfig.lang)
+				if (supportImport && shouldAskForImport()) {
+					askForImport()
+				}
+				let code = preprocessCode(question, weekname, codeSnippet, name)
+				if (langConfig.lang === CodeLang.Java) {
+					code = code.replace('class Solution', 'public class Solution')
+				}
+				if (isAlgorithm(langConfig.lang)) {
+					await Service.handlePreImport(filePath)
+				}
+
+				await writeFile(filePath, code)
+			}
+			const fileDocument = await vscode.workspace.openTextDocument(filePath)
+			await vscode.window.showTextDocument(fileDocument, vscode.ViewColumn.One)
+			QuestionPreviewPanel.createOrShow(extensionPath, previewText, titleSlug)
+		} else {
+			console.log('parse question error:', question)
+		}
+
+		return
+	} catch (err) {
+		console.log(err)
 	}
-	return text
+}
+export async function getQuestionDescription(extensionPath: string, param: Param): Promise<void> {
+	const question = await fetchQuestion(param)
+	if (question) {
+		const { title, content, translatedContent, translatedTitle, titleSlug } = question
+		//preview
+		let previewText = `# ${title}\n` + content
+		if (config.lang === 'cn') {
+			previewText = `# ${translatedTitle}\n` + translatedContent
+		}
+		QuestionPreviewPanel.createOrShow(extensionPath, previewText, titleSlug)
+	} else {
+		console.log('question not found')
+	}
 }

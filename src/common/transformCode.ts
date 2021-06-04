@@ -26,7 +26,7 @@ function addAstComment(ast: namedTypes.File, comment: string, funName: string) {
 	}
 	const body = ast.program.body
 	for (const node of body) {
-		let fn = visitor[node.type]
+		const fn = visitor[node.type]
 		if (fn) {
 			fn(node)
 		}
@@ -34,8 +34,8 @@ function addAstComment(ast: namedTypes.File, comment: string, funName: string) {
 }
 function insertLineComment(node: VariableDeclarationKind | FunctionDeclarationKind, comment: string) {
 	const commentNode = builders.commentLine(comment, true)
-	let originComments = node.comments || []
-	let mergeComments = [commentNode, ...originComments]
+	const originComments = node.comments || []
+	const mergeComments = [commentNode, ...originComments]
 
 	node.comments = mergeComments
 }

@@ -3,14 +3,15 @@ import { config } from './config'
 import { Lang } from './model/common'
 
 const filename = 'question'
-let dbMap: Partial<Record<Lang, Db>> = {}
+const dbMap: Partial<Record<Lang, Db>> = {}
 export async function getDb(): Promise<Db> {
-	let lang = config.lang
-	if (dbMap[lang]) {
-		return dbMap[lang]!
+	const lang = config.lang
+	const db = dbMap[lang]
+	if (db) {
+		return db
 	} else {
 		const dbDir = config.dbDir
-		let db = new Db({
+		const db = new Db({
 			dbDir,
 			filename: filename,
 		})

@@ -1,9 +1,6 @@
 import { api, getTags, getQuestionsByTag, getQuestionsByDifficult, getAllQuestions } from '../api/api'
-import { config } from '../config'
 import { DailyWeekMap } from '../model/question'
-import * as vscode from 'vscode'
 import { QuestionTree } from './questionsProvider'
-import { ConciseQuestion } from '../model/common'
 import { normalizeQuestions } from '../common/util'
 
 export interface ResolverParam {
@@ -104,7 +101,6 @@ export const resolverEn: ResolverType = {
 		const chapterDetail = await api.fetchChapter(chapterId)
 		const chaptersProgressRes = await api.fetchChapterProgress()
 		const progress = chaptersProgressRes?.getOrCreateExploreSession?.progress
-		let isAC = false
 		let progressMap: DailyWeekMap | null = null
 		try {
 			progressMap = JSON.parse(progress)

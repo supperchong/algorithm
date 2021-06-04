@@ -1,21 +1,13 @@
 import * as cp from 'child_process'
 import { pathExists, ensureFile, copy, ensureDir } from 'fs-extra'
-import { CaseList, existFile, parseHtml, readFileAsync, TestCase, TestCaseParam, writeFileAsync } from '../common/util'
+import { CaseList, writeFileAsync } from '../common/util'
 import { tag } from 'pretty-tag'
-import { getFuncNames, parseTestCase, TestResult, handleMsg } from '../common/util'
-import { log, config } from '../config'
-import { getDb } from '../db'
-import { api } from '../api/index'
-
+import { handleMsg } from '../common/util'
+import { log } from '../config'
 import { promisify } from 'util'
-
 import * as vscode from 'vscode'
-import { tranfromToCustomBreakpoint } from '../debug/launch'
-
 import * as path from 'path'
-import { getFileComment } from '../common/langConfig'
 import { BaseLang } from './base'
-import { parseCommentTest } from '../common/util'
 import { platform } from 'os'
 import { LanguageMetaData } from '../common/lang'
 
@@ -92,7 +84,7 @@ export class GoParse extends BaseLang {
 		throw new Error(`paramType ${paramType} not support`)
 	}
 	handleReturn(paramCount: number, funcName: string, returnType: string, firstParamType: string): string {
-		let isVoid = returnType === 'void'
+		const isVoid = returnType === 'void'
 		if (isVoid) {
 			returnType = firstParamType
 		}
@@ -169,7 +161,7 @@ export class GoParse extends BaseLang {
 		]
 		const argStr = Array(paramCount)
 			.fill(0)
-			.map((v, i) => `arg${i}`)
+			.map((_v, i) => `arg${i}`)
 			.join(',')
 
 		for (const { type, handleFn } of handleConfig) {
@@ -197,15 +189,14 @@ export class GoParse extends BaseLang {
 			throw new Error('question meta not found')
 		}
 		const params = meta.params || []
-		let rt = meta.return.type
+		const rt = meta.return.type
 		const funcName = meta.name
 		const argExpressions: string[] = []
 		const paramCount = params.length
 		for (let i = 0; i < paramCount; i++) {
-			const { name, type } = params[i]
+			const { type } = params[i]
 			argExpressions[i] = this.handleParam(i, type)
 		}
-		const dir = path.parse(path.parse(this.filePath).dir).name
 
 		const argExpression = argExpressions.join('\n')
 		const rtExpression = this.handleReturn(paramCount, funcName, rt, params[0].type)
@@ -230,18 +221,18 @@ export class GoParse extends BaseLang {
 		const cwd = this.cwd
 		return path.join(cwd, 'main')
 	}
-	async runMultiple(caseList: CaseList, originCode: string, funcName: string) {
+	async runMultiple(caseList: CaseList, _originCode: string, _funcName: string) {
 		const argsArr = caseList.map((v) => v.args)
 		const argsStr = JSON.stringify(argsArr)
 		await this.buildMainFile(argsStr)
 		const mainFile = this.getExecProgram()
 		const cwd = this.cwd
 		try {
-			const { stdout, stderr } = await execFileAsync(mainFile, {
+			const { stdout } = await execFileAsync(mainFile, {
 				cwd: cwd,
 				shell: true,
 			})
-			let testResultList = this.handleResult(stdout, caseList)
+			const testResultList = this.handleResult(stdout, caseList)
 			return handleMsg(testResultList)
 		} catch (err) {
 			log.appendLine(err)
@@ -295,7 +286,7 @@ export class GoParse extends BaseLang {
 			shell: true,
 		})
 	}
-	async runInNewContext(args: string[], originCode: string, funcName: string) {
+	async runInNewContext(_args: string[], _originCode: string, _funcName: string) {
 		return ''
 	}
 	async handlePreImport() {

@@ -1,6 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios'
-import fs = require('fs')
-import { cache, ALLQUESTIONS } from '../cache'
+import { cache } from '../cache'
 import {
 	ConciseQuestion,
 	MapIdConciseQuestion,
@@ -11,7 +10,6 @@ import {
 	SubmitOptions,
 	SubmitResponse,
 	TagData,
-	GraphqlResponse,
 	QuestionTranslationData,
 	TodayRecordData,
 	DailyQuestionRecordData,
@@ -25,15 +23,18 @@ import {
 	UpdateCommentResponse,
 	SubmissionDetailOptions,
 	SubmissionDetailResponse,
+	TodayRecord,
+	Translation,
+	Question,
 } from '../model/question.cn'
-import { Problems, ErrorStatus, FlagType } from '../model/common'
+import { Problems, ErrorStatus, FlagType, Tag, checkParams, ContestDetail } from '../model/common'
 import { showLoginMessage } from '../login/index'
 
 import { getDb } from '../db'
 import { GraphRes } from '../model/common'
 import { log } from '../config'
 import { sortQuestions } from '../util'
-const MAPIDQUESTION = 'MapIdQuestion'
+export const MAPIDQUESTION = 'MapIdQuestion'
 const monthEns = [
 	'january',
 	'february',
@@ -48,7 +49,6 @@ const monthEns = [
 	'november',
 	'december',
 ]
-const categories: Category[] = ['algorithms', 'database', 'shell', 'concurrency', 'lcof', 'lcci', 'all']
 const curCategories = [
 	{
 		label: '面试题',
@@ -60,16 +60,7 @@ const curCategories = [
 	},
 ]
 type Category = 'all' | 'algorithms' | 'database' | 'shell' | 'concurrency' | 'lcof' | 'lcci'
-interface PlainObject {
-	[key: string]: any
-}
 
-function checkParams(obj: PlainObject, attrs: string[]) {
-	let verify = attrs.every((attr) => obj[attr])
-	if (!verify) {
-		throw new Error('options有误 options:' + obj + ',attrs:' + attrs)
-	}
-}
 async function getHeaders() {
 	const cookie = await cache.getCookie()
 	return {
@@ -79,19 +70,19 @@ async function getHeaders() {
 		...cookie,
 	}
 }
-export async function fetchAllQuestions() {
-	const url = 'https://leetcode-cn.com/graphql'
-	const headers = await getHeaders()
-	axios.request({
-		url,
-		headers,
-		data: {
-			operationName: 'getQuestionTranslation',
-			query: `query getQuestionTranslation($lang: String) {\n  translations: allAppliedQuestionTranslations(lang: $lang) {\n    title\n    questionId\n    __typename\n  }\n}\n`,
-			variables: {},
-		},
-	})
-}
+// export async function fetchAllQuestions() {
+// 	const url = 'https://leetcode-cn.com/graphql'
+// 	const headers = await getHeaders()
+// 	axios.request({
+// 		url,
+// 		headers,
+// 		data: {
+// 			operationName: "getQuestionTranslation",
+// 			query: `query getQuestionTranslation($lang: String) {\n  translations: allAppliedQuestionTranslations(lang: $lang) {\n    title\n    questionId\n    __typename\n  }\n}\n`,
+// 			variables: {}
+// 		}
+// 	})
+// }
 
 async function request<T>(config: AxiosRequestConfig): Promise<T> {
 	const headers = await getHeaders()
@@ -221,8 +212,7 @@ const config = {
 	},
 	getSubmitContest(options: SubmitContestOptions): AxiosRequestConfig {
 		const { titleSlug, weekname, question_id, typed_code } = options
-		let attrs = ['titleSlug', 'weekname', 'question_id', 'typed_code']
-		checkParams(options, attrs)
+		checkParams(options, ['titleSlug', 'weekname', 'question_id', 'typed_code'])
 		return {
 			url: `https://leetcode-cn.com/contest/api/${weekname}/problems/${titleSlug}/submit/`,
 			method: 'POST',
@@ -319,15 +309,83 @@ const config = {
 		}
 	},
 }
-export async function getAllQuestions() {
-	let questions = cache.getQuestions()
+
+export const api = {
+	freshQuestions,
+	getAllQuestions,
+	fetchTranslations(): Promise<Translation[]> {
+		return graphql<QuestionTranslationData>(config.allQuestions).then((data) => data.translations)
+	},
+	fetchCategorieQuestions(categorie: Category): Promise<Problems> {
+		return request<Problems>(config.getQuestionsByCategory(categorie))
+	},
+	fetchContests() {
+		return graphql<ContestData>(config.contests).then((data) => data.allContests)
+	},
+	fetchTags(): Promise<TagData> {
+		return request<TagData>(config.tags)
+	},
+	fetchContest(titleSlug: string) {
+		return request<ContestDetail>(config.getContest(titleSlug))
+	},
+	fetchTodayRecord(): Promise<TodayRecord[]> {
+		return graphql<TodayRecordData>(config.todayRecord).then((data) => data.todayRecord)
+	},
+	fetchDailyQuestionRecords(): Promise<[DailyQuestionRecord]> {
+		return graphql<DailyQuestionRecordData>(config.getDailyQuestionRecords()).then(
+			(data) => data.dailyQuestionRecords
+		)
+	},
+	fetchQuestionDetail(titleSlug: string): Promise<Question> {
+		if (cache.get(titleSlug)) {
+			return cache.get(titleSlug)
+		}
+		return graphql<QuestionData>(config.getQuestionDetail(titleSlug)).then((data) => {
+			if (data && data.question && data.question.titleSlug === titleSlug) {
+				cache.set(titleSlug, data.question)
+			}
+			return cache.get(titleSlug)
+		})
+	},
+	fetchContestQuestionDetail(titleSlug: string, weekname: string): Promise<string> {
+		return request<string>(config.getQuestionContest(titleSlug, weekname))
+	},
+	submit(options: SubmitOptions): Promise<SubmitResponse> {
+		return request<SubmitResponse>(config.getSubmit(options))
+	},
+	submitContest(options: SubmitContestOptions): Promise<SubmitResponse> {
+		return request<SubmitResponse>(config.getSubmitContest(options))
+	},
+	check(options: CheckOptions): Promise<CheckResponse> {
+		return request<CheckResponse>(config.getCheck(options))
+	},
+	checkContest(options: CheckContestOptions): Promise<CheckResponse> {
+		return request<CheckResponse>(config.getContestCheck(options))
+	},
+	fetchSubmissions(options: SubmissionsOptions): Promise<SubmissionsResponse> {
+		return graphql<SubmissionsResponse>(config.getSubmissions(options))
+	},
+	updateComment(options: UpdateCommentOptions): Promise<UpdateCommentResponse> {
+		return graphql<UpdateCommentResponse>(config.getUpdateComment(options))
+	},
+	async fetchSubmissionDetail(options: SubmissionDetailOptions): Promise<string> {
+		const submissionDetail = await graphql<SubmissionDetailResponse>(config.getSubmissionDetail(options))
+		if (submissionDetail.submissionDetail) {
+			return submissionDetail.submissionDetail?.code
+		} else {
+			return 'can not query'
+		}
+	},
+}
+export async function getAllQuestions(): Promise<ConciseQuestion[]> {
+	const questions = cache.getQuestions()
 	if (questions.length) {
 		return questions
 	}
 	await freshQuestions()
 	return cache.getQuestions()
 }
-export async function freshQuestions() {
+export async function freshQuestions(): Promise<void> {
 	let questions: ConciseQuestion[] = []
 	const data = await api.fetchCategorieQuestions('all')
 	questions = handleCategorieQuestions(data)
@@ -335,12 +393,12 @@ export async function freshQuestions() {
 	sortQuestions(questions)
 	cache.setQuestions(questions)
 }
-async function getMapIdQuestion(): Promise<object> {
+async function getMapIdQuestion(): Promise<MapIdConciseQuestion> {
 	if (cache.has(MAPIDQUESTION)) {
-		return cache.get(MAPIDQUESTION)
+		return cache.get(MAPIDQUESTION)!
 	}
 	const questions = await getAllQuestions()
-	let map: MapIdConciseQuestion = {}
+	const map: MapIdConciseQuestion = {}
 	for (let i = 0; i < questions.length; i++) {
 		const question = questions[i]
 		map[question.id] = question
@@ -348,9 +406,7 @@ async function getMapIdQuestion(): Promise<object> {
 	cache.set(MAPIDQUESTION, map)
 	return map
 }
-export async function getDifficulty() {
-	const questions = await getAllQuestions()
-}
+
 export async function getQuestionDetailById(id: string) {
 	const db = await getDb()
 	const out = await db.read(parseInt(id))
@@ -366,7 +422,7 @@ export function getCategories() {
 	return curCategories
 }
 export async function getQuestionsByCategory(category: string) {
-	let c = curCategories.find((c) => c.category_slug === category)
+	const c = curCategories.find((c) => c.category_slug === category)
 	if (!c) {
 		return []
 	}
@@ -375,7 +431,7 @@ export async function getQuestionsByCategory(category: string) {
 	return questions.filter((q) => q.fid.startsWith(label))
 }
 export async function getTags() {
-	let tags: Tag[] = cache.getTags()
+	let tags: Tag[] | null | undefined = cache.getTags()
 	if (!tags) {
 		const data = await api.fetchTags()
 		tags = data.topics
@@ -385,8 +441,8 @@ export async function getTags() {
 	return tags.map((tag) => tag.translatedName || tag.name)
 }
 export async function getQuestionsByTag(translatedName: string) {
-	let tags = cache.getTags()
-	let tag = tags.find((tag) => tag.translatedName === translatedName || tag.name === translatedName)
+	const tags = cache.getTags() || []
+	const tag = tags.find((tag) => tag.translatedName === translatedName || tag.name === translatedName)
 
 	if (tag && tag.questions) {
 		const map = await getMapIdQuestion()
@@ -421,7 +477,7 @@ function handleCategorieQuestions(data) {
 }
 async function setTranslations(questions) {
 	const translationsQuestions = await api.fetchTranslations()
-	let mapIdTitle = {}
+	const mapIdTitle = {}
 	for (let i = 0; i < translationsQuestions.length; i++) {
 		const { questionId, title } = translationsQuestions[i]
 		mapIdTitle[questionId] = title
@@ -430,81 +486,4 @@ async function setTranslations(questions) {
 		const question = questions[i]
 		question.name = mapIdTitle[question.id] || question.title
 	}
-}
-interface Question {
-	questionId: string
-	title: string
-}
-interface Tag {
-	slug: string
-	name: string
-	questions: number[]
-	translatedName: string
-}
-export const api = {
-	freshQuestions,
-	getAllQuestions,
-	fetchTranslations(): Promise<Question[]> {
-		return graphql<QuestionTranslationData>(config.allQuestions).then((data) => data.translations)
-	},
-	fetchCategorieQuestions(categorie: Category) {
-		return request<Problems>(config.getQuestionsByCategory(categorie))
-	},
-	fetchContests() {
-		return graphql<ContestData>(config.contests).then((data) => data.allContests)
-	},
-	fetchTags() {
-		return request<TagData>(config.tags)
-	},
-	fetchContest(titleSlug: string) {
-		return request<any>(config.getContest(titleSlug))
-	},
-	fetchTodayRecord() {
-		return graphql<TodayRecordData>(config.todayRecord).then((data) => data.todayRecord)
-	},
-	fetchDailyQuestionRecords() {
-		return graphql<DailyQuestionRecordData>(config.getDailyQuestionRecords()).then(
-			(data) => data.dailyQuestionRecords
-		)
-	},
-	fetchQuestionDetail(titleSlug: string): Promise<Question> {
-		if (cache.get(titleSlug)) {
-			return cache.get(titleSlug)
-		}
-		return graphql<QuestionData>(config.getQuestionDetail(titleSlug)).then((data) => {
-			if (data && data.question && data.question.titleSlug === titleSlug) {
-				cache.set(titleSlug, data.question)
-			}
-			return cache.get(titleSlug)
-		})
-	},
-	fetchContestQuestionDetail(titleSlug: string, weekname: string) {
-		return request<string>(config.getQuestionContest(titleSlug, weekname))
-	},
-	submit(options: SubmitOptions) {
-		return request<SubmitResponse>(config.getSubmit(options))
-	},
-	submitContest(options: SubmitContestOptions) {
-		return request<SubmitResponse>(config.getSubmitContest(options))
-	},
-	check(options: CheckOptions) {
-		return request<CheckResponse>(config.getCheck(options))
-	},
-	checkContest(options: CheckContestOptions) {
-		return request<CheckResponse>(config.getContestCheck(options))
-	},
-	fetchSubmissions(options: SubmissionsOptions) {
-		return graphql<SubmissionsResponse>(config.getSubmissions(options))
-	},
-	updateComment(options: UpdateCommentOptions) {
-		return graphql<UpdateCommentResponse>(config.getUpdateComment(options))
-	},
-	async fetchSubmissionDetail(options: SubmissionDetailOptions) {
-		const submissionDetail = await graphql<SubmissionDetailResponse>(config.getSubmissionDetail(options))
-		if (submissionDetail.submissionDetail) {
-			return submissionDetail.submissionDetail?.code
-		} else {
-			return 'can not query'
-		}
-	},
 }

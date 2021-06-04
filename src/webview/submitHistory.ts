@@ -5,10 +5,6 @@ import { config } from '../config'
 import { getHistory, getRemoteSubmits, updateComment } from '../history'
 import { highlightCode } from '../util'
 
-export function createSubmitHistoryPanel(context: vscode.ExtensionContext, question_id: string) {
-	BuildSubmitHistoryPanel.createOrShow(context, question_id)
-}
-
 class BuildSubmitHistoryPanel {
 	/**
 	 * Track the currently panel. Only allow a single panel to exist at a time.
@@ -66,6 +62,8 @@ class BuildSubmitHistoryPanel {
 					case 'getSubmissionCode':
 						api.fetchSubmissionDetail({ id: message.id })
 							.then((code) => {
+								const p = highlightCode(code, message.lang)
+								console.log(p)
 								this._panel.webview.postMessage({
 									command: 'submissionDetail',
 									data: {
@@ -88,7 +86,7 @@ class BuildSubmitHistoryPanel {
 						return
 					case 'updateComment': {
 						updateComment(message.type, message.params)
-							.then((v) => {
+							.then(() => {
 								this._panel.webview.postMessage({
 									command: 'updateComment',
 									data: {
@@ -204,4 +202,8 @@ function getNonce() {
 		text += possible.charAt(Math.floor(Math.random() * possible.length))
 	}
 	return text
+}
+
+export function createSubmitHistoryPanel(context: vscode.ExtensionContext, question_id: string): void {
+	BuildSubmitHistoryPanel.createOrShow(context, question_id)
 }

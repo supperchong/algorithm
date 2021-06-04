@@ -1,21 +1,20 @@
 import * as path from 'path'
 import { config } from '../config'
 import { pathExists, readJson, writeJson, ensureFile } from 'fs-extra'
-import { getDesc } from '../common/util'
-import { Lang, UpdateCommentOption, UpdateRemoteCommentOption } from '../model/common'
+import { CheckResponse, Lang, UpdateCommentOption, UpdateRemoteCommentOption } from '../model/common'
 import { apiCn } from '../api'
-import { Submissions } from '../model/question'
+import { formatMemory, formatTimestamp } from '.'
 interface Param {
 	filePath: string
 	text: string
-	result: any
+	result: CheckResponse
 	desc?: string
 }
 interface LocalSubmit {
 	id: string
 	code: string
 	submission: Submission
-	result: any
+	result: CheckResponse
 }
 interface Submission {
 	id: string
@@ -71,7 +70,7 @@ class SubmitStorage {
 			})
 		}
 	}
-	async updateComment({ id, questionId, comment }: UpdateCommentOption) {
+	async updateComment({ id, questionId, comment }: UpdateCommentOption): Promise<void> {
 		const arr = await this.read(questionId)
 		const item = arr.find((v) => v.id === id)
 		if (item) {
@@ -80,7 +79,7 @@ class SubmitStorage {
 		const filePath = this.getFilePath(questionId)
 		return writeJson(filePath, arr)
 	}
-	private async innerSave(options: Param) {
+	private async innerSave(options: Param): Promise<void> {
 		try {
 			const id = options.result.question_id as string
 			const r = options.result
@@ -93,15 +92,15 @@ class SubmitStorage {
 					isPending: 'Not Pending',
 					submissionComment: options.desc || '',
 					lang: r.lang,
-					memory: r.memory,
+					memory: formatMemory(r.memory),
 					runtime: r.status_runtime,
 					statusDisplay: r.status_msg,
-					timestamp: r.task_finish_time,
+					timestamp: formatTimestamp(r.task_finish_time),
 					url: '/submissions/detail/' + r.submission_id + '/',
 				},
 				result: options.result,
 			}
-			let arr: any[] = []
+			let arr: LocalSubmit[] = []
 			const exist = await pathExists(filePath)
 			if (exist) {
 				arr = await readJson(filePath)
@@ -115,6 +114,7 @@ class SubmitStorage {
 			console.log(err)
 		}
 		if (this.arr.length) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const opt = this.arr.shift()!
 			await this.innerSave(opt)
 		} else {
