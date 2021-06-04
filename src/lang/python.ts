@@ -14,7 +14,10 @@ const execFileAsync = promisify(cp.execFile)
 
 export class PythonParse extends BaseLang {
 	static getPreImport() {
-		return 'from mod.preImport import *'
+		const lang = config.lang
+		const codeLang = config.codeLang
+
+		return `from ${lang}.${codeLang}.mod.preImport import *`
 	}
 	private cwd: string
 	funcRegExp = /^(\s*class Solution)/
@@ -275,10 +278,12 @@ export class PythonParse extends BaseLang {
 		const argExpression = argExpressions.join('\n')
 		const rtExpression = this.handleReturn(paramCount, funcName, rt, params[0].type)
 		const cwd = this.cwd.replace(/\\/g, '\\\\')
+		const baseDir = config.baseDir.replace(/\\/g, '\\\\')
 		return tag`
         import sys
         import json
         sys.path.append("${cwd}")
+        sys.path.append("${baseDir}")
         a = __import__('${name}')
         ${this.handleTypeCode}
        
