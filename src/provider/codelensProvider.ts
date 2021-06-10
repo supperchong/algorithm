@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { detectEnableExt, TestCaseParam } from '../common/util'
-import { getFileLang, getFileLangSlug, isAlgorithm } from '../common/langConfig'
+import { getFileLang, getFileLangSlug, isAlgorithm, isSupportFile } from '../common/langConfig'
 import { Service } from '../lang/common'
 import {
 	CodeLensesOptions,
@@ -94,6 +94,10 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 		this.codeLenses = []
 		const text = document.getText()
 		const filePath = document.fileName
+		const isSupport = isSupportFile(filePath)
+		if (!isSupport) {
+			return []
+		}
 		const enableExt = detectEnableExt(text, filePath)
 
 		if (enableExt) {

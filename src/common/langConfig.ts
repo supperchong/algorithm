@@ -220,6 +220,7 @@ export function getFileComment(filePath: string): LangBaseComment {
 	}
 	return langItem.comment
 }
+
 export const builtInLang = [CodeLang.JavaScript, CodeLang.TypeScript]
 export const otherLang = [CodeLang.Python3, CodeLang.Go, CodeLang.Java, CodeLang['C++']]
 export const enableLang = [...builtInLang, ...otherLang]
@@ -249,11 +250,17 @@ export const highlightLangMap = {
 export function transformToHightlightLang(lang: string): string {
 	return highlightLangMap[lang] || lang
 }
-// export function getPreImport(codeLang: CodeLang) {
-//     if (codeLang === CodeLang.Python3) {
-//         return 'from mod.preImport import *'
-//     } else {
-//         return ''
-//     }
+export function isSupportFile(filePath: string) {
+	if (isShell(filePath) || isDataBase(filePath)) {
+		return true
+	}
+	const ext = path.extname(filePath)
 
-// }
+	const langItem = langExtMap[ext]
+	if (!langItem) {
+		return false
+	}
+	const lang = langItem.lang
+	return enableLang.includes(lang)
+
+}
