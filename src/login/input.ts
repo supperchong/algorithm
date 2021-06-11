@@ -1,6 +1,6 @@
 import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, QuickInputButtons } from 'vscode'
 import { accountLogin, cookieLogin, githubLogin } from '.'
-import { freshQuestions } from '../api/index'
+import { refreshQuestions } from '../api/index'
 import { cache } from '../cache'
 import { config } from '../config'
 import { QuestionsProvider } from '../provider/questionsProvider'
@@ -224,10 +224,10 @@ function validUser(user: Partial<User>): user is User {
 function validCookie(cookie: string) {
 	return cookie.includes('LEETCODE_SESSION') && cookie.includes('csrftoken')
 }
-async function fresh(questionsProvider: QuestionsProvider) {
+async function refresh(questionsProvider: QuestionsProvider) {
 	cache.removeCache()
-	const freshPromise = freshQuestions()
-	execWithProgress(freshPromise, 'fresh questions')
+	const refreshPromise = refreshQuestions()
+	execWithProgress(refreshPromise, 'refresh questions')
 	questionsProvider.refresh()
 }
 export async function selectLogin(questionsProvider: QuestionsProvider) {
@@ -267,7 +267,7 @@ export async function selectLogin(questionsProvider: QuestionsProvider) {
 		await cookieLogin(cookie)
 		config.log.appendLine('save cookie success')
 		// window.showInformationMessage('save cookie success')
-		await fresh(questionsProvider)
+		await refresh(questionsProvider)
 		return
 	} else if (result === accountItem) {
 		const user = await accountInput()
@@ -277,7 +277,7 @@ export async function selectLogin(questionsProvider: QuestionsProvider) {
 		await accountLogin(user)
 		config.log.appendLine('login success')
 		// window.showInformationMessage('login success')
-		await fresh(questionsProvider)
+		await refresh(questionsProvider)
 	}
 }
 export async function githubInput(): Promise<Partial<User>> {

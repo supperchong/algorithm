@@ -10,66 +10,66 @@ An excellent vscode extension for leetcode.
 
 ## Support
 
-- javascript
-- typescript
-- python3
-- golang
-- java
-- c++
-- shell
-- sql
+-   javascript
+-   typescript
+-   python3
+-   golang
+-   java
+-   c++
+-   shell
+-   sql
 
 **will support other language soon**
 
 ## Main Features
 
-- write testcase in the file and run test in local, support link list and tree
+-   write testcase in the file and run test in local, support link list and tree
 
-- debug the testcase
+-   debug the testcase
 
-- memo
+-   memo
 
-- support import module, bundle code and copy the build code.(only support js/ts)
+-   support import module, bundle code and copy the build code.(only support js/ts)
 
-- contain contest (Do not submit directly when you attending weekly contest,
-  copy the code and submit in browser instead.)
+-   contain contest (Do not submit directly when you attending weekly contest,
+    copy the code and submit in browser instead.)
 
 ## Other Features
 
-- search question
-- contain daily challenge
-- support login in https://leetcode.com/ and https://leetcode-cn.com/
+-   search question
+-   contain daily challenge
+-   support login in https://leetcode.com/ and https://leetcode-cn.com/
 
 ## Requirements
 
-- javascript/typescript
+-   javascript/typescript
 
-  - Nodejs 12+
+    -   Nodejs 12+
 
-    > The `test` and `debug` will use `node` to execute.
-    > Make sure that `node` is in your PATH environment variable.If you're using nvm, you may need to set the `algorithm.nodePath` in the VS Code settings.
+        > The `test` and `debug` will use `node` to execute.
+        > Make sure that `node` is in your PATH environment variable.If you're using nvm, you may need to set the `algorithm.nodePath` in the VS Code settings.
 
-- python3
+-   python3
 
-  - Make sure that `python3` is in your PATH environment variable.
-  - install the official Python extension(https://code.visualstudio.com/docs/python/python-tutorial)
+    -   Make sure that `python3` is in your PATH environment variable.
+    -   install the official Python extension(https://code.visualstudio.com/docs/python/python-tutorial)
 
-- golang
+-   golang
 
-  - Make sure that `go` is in your PATH environment variable.
-  - install the official golang extension
+    -   Make sure that `go` is in your PATH environment variable.
+    -   install the official golang extension
 
-- java
+-   java
 
-  - Make sure that `java`,`javac` is in your PATH environment variable.Or [set javaPath and javacPath](#setting)
-  - install the official java extension (https://code.visualstudio.com/docs/java/java-tutorial)
-    > ensure the extension `Debugger for Java`>=v0.33.1 or the extension `Java Extension Pack`>=v0.14.0
+    -   Make sure that `java`,`javac` is in your PATH environment variable.Or [set javaPath and javacPath](#setting)
+    -   install the official java extension (https://code.visualstudio.com/docs/java/java-tutorial)
+        > ensure the extension `Debugger for Java`>=v0.33.1 or the extension `Java Extension Pack`>=v0.14.0
 
-- c++
+-   c++
 
-  - Install GCC C++ compiler (g++).And make sure that `g++` is in your PATH environment variable.
-  - Install the C++ extension for VS Code.
-    more detail in the website (https://code.visualstudio.com/docs/cpp/config-linux)
+    -   Install GCC C++ compiler (g++).And make sure that `g++` is in your PATH environment variable.
+    -   Install the C++ extension for VS Code.
+        more detail in the website (https://code.visualstudio.com/docs/cpp/config-linux)
 
 ## Pick a question
 
@@ -87,11 +87,11 @@ press `ctrl+shift+p` and run the Command `algorithm:switch default database`
 
 > Just click the shortcut button in the `view toolbar` to
 
-- fresh question
-- search question
-- login in
-- switch endpoint
-- collapse all
+-   refresh question
+-   search question
+-   login in
+-   switch endpoint
+-   collapse all
 
 ![shortcut buttons](./images/shortcut.png)
 
@@ -99,8 +99,8 @@ press `ctrl+shift+p` and run the Command `algorithm:switch default database`
 
 ### current support:
 
-- leetcode.com
-- leetcode-cn.com
+-   leetcode.com
+-   leetcode-cn.com
 
 > Note: The accounts of different endpoints are not shared.
 
@@ -108,8 +108,8 @@ press `ctrl+shift+p` and run the Command `algorithm:switch default database`
 
 The way to login in referred to the official extension [vscode-leetcode](https://github.com/LeetCode-OpenSource/vscode-leetcode).
 
-- leetcode.com support github and cookie login.
-- leetcode-cn.com support account,github and cookie login.
+-   leetcode.com support github and cookie login.
+-   leetcode-cn.com support account,github and cookie login.
 
 ## Test in the file
 
@@ -156,11 +156,11 @@ click `copy` to copy code , finally paste the code in browser and submit.
 
 This is useful in the weekly contest.
 
-- click the build codelens hover.
+-   click the build codelens hover.
 
 ![build.png](./images/build.png)
 
-- focus the code view then click the copy icon.
+-   focus the code view then click the copy icon.
 
 ![copy.png](./images/copy.png)
 

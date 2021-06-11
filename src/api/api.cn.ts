@@ -311,7 +311,7 @@ const config = {
 }
 
 export const api = {
-	freshQuestions,
+	refreshQuestions,
 	getAllQuestions,
 	fetchTranslations(): Promise<Translation[]> {
 		return graphql<QuestionTranslationData>(config.allQuestions).then((data) => data.translations)
@@ -382,10 +382,10 @@ export async function getAllQuestions(): Promise<ConciseQuestion[]> {
 	if (questions.length) {
 		return questions
 	}
-	await freshQuestions()
+	await refreshQuestions()
 	return cache.getQuestions()
 }
-export async function freshQuestions(): Promise<void> {
+export async function refreshQuestions(): Promise<void> {
 	let questions: ConciseQuestion[] = []
 	const data = await api.fetchCategorieQuestions('all')
 	questions = handleCategorieQuestions(data)

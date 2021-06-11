@@ -289,7 +289,7 @@ const config = {
 	},
 }
 export const api = {
-	freshQuestions,
+	refreshQuestions,
 	getAllQuestions,
 	fetchCategorieQuestions(categorie: Category) {
 		return request<Problems>(config.getQuestionsByCategory(categorie))
@@ -381,10 +381,10 @@ export async function getAllQuestions() {
 	if (questions.length) {
 		return questions
 	}
-	await freshQuestions()
+	await refreshQuestions()
 	return cache.getQuestions()
 }
-export async function freshQuestions() {
+export async function refreshQuestions() {
 	let questions: ConciseQuestion[] = []
 	const data = await api.fetchCategorieQuestions('all')
 	questions = handleCategorieQuestions(data)

@@ -3,7 +3,7 @@ import { checkBeforeDebug, execWithProgress, execWithProgress2 } from './util'
 import { log, updateConfig } from './config'
 import { window } from 'vscode'
 import { createPanel } from './webview/buildCodeWebview'
-import { api, freshQuestions } from './api/index'
+import { api, refreshQuestions } from './api/index'
 import * as vscode from 'vscode'
 import { QuestionsProvider, QuestionTree } from './provider/questionsProvider'
 import { cache } from './cache'
@@ -234,8 +234,8 @@ export async function getDescriptionCommand(...args: GetDescriptionArguments) {
 	})
 }
 
-export async function freshCommand(questionsProvider: QuestionsProvider) {
-	const promise = freshQuestions()
+export async function refreshCommand(questionsProvider: QuestionsProvider) {
+	const promise = refreshQuestions()
 	await execWithProgress2(promise, '')
 	questionsProvider.refresh()
 }
@@ -251,7 +251,7 @@ export async function signInCommand(questionsProvider: QuestionsProvider) {
 }
 
 class LangItem implements vscode.QuickPickItem {
-	constructor(public label: string, public description: string, public detail: string) {}
+	constructor(public label: string, public description: string, public detail: string) { }
 }
 export async function switchEndpointCommand() {
 	const LangConfigs = [
@@ -284,7 +284,7 @@ export async function switchEndpointCommand() {
 }
 
 class CodeLangItem implements vscode.QuickPickItem {
-	constructor(public label: string, public description: string) {}
+	constructor(public label: string, public description: string) { }
 }
 export async function switchCodeLangCommand() {
 	// const langs: CodeLang[] = [CodeLang.JavaScript, CodeLang.TypeScript, CodeLang.Python3, CodeLang.Go]

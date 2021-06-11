@@ -92,11 +92,11 @@ export const api = {
 	},
 }
 
-export async function freshQuestions() {
+export async function refreshQuestions() {
 	if (config.lang === 'en') {
-		await apiEn.api.freshQuestions()
+		await apiEn.api.refreshQuestions()
 	} else {
-		await apiCn.api.freshQuestions()
+		await apiCn.api.refreshQuestions()
 	}
 }
 

@@ -262,5 +262,4 @@ export function isSupportFile(filePath: string) {
 	}
 	const lang = langItem.lang
 	return enableLang.includes(lang)
-
 }

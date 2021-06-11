@@ -5,7 +5,7 @@ import {
 	testCodeCommand,
 	buildCodeCommand,
 	submitCommand,
-	freshCommand,
+	refreshCommand,
 	switchEndpointCommand,
 	signInCommand,
 	switchCodeLangCommand,
@@ -51,7 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
 		)
 	)
 	subscriptions.push(
-		commands.registerCommand('algorithm.refreshQuestions', freshCommand.bind(null, questionsProvider))
+		commands.registerCommand('algorithm.refreshQuestions', refreshCommand.bind(null, questionsProvider))
 	)
 	subscriptions.push(
 		commands.registerCommand('algorithm.switchEndpoint', switchEndpointCommand.bind(null, questionsProvider))

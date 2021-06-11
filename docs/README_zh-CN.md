@@ -8,62 +8,62 @@ An excellent vscode extension for leetcode.
 
 ## Support
 
-- javascript
-- typescript
-- python3
-- golang
-- java
-- c++
-- shell
-- sql
+-   javascript
+-   typescript
+-   python3
+-   golang
+-   java
+-   c++
+-   shell
+-   sql
 
 **将会很快支持其它语言**
 
 ## Main Features
 
-- 代码里包含默认测试用例，也可以添加自定义的测试用例，点击测试按钮 自动在本地运行，支持链表和二叉树。
+-   代码里包含默认测试用例，也可以添加自定义的测试用例，点击测试按钮 自动在本地运行，支持链表和二叉树。
 
-- debug 指定测试用例
+-   debug 指定测试用例
 
-- 备忘录
+-   备忘录
 
-- 支持 import module, 打包代码， 快速复制打包的代码.(此功能仅支持 js/ts)
+-   支持 import module, 打包代码， 快速复制打包的代码.(此功能仅支持 js/ts)
 
-- 包含周赛 (正式比赛时直接使用 submit 是无效的,应该使用复制代码，然后在浏览器提交.)
+-   包含周赛 (正式比赛时直接使用 submit 是无效的,应该使用复制代码，然后在浏览器提交.)
 
 ## Other Features
 
-- 搜索题目
-- 每日一题
-- 支持同时登录 https://leetcode.com/ 和 https://leetcode-cn.com/
+-   搜索题目
+-   每日一题
+-   支持同时登录 https://leetcode.com/ 和 https://leetcode-cn.com/
 
 ## 运行条件
 
-- javascript/typescript
+-   javascript/typescript
 
-  - Nodejs 12+
+    -   Nodejs 12+
 
-    > 默认会使用 node 执行测试和 debug，如果是使用 nvm 安装的，需要设置选项`algorithm.nodePath`
+        > 默认会使用 node 执行测试和 debug，如果是使用 nvm 安装的，需要设置选项`algorithm.nodePath`
 
-- python3
+-   python3
 
-  - python3
-  - 安装官方 Python 插件(https://code.visualstudio.com/docs/python/python-tutorial)
+    -   python3
+    -   安装官方 Python 插件(https://code.visualstudio.com/docs/python/python-tutorial)
 
-- golang
+-   golang
 
-  - 确保 `go` 在环境变量里
-  - 安装 golang 官方插件
+    -   确保 `go` 在环境变量里
+    -   安装 golang 官方插件
 
-- java
+-   java
 
-  - 确保`java`,`javac`在环境变量里，或者[设置 javaPath 和 javacPath](#Setting).
-  - 安装 java 官方插件(https://code.visualstudio.com/docs/java/java-tutorial)
+    -   确保`java`,`javac`在环境变量里，或者[设置 javaPath 和 javacPath](#Setting).
+    -   安装 java 官方插件(https://code.visualstudio.com/docs/java/java-tutorial)
 
-- c++
+-   c++
 
-  - 安装 GCC C++编译器(g++).确保`g++`在环境变量里.
-  - 安装 c++插件.(https://code.visualstudio.com/docs/cpp/config-linux)
+    -   安装 GCC C++编译器(g++).确保`g++`在环境变量里.
+    -   安装 c++插件.(https://code.visualstudio.com/docs/cpp/config-linux)
 
 ## 选择题目
 
@@ -81,11 +81,11 @@ An excellent vscode extension for leetcode.
 
 > `view toolbar`有以下几种按钮
 
-- fresh question
-- search question
-- login in
-- switch endpoint
-- collapse all
+-   refresh question
+-   search question
+-   login in
+-   switch endpoint
+-   collapse all
 
 ![shortcut buttons](../images/shortcut.png)
 
@@ -93,8 +93,8 @@ An excellent vscode extension for leetcode.
 
 ### 目前支持:
 
-- leetcode.com
-- leetcode-cn.com
+-   leetcode.com
+-   leetcode-cn.com
 
 > Note: 账户不互通.
 
@@ -102,8 +102,8 @@ An excellent vscode extension for leetcode.
 
 登录方式参考了官方插件 [vscode-leetcode](https://github.com/LeetCode-OpenSource/vscode-leetcode).
 
-- leetcode.com 支持 github 和 cookie.
-- leetcode-cn.com 支持 账号密码,github 和 cookie.
+-   leetcode.com 支持 github 和 cookie.
+-   leetcode-cn.com 支持 账号密码,github 和 cookie.
 
 ## 运行测试
 
@@ -139,11 +139,11 @@ An excellent vscode extension for leetcode.
 
 ### build code & copy code
 
-- 点击 build
+-   点击 build
 
 ![build.png](../images/build.png)
 
-- 点击 copy
+-   点击 copy
 
 ![copy.png](../images/copy.png)
 
