@@ -29,6 +29,8 @@ An excellent vscode extension for leetcode.
 
 -   memo
 
+-   multi-solution and history
+
 -   support import module, bundle code and copy the build code.(only support js/ts)
 
 -   contain contest (Do not submit directly when you attending weekly contest,
@@ -140,6 +142,17 @@ Click the submit hover to submit your code. You can use build to view the final 
 
 You can create different folders and add questions to them.
 ![memo](./images/memo.gif)
+
+## Multi-solution and History
+
+![solution](./images/history.png)
+
+1. Click the history codelens, you will see the answers and submit history.
+2. Add the comment `@desc $(method name)` in the code, it will generate description or comment when `submit` or use `new leetcode answer` command.
+3. Right click the mouse,you will see the `new leetcode answer` command.This command will save your old answer and init a new answer.You can scan it in 4.
+4. the old answers
+5. submit solution save in local
+6. submit solution save in leetcode
 
 ## Weekly Contest
 

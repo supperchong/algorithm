@@ -27,6 +27,8 @@ An excellent vscode extension for leetcode.
 
 -   备忘录
 
+-   一题多解和提交历史
+
 -   支持 import module, 打包代码， 快速复制打包的代码.(此功能仅支持 js/ts)
 
 -   包含周赛 (正式比赛时直接使用 submit 是无效的,应该使用复制代码，然后在浏览器提交.)
@@ -132,6 +134,17 @@ An excellent vscode extension for leetcode.
 
 可以在备忘录里新建不同文件夹，例如 dfs,bfs 等，然后将题目添加进去
 ![memo](../images/memo.gif)
+
+## 一题多解和提交历史
+
+![solution](./images/history.png)
+
+1. 点击 history，右边将会出现多种解法列表和提交历史。
+2. 在代码里添加注释 `@desc $(method name)`，在保存多解和提交的时候会自动生成备注。
+3. 右击鼠标可以看到命令`new leetcode answer`。这个命令将会保存解答，同时初始化新的解答。保存的解答可以在 4 中查看。
+4. 保存的多种解答
+5. 保存在本地的提交
+6. 保存在 leetcode 的提交
 
 ### **注意!**
 
