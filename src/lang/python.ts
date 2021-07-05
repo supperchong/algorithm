@@ -157,7 +157,7 @@ export class PythonParse extends BaseLang {
 			'list<integer>',
 			'list<list<integer>>',
 			'list<list<string>>',
-			'character[][]"',
+			'character[][]',
 			'boolean',
 			'double',
 		]
@@ -212,7 +212,7 @@ export class PythonParse extends BaseLang {
 			'list<integer>',
 			'list<list<integer>>',
 			'list<list<string>>',
-			'character[][]"',
+			'character[][]',
 			'boolean',
 		]
 

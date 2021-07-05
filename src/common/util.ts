@@ -589,7 +589,7 @@ function handleParam(index: number, paramType: string, esbuild = false): string 
 		'list<integer>',
 		'list<list<integer>>',
 		'list<list<string>>',
-		'character[][]"',
+		'character[][]',
 		'boolean',
 		'double',
 	]
@@ -651,7 +651,7 @@ function handleReturn(
 		'list<integer>',
 		'list<list<integer>>',
 		'list<list<string>>',
-		'character[][]"',
+		'character[][]',
 		'boolean',
 	]
 
