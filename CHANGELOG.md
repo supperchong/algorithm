@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.6](https://github.com/supperchong/algorithm/compare/v0.0.5...v0.0.6) (2021-07-08)
+
+
+### Bug Fixes
+
+* fix the test process not exit ([1f8b2c6](https://github.com/supperchong/algorithm/commit/1f8b2c6997a86b12649dc2a77b109fe3a3671c7c)), closes [#14](https://github.com/supperchong/algorithm/issues/14)
+
 ### [0.0.5](https://github.com/supperchong/algorithm/compare/v0.0.4...v0.0.5) (2021-07-05)
 
 
