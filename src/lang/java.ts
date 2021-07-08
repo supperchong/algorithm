@@ -2,14 +2,13 @@ import * as cp from 'child_process'
 import { pathExists, ensureFile, copy } from 'fs-extra'
 import { CaseList, writeFileAsync } from '../common/util'
 import { tag } from 'pretty-tag'
-import { handleMsg } from '../common/util'
-import { log, config } from '../config'
+import { config } from '../config'
 import { promisify } from 'util'
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { ExtraType } from '../common/langConfig'
 import { BaseLang } from './base'
-import { LanguageMetaData } from '../common/lang'
+import { defaultTimeout, LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 const langTypeMap = {
 	integer: 'int',
@@ -304,16 +303,11 @@ export class JavaParse extends BaseLang {
 		await this.buildMainFile(argsStr)
 		const javaPath = config.javaPath
 		const cwd = this.cwd
-		try {
-			const { stdout } = await execFileAsync(javaPath, [`test/Test`], {
-				cwd: cwd,
-				shell: true,
-			})
-			const testResultList = this.handleResult(stdout, caseList)
-			return handleMsg(testResultList)
-		} catch (err) {
-			log.appendLine(err)
-		}
+		const p = execFileAsync(javaPath, [`test/Test`], {
+			cwd: cwd,
+			timeout: defaultTimeout
+		})
+		return this.waitExecTest(p, caseList)
 	}
 	async runInNewContext(_args: string[], _originCode: string, _funcName: string) {
 		return ''

@@ -2,13 +2,11 @@ import * as cp from 'child_process'
 import { pathExists, ensureFile, copy } from 'fs-extra'
 import { CaseList, writeFileAsync } from '../common/util'
 import { tag } from 'pretty-tag'
-import { handleMsg } from '../common/util'
-import { log } from '../config'
 import { promisify } from 'util'
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { BaseLang } from './base'
-import { LanguageMetaData } from '../common/lang'
+import { defaultTimeout, LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 const GCC = 'g++'
 const langTypeMap: Record<string, string> = {
@@ -302,17 +300,13 @@ export class CppParse extends BaseLang {
 		const argsStr = JSON.stringify(argsArr)
 		await this.buildMainFile(argsStr)
 		const cwd = this.cwd
-		try {
-			const execProgram = this.getExecProgram()
-			const { stdout } = await execFileAsync(execProgram, {
-				cwd: cwd,
-				shell: true,
-			})
-			const testResultList = this.handleResult(stdout, caseList)
-			return handleMsg(testResultList)
-		} catch (err) {
-			log.appendLine(err)
-		}
+
+		const execProgram = this.getExecProgram()
+		const p = execFileAsync(execProgram, {
+			cwd: cwd,
+			timeout: defaultTimeout
+		})
+		return this.waitExecTest(p, caseList)
 	}
 	async runInNewContext(_args: string[], _originCode: string, _funcName: string) {
 		return ''

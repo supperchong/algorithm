@@ -2,14 +2,12 @@ import * as cp from 'child_process'
 import { pathExists, ensureFile, copy, ensureDir } from 'fs-extra'
 import { CaseList, writeFileAsync } from '../common/util'
 import { tag } from 'pretty-tag'
-import { handleMsg } from '../common/util'
-import { log } from '../config'
 import { promisify } from 'util'
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { BaseLang } from './base'
 import { platform } from 'os'
-import { LanguageMetaData } from '../common/lang'
+import { defaultTimeout, LanguageMetaData } from '../common/lang'
 
 const execFileAsync = promisify(cp.execFile)
 
@@ -227,16 +225,12 @@ export class GoParse extends BaseLang {
 		await this.buildMainFile(argsStr)
 		const mainFile = this.getExecProgram()
 		const cwd = this.cwd
-		try {
-			const { stdout } = await execFileAsync(mainFile, {
-				cwd: cwd,
-				shell: true,
-			})
-			const testResultList = this.handleResult(stdout, caseList)
-			return handleMsg(testResultList)
-		} catch (err) {
-			log.appendLine(err)
-		}
+
+		const p = execFileAsync(mainFile, {
+			cwd: cwd,
+			timeout: defaultTimeout
+		})
+		return this.waitExecTest(p, caseList)
 	}
 	private async ensureModFile() {
 		const cwd = this.cwd

@@ -30,3 +30,4 @@ export interface TestOptions {
 	originCode: string
 }
 export type DebugOptions = Omit<TestOptions, 'caseList'>
+export const defaultTimeout = 10000

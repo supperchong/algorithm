@@ -8,7 +8,9 @@ import * as vscode from 'vscode'
 import { tranfromToCustomBreakpoint } from '../debug/launch'
 import { getFileComment } from '../common/langConfig'
 import { parseCommentTest } from '../common/util'
-import { LanguageMetaData, MetaData } from '../common/lang'
+import { defaultTimeout, LanguageMetaData, MetaData } from '../common/lang'
+import { childProcessProxy } from '../process'
+import * as cp from 'child_process'
 
 export abstract class BaseLang {
 	public log: OutputChannel
@@ -95,6 +97,25 @@ export abstract class BaseLang {
 			testResultList[index].result = result
 		}
 		return testResultList
+	}
+	async waitExecTest(p: cp.PromiseWithChild<{
+		stdout: string;
+		stderr: string;
+	}>, caseList: CaseList) {
+		const child = p.child
+		childProcessProxy.add(child)
+		try {
+			const { stdout } = await p
+			const testResultList = this.handleResult(stdout, caseList)
+			childProcessProxy.remove(child)
+			return handleMsg(testResultList)
+		} catch (err) {
+			if (err.killed) {
+				log.appendLine(`timeout ${defaultTimeout}ms`)
+			}
+			childProcessProxy.remove(child)
+			log.appendLine(err)
+		}
 	}
 	async runMultiple(caseList: CaseList, originCode: string, funcName: string): Promise<string | undefined> {
 		const testResultList: TestResult[] = []

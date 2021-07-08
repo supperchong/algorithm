@@ -27,6 +27,7 @@ import { registerForSnippetProviders } from './provider/snippetProvider'
 import { registerDebug } from './debug/launch'
 import { registerCompletionItemProvider } from './provider/completionProvider'
 import { MemoProvider } from './provider/memoProvider'
+import { childProcessProxy } from './process'
 export function activate(context: vscode.ExtensionContext) {
 	const subscriptions = context.subscriptions
 	registerCompletionItemProvider(context)
@@ -82,4 +83,8 @@ export function activate(context: vscode.ExtensionContext) {
 		showCollapseAll: true,
 	})
 	subscriptions.push(vscode.workspace.onDidChangeConfiguration(onChangeConfig.bind(null, questionsProvider)))
+}
+
+export function deactivate() {
+	childProcessProxy.clear()
 }
