@@ -52,7 +52,7 @@ export function outBoundArrayPlugin() {
 					const referencePaths = bind.referencePaths
 					referencePaths.forEach((r) => {
 						let nodes: ComputeProperty[] = []
-						while (r.parentPath.node.type === 'MemberExpression' && r.parentPath.node.computed) {
+						while (r.parentPath && r.parentPath.node.type === 'MemberExpression' && r.parentPath.node.computed) {
 							const node = r.parentPath.node
 							if (!isValidNumberProperty(node.property)) {
 								return
@@ -64,7 +64,7 @@ export function outBoundArrayPlugin() {
 							r = r.parentPath
 						}
 
-						if (nodes.length && !(r.key === 'left' && r.parentPath.type === 'AssignmentExpression')) {
+						if (nodes.length && !(r.key === 'left' && r.parentPath && r.parentPath.type === 'AssignmentExpression')) {
 							nodes = nodes.map((node) => toBinaryExpression(node))
 							r.replaceWith(
 								t.conditionalExpression(
