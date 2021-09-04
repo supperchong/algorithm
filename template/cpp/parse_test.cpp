@@ -120,8 +120,27 @@ int main()
     string target9 = serializeTreeNodeArr(listNodeArr9);
     cout << "test parseTreeNodeArr: " << transformBool(origin9 == target9) << endl;
 
-    string origin10="2.00000";
-    double num10=parseFloat(origin10);
-    string target10=serializeFloat(num10);
-    cout << "test serializeFloat: " << transformBool(origin10==target10 ) << endl;
+    string origin10 = "2.00000";
+    double num10 = parseFloat(origin10);
+    string target10 = serializeFloat(num10);
+    cout << "test serializeFloat: " << transformBool(origin10 == target10) << endl;
+
+    char char11 = parseChar("\"a\"");
+    char target11 = 'a';
+    cout << "test parseString: " << transformBool(char11 == target11) << endl;
+
+    string origin12 = "\"a\"";
+    char char12 = parseChar(origin12);
+    string str12 = serializeChar(char12);
+    cout << "test parseChar: " << transformBool(str12 == origin12) << endl;
+
+    string origin13 = "[\"a\",\"v\"]";
+    vector<char> charArr13 = parseCharArr(origin13);
+    string str13 = serializeCharArr(charArr13);
+    cout << "test parseCharArr: " << transformBool(str13 == origin13) << endl;
+
+    string origin14 = "[[\"a\",\"v\"]]";
+    vector<vector<char>> charArrArr14 = parseCharArrArr(origin14);
+    string str14 = serializeCharArrArr(charArrArr14);
+    cout << "test parseCharArrArr: " << transformBool(str14 == origin14) << endl;
 }

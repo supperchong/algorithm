@@ -64,6 +64,63 @@ public class Util {
 
     }
 
+    static public char parseChar(String param) {
+        String str = parseString(param);
+        return str.charAt(0);
+    }
+
+    static public char[] parseCharArr(String param) {
+        String[] arr = parseStringArr(param);
+        char r[] = new char[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            r[i] = arr[i].charAt(0);
+        }
+        return r;
+    }
+
+    static public char[][] parseCharArrArr(String param) {
+        String[][] arr = parseStringArrArr(param);
+        char[][] r = new char[arr.length][];
+        for (int i = 0; i < arr.length; i++) {
+            r[i] = new char[arr[i].length];
+            for (int j = 0; j < arr[i].length; j++) {
+                r[i][j] = arr[i][j].charAt(0);
+            }
+        }
+        return r;
+    }
+
+    static public String serializeChar(char param) {
+        String r = String.valueOf(param);
+        return serializeString(r);
+    }
+
+    static public String serializeCharArr(char[] param) {
+        String[] arr = new String[param.length];
+        for (int i = 0; i < param.length; i++) {
+            arr[i] = String.valueOf(param[i]);
+        }
+        return serializeStringArr(arr);
+    }
+
+    static public String serializeCharArrArr(char[][] param) {
+        String r = "";
+        r += "[";
+        for (int i = 0; i < param.length; i++) {
+            r += "[";
+            for (int j = 0; j < param[i].length; j++) {
+                r += serializeChar(param[i][j]);
+                if (j != param[i].length - 1) {
+                    r += ",";
+                }
+
+            }
+            r += "]";
+        }
+        r += "]";
+        return r;
+    }
+
     static public int[] parseIntegerArr(String param) {
         int[] r = {};
         int len = param.length();

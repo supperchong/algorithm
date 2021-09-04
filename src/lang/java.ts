@@ -9,6 +9,7 @@ import * as path from 'path'
 import { ExtraType } from '../common/langConfig'
 import { BaseLang } from './base'
 import { defaultTimeout, LanguageMetaData } from '../common/lang'
+let hasCopy = false
 const execFileAsync = promisify(cp.execFile)
 const langTypeMap = {
 	integer: 'int',
@@ -21,7 +22,7 @@ const langTypeMap = {
 	TreeNode: 'TreeNode',
 	'ListNode[]': 'ListNode[]',
 	'TreeNode[]': 'TreeNode[]',
-	'character[][]': 'String[][]',
+	'character[][]': 'char[][]',
 	'string[][]': 'String[][]',
 	'list<integer>': 'List<Integer>',
 	'list<string>': 'List<String>',
@@ -30,6 +31,9 @@ const langTypeMap = {
 	'list<ListNode>': 'ListNode[]',
 	'list<TreeNode>': 'TreeNode[]',
 	boolean: 'boolean',
+	character: 'char',
+	'character[]': 'char[]'
+
 }
 
 export class JavaParse extends BaseLang {
@@ -98,10 +102,7 @@ export class JavaParse extends BaseLang {
 				type: 'TreeNode[]',
 				handleFn: 'parseTreeNodeArr',
 			},
-			{
-				type: 'character[][]',
-				handleFn: 'parseStringArrArr',
-			},
+
 			{
 				type: 'string[][]',
 				handleFn: 'parseStringArrArr',
@@ -121,6 +122,18 @@ export class JavaParse extends BaseLang {
 			{
 				type: 'list<list<string>>',
 				handleFn: 'parseStringListList',
+			},
+			{
+				type: 'character',
+				handleFn: 'parseChar',
+			},
+			{
+				type: 'character[]',
+				handleFn: 'parseCharArr'
+			},
+			{
+				type: 'character[][]',
+				handleFn: 'parseCharArrArr'
 			},
 		]
 		for (const { type, handleFn } of handleConfig) {
@@ -197,10 +210,6 @@ export class JavaParse extends BaseLang {
 				handleFn: 'serializeIntegerListList',
 			},
 			{
-				type: 'character[][]',
-				handleFn: 'serializeStringArrArr',
-			},
-			{
 				type: 'string[][]',
 				handleFn: 'serializeStringArrArr',
 			},
@@ -211,6 +220,18 @@ export class JavaParse extends BaseLang {
 			{
 				type: 'list<list<string>>',
 				handleFn: 'serializeStringListList',
+			},
+			{
+				type: 'character',
+				handleFn: 'serializeChar',
+			},
+			{
+				type: 'character[]',
+				handleFn: 'serializeCharArr'
+			},
+			{
+				type: 'character[][]',
+				handleFn: 'serializeCharArrArr',
 			},
 		]
 		const argStr = Array(paramCount)
@@ -291,11 +312,12 @@ export class JavaParse extends BaseLang {
 				const src = path.join(sourceDir, name)
 				const dst = path.join(algmDir, name)
 				const isExist = await pathExists(dst)
-				if (!isExist) {
+				if (!hasCopy || !isExist) {
 					return copy(src, dst)
 				}
 			})
 		)
+		hasCopy = true
 	}
 	async runMultiple(caseList: CaseList, _originCode: string, _funcName: string) {
 		const argsArr = caseList.map((v) => v.args)

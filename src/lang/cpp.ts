@@ -9,6 +9,7 @@ import { BaseLang } from './base'
 import { defaultTimeout, LanguageMetaData } from '../common/lang'
 const execFileAsync = promisify(cp.execFile)
 const GCC = 'g++'
+let hasCopy = false
 const langTypeMap: Record<string, string> = {
 	integer: 'int',
 	string: 'string',
@@ -21,7 +22,7 @@ const langTypeMap: Record<string, string> = {
 	TreeNode: 'TreeNode *',
 	'ListNode[]': 'vector<ListNode *>',
 	'TreeNode[]': 'vector<TreeNode *>',
-	'character[][]': 'vector<vector<string>>',
+	'character[][]': 'vector<vector<char>>',
 	'string[][]': 'vector<vector<string>>',
 	'list<integer>': 'vector<int>',
 	'list<string>': 'vector<string>',
@@ -29,6 +30,8 @@ const langTypeMap: Record<string, string> = {
 	'list<list<string>>': 'vector<vector<string>>',
 	'list<ListNode>': 'vector<ListNode *>',
 	'list<TreeNode>': 'vector<TreeNode *>',
+	'character': 'char',
+	'character[]': 'vector<char>'
 }
 
 export class CppParse extends BaseLang {
@@ -97,10 +100,7 @@ export class CppParse extends BaseLang {
 				type: 'TreeNode[]',
 				handleFn: 'parseTreeNodeArr',
 			},
-			{
-				type: 'character[][]',
-				handleFn: 'parseStringArrArr',
-			},
+
 			{
 				type: 'string[][]',
 				handleFn: 'parseStringArrArr',
@@ -120,6 +120,17 @@ export class CppParse extends BaseLang {
 			{
 				type: 'list<list<integer>>',
 				handleFn: 'parseIntegerArrArr',
+			},
+			{
+				type: 'character',
+				handleFn: 'parseChar'
+			}, {
+				type: 'character[]',
+				handleFn: 'parseCharArr'
+			},
+			{
+				type: 'character[][]',
+				handleFn: 'parseCharArrArr',
 			},
 		]
 		for (const { type, handleFn } of handleConfig) {
@@ -196,10 +207,6 @@ export class CppParse extends BaseLang {
 				handleFn: 'serializeIntegerArrArr',
 			},
 			{
-				type: 'character[][]',
-				handleFn: 'serializeStringArrArr',
-			},
-			{
 				type: 'string[][]',
 				handleFn: 'serializeStringArrArr',
 			},
@@ -207,6 +214,16 @@ export class CppParse extends BaseLang {
 				type: 'list<list<string>>',
 				handleFn: 'serializeStringArrArr',
 			},
+			{
+				type: 'character',
+				handleFn: 'serializeChar',
+			}, {
+				type: 'character[]',
+				handleFn: 'serializeCharArr'
+			}, {
+				type: 'character[][]',
+				handleFn: 'serializeCharArrArr'
+			}
 		]
 		const argStr = Array(paramCount)
 			.fill(0)
@@ -285,11 +302,17 @@ export class CppParse extends BaseLang {
 				const src = path.join(sourceDir, name)
 				const dst = path.join(algmDir, name)
 				const isExist = await pathExists(dst)
-				if (!isExist) {
-					return copy(src, dst)
+				if (!hasCopy || !isExist) {
+					try {
+						await copy(src, dst, { overwrite: true })
+					} catch (err) {
+						console.log(err)
+					}
+
 				}
 			})
 		)
+		hasCopy = true
 	}
 	private getExecProgram() {
 		const cwd = this.cwd
@@ -327,7 +350,7 @@ export class CppParse extends BaseLang {
 		await this.writeTestCase(argsStr)
 		const cwd = this.cwd
 		const mainFilePath = this.mainFilePath
-		await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '-o', 'main/main'], { cwd: cwd, shell: true })
+		await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '"-std=c++11"', '-o', 'main/main'], { cwd: cwd, shell: true })
 	}
 	private getTestFilePath() {
 		const cwd = this.cwd

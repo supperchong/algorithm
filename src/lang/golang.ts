@@ -32,10 +32,21 @@ export class GoParse extends BaseLang {
 			{
 				type: 'string',
 				handleFn: 'parseString',
+			}, {
+				type: 'character',
+				handleFn: 'parseChar',
 			},
 			{
 				type: 'integer[]',
 				handleFn: 'parseIntegerArr',
+			},
+			{
+				type: 'character[]',
+				handleFn: 'parseCharArr'
+			},
+			{
+				type: 'character[][]',
+				handleFn: 'parseCharArrArr'
 			},
 			{
 				type: 'string[]',
@@ -66,10 +77,6 @@ export class GoParse extends BaseLang {
 				handleFn: 'deserializeTreeNodeArr',
 			},
 			{
-				type: 'character[][]',
-				handleFn: 'parseStringArrArr',
-			},
-			{
 				type: 'string[][]',
 				handleFn: 'parseStringArrArr',
 			},
@@ -95,6 +102,10 @@ export class GoParse extends BaseLang {
 			{
 				type: 'string',
 				handleFn: 'serializeInterface',
+			},
+			{
+				type: 'character',
+				handleFn: 'serializeChar',
 			},
 			{
 				type: 'double',
@@ -146,7 +157,7 @@ export class GoParse extends BaseLang {
 			},
 			{
 				type: 'character[][]',
-				handleFn: 'serializeInterface',
+				handleFn: 'serializeCharArrArr',
 			},
 			{
 				type: 'string[][]',
@@ -155,7 +166,10 @@ export class GoParse extends BaseLang {
 			{
 				type: 'list<list<string>>',
 				handleFn: 'serializeInterface',
-			},
+			}, {
+				type: 'character[]',
+				handleFn: 'serializeCharArr'
+			}
 		]
 		const argStr = Array(paramCount)
 			.fill(0)

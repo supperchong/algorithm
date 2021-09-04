@@ -214,6 +214,10 @@ func parseString(param string) string {
 	json.Unmarshal([]byte(param), &r)
 	return r
 }
+func parseChar(param string) byte {
+	r := parseString(param)
+	return r[0]
+}
 func parseFloat(param string) float64 {
 	num, err := strconv.ParseFloat(param, 64)
 	if err != nil {
@@ -231,6 +235,14 @@ func parseStringArr(param string) []string {
 	json.Unmarshal([]byte(param), &r)
 	return r
 }
+func parseCharArr(param string) []byte {
+	strArr := parseStringArr(param)
+	var r []byte
+	for i := 0; i < len(strArr); i++ {
+		r = append(r, strArr[i][0])
+	}
+	return r
+}
 func parseIntegerArrArr(param string) [][]int {
 	var r [][]int
 	json.Unmarshal([]byte(param), &r)
@@ -242,6 +254,39 @@ func parseStringArrArr(param string) [][]string {
 	json.Unmarshal([]byte(param), &r)
 	return r
 }
+func parseCharArrArr(param string) [][]byte {
+	strArrArr := parseStringArrArr(param)
+	var r [][]byte
+	for i := 0; i < len(strArrArr); i++ {
+		var item []byte
+		for j := 0; j < len(strArrArr[i]); j++ {
+			item = append(item, strArrArr[i][j][0])
+		}
+		r = append(r, item)
+	}
+	return r
+}
 func serializeFloat(a float64) string {
 	return strconv.FormatFloat(a, 'f', 5, 64)
+}
+func serializeChar(a byte) string {
+	return serializeInterface(string(a))
+}
+func serializeCharArr(a []byte) string {
+	var strArr []string
+	for i := 0; i < len(a); i++ {
+		strArr = append(strArr, string(a[i]))
+	}
+	return serializeInterface(strArr)
+}
+func serializeCharArrArr(a [][]byte) string {
+	var strArr [][]string
+	for i := 0; i < len(a); i++ {
+		var item []string
+		for j := 0; j < len(a[i]); j++ {
+			item = append(item, string(a[i][j]))
+		}
+		strArr = append(strArr, item)
+	}
+	return serializeInterface(strArr)
 }

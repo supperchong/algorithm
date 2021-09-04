@@ -212,6 +212,80 @@ vector<vector<string>> parseStringArrArr(string param)
     return strs;
 }
 
+char parseChar(string param)
+{
+    string str = parseString(param);
+    return str.at(0);
+}
+
+vector<char> parseCharArr(string param)
+{
+    vector<char> r;
+    vector<string> strArr = parseStringArr(param);
+    for (auto it = strArr.begin(); it != strArr.end(); it++)
+    {
+        r.push_back((*it).at(0));
+    }
+    return r;
+}
+
+vector<vector<char>> parseCharArrArr(string param)
+{
+    vector<vector<char>> r;
+    vector<vector<string>> strArrArr = parseStringArrArr(param);
+    for (auto it = strArrArr.begin(); it != strArrArr.end(); it++)
+    {
+        vector<string> strArr = *it;
+        vector<char> item;
+        for (auto it2 = strArr.begin(); it2 != strArr.end(); it2++)
+        {
+            item.push_back((*it2).at(0));
+        }
+        r.push_back(item);
+    }
+    return r;
+}
+
+string serializeChar(char param)
+{
+    string r = "\"";
+    if (param == '\\' || param == '"')
+    {
+
+        r += '\\';
+    }
+    r += param;
+    r += '"';
+    return r;
+}
+string serializeCharArr(vector<char> param)
+{
+    string r = "[";
+    for (auto it = param.begin(); it != param.end(); it++)
+    {
+        if (it != param.begin())
+        {
+            r += ",";
+        }
+        r += serializeChar(*it);
+    }
+    r += "]";
+    return r;
+}
+string serializeCharArrArr(vector<vector<char>> param)
+{
+    string r = "[";
+    for (auto it = param.begin(); it != param.end(); it++)
+    {
+        if (it != param.begin())
+        {
+            r += ",";
+        }
+        r += serializeCharArr(*it);
+    }
+    r += "]";
+    return r;
+}
 TreeNode *parseTreeNode(string param)
 {
     int len = param.length();
