@@ -132,6 +132,8 @@ You only need to set breakpoints on the testcase line and set breakpoints for th
 
 > Note:If you are debugging java,ensure the extension `Debugger for Java`>=v0.33.1 or the extension `Java Extension Pack`>=v0.14.0. If you build error when debugging,press `ctrl+shift+p` and run the Command `Java:Clean Java Language Server Workspace`.
 
+> Note:If you are debugging c++ in m1, you need install the vscode extension named `CodeLLDB`
+
 ## Submit
 
 Click the submit hover to submit your code. You can use build to view the final submitted code.

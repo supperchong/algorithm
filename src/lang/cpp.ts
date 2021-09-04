@@ -350,7 +350,7 @@ export class CppParse extends BaseLang {
 		await this.writeTestCase(argsStr)
 		const cwd = this.cwd
 		const mainFilePath = this.mainFilePath
-		await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '"-std=c++11"', '-o', 'main/main'], { cwd: cwd, shell: true })
+		await execFileAsync(GCC, ['-I', '.', '-g', mainFilePath, '"-std=c++17"', '-o', 'main/main'], { cwd: cwd, shell: true })
 	}
 	private getTestFilePath() {
 		const cwd = this.cwd
@@ -367,6 +367,21 @@ export class CppParse extends BaseLang {
 	async getDebugConfig(_breaks: vscode.SourceBreakpoint[]) {
 		const cwd = this.cwd
 		const execProgram = this.getExecProgram()
+		// for m1
+		if (process.platform === 'darwin' && process.arch === 'arm64') {
+			return {
+				"name": "clang++ - Build and debug active file",
+				"type": "lldb",
+				"request": "launch",
+				"program": execProgram,
+				"args": [],
+				"stopAtEntry": true,
+				"cwd": cwd,
+				"environment": [],
+				"externalConsole": false,
+				"MIMode": "lldb",
+			}
+		}
 		return {
 			name: 'g++ - Build and debug active file',
 			type: 'cppdbg',
@@ -386,6 +401,7 @@ export class CppParse extends BaseLang {
 				},
 			],
 		}
+
 	}
 	shouldRemoveInBuild(line: string): boolean {
 		return line.trim().startsWith('#include "algm/algm.h"')
