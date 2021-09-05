@@ -124,6 +124,8 @@ An excellent vscode extension for leetcode.
 
 > Note: 如果你正在调试 java,确保已经打开的问题没有语法错误，否则将会编译失败，因为所有问题在同一个目录下，而 java 相关插件只支持一个目录一个项目。比如你打开了问题 1，但是没有补全代码，然后开始 debug 问题 2，这时候会报语法错误，因为问题 1 应该返回一个值。如果语法正确后编译仍然失败尝试按住 `ctrl+shift+p` ，然后执行命令 `Java:Clean Java Language Server Workspace`.
 
+> Note:如果你在 mac m1 上调试 c++, 需要安装 vscode 插件 `CodeLLDB`
+
 ## 提交
 
 点击 submit 提交代码. 你可以使用 build 查看最终提交的代码.
