@@ -104,7 +104,7 @@ class MultiStepInput {
 					}),
 					input.onDidChangeSelection((items) => resolve(items[0])),
 					input.onDidHide(() => {
-						;(async () => {
+						; (async () => {
 							reject(
 								shouldResume && (await shouldResume()) ? InputFlowAction.resume : InputFlowAction.cancel
 							)
@@ -172,7 +172,7 @@ class MultiStepInput {
 						}
 					}),
 					input.onDidHide(() => {
-						;(async () => {
+						; (async () => {
 							reject(
 								shouldResume && (await shouldResume()) ? InputFlowAction.resume : InputFlowAction.cancel
 							)
@@ -227,7 +227,7 @@ function validCookie(cookie: string) {
 async function refresh(questionsProvider: QuestionsProvider) {
 	cache.removeCache()
 	const refreshPromise = refreshQuestions()
-	execWithProgress(refreshPromise, 'refresh questions')
+	await execWithProgress(refreshPromise, 'refresh questions')
 	questionsProvider.refresh()
 }
 export async function selectLogin(questionsProvider: QuestionsProvider) {
