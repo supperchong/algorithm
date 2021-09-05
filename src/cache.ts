@@ -56,7 +56,10 @@ class Cache {
 		}
 		try {
 			const allQuestions = reRequire(questionPath)
-			const filterPrivilegeQuestions = allQuestions.filter((v) => !v.paid_only)
+			let filterPrivilegeQuestions = allQuestions
+			if (!config.displayLock) {
+				filterPrivilegeQuestions = allQuestions.filter((v) => !v.paid_only)
+			}
 			this.set(ALLQUESTIONS, filterPrivilegeQuestions)
 			return this.get(ALLQUESTIONS) || []
 		} catch (err) {
@@ -66,7 +69,10 @@ class Cache {
 
 	setQuestions(questions: ConciseQuestion[]) {
 		const { questionPath } = config
-		const filterPrivilegeQuestions = questions.filter((v) => !v.paid_only)
+		let filterPrivilegeQuestions = questions
+		if (!config.displayLock) {
+			filterPrivilegeQuestions = questions.filter((v) => !v.paid_only)
+		}
 		this.set(ALLQUESTIONS, filterPrivilegeQuestions)
 		fs.writeFile(
 			questionPath,

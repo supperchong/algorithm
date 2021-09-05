@@ -236,7 +236,7 @@ export async function getDescriptionCommand(...args: GetDescriptionArguments) {
 
 export async function refreshCommand(questionsProvider: QuestionsProvider) {
 	const promise = refreshQuestions()
-	await execWithProgress2(promise, '')
+	await execWithProgress2(promise, 'refresh questions')
 	questionsProvider.refresh()
 }
 

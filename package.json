@@ -103,6 +103,10 @@
         "algorithm.autoImportAlgm": {
           "type": "boolean",
           "description": "if true, will auto import algm at the beginning of the coding file."
+        },
+        "algorithm.displayLock":{
+          "type":"boolean",
+          "description": "if true, will display the locked questions."
         }
       }
     },

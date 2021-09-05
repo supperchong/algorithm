@@ -21,6 +21,7 @@ const defaultJavacPath = 'javac'
 const defaultJavaPath = 'java'
 const algmVersion = '0.1.7'
 const ESBUILD = 'esbuild'
+const defaultDisplayLock = false
 const defaultDataBase = DataBase.MySQL
 export const log = window.createOutputChannel('algorithm')
 export const InstallState = {
@@ -71,6 +72,7 @@ export interface Config extends BaseDir {
 	javacPath: string
 	javaPath: string
 	questionsProvider?: QuestionsProvider
+	displayLock: boolean
 }
 type UpdateConfigKey = keyof Pick<Config, 'lang' | 'nodeBinPath' | 'codeLang' | 'autoImportAlgm' | 'database'>
 
@@ -129,6 +131,7 @@ function initConfig(): Config {
 	// const algorithmPath = path.join(cacheDir, 'node_modules/algm')
 	const debugOptionsFilePath = path.join(baseDir, '.vscode/debugParams.json')
 	const autoImportAlgm: boolean = customConfig.get('autoImportAlgm') || false
+	const displayLock: boolean = customConfig.get('displayLock') || false
 	const moduleDir: string = path.join(baseDir, 'node_modules')
 	const algmModuleDir: string = path.join(moduleDir, 'algm')
 	const existAlgmModule = fs.existsSync(algmModuleDir)
@@ -160,6 +163,7 @@ function initConfig(): Config {
 		javaPath,
 		javacPath,
 		database,
+		displayLock
 	}
 }
 export const config = initConfig()
@@ -301,6 +305,10 @@ function updateBaseDir() {
 	config.existAlgmModule = fs.existsSync(config.algmModuleDir)
 }
 
+function updateDisplayLock() {
+	config.displayLock = workspace.getConfiguration('algorithm').get('displayLock') || defaultDisplayLock
+}
+
 async function installEsbuild() {
 	const name = ESBUILD
 	const moduleDir = path.join(__dirname, '..', 'node_modules')
@@ -383,6 +391,10 @@ export function onChangeConfig(questionsProvider: QuestionsProvider, e: Configur
 	}
 	if (e.affectsConfiguration('algorithm.autoImportAlgm')) {
 		updateAutoImportAlgm()
+	}
+
+	if (e.affectsConfiguration('algorithm.displayLock')) {
+		updateDisplayLock()
 	}
 }
 init()

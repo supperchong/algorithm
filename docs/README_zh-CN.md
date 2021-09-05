@@ -177,6 +177,7 @@ An excellent vscode extension for leetcode.
 | javaPath        | java 可执行文件的路径.                           | java          |
 | javacPath       | javac 可执行文件的路径.                          | javac         |
 | Database        | 执行 sql 所用的数据库                            | MySQL         |
+| displayLock     | 展示锁住的题目                                   | false         |
 
 ## 感谢
 

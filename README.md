@@ -196,6 +196,7 @@ open `Extensions->algorithm`,you will see the settings:
 | javaPath        | The absolute pathname of java                                                                     | java          |
 | javacPath       | The absolute pathname of javac                                                                    | javac         |
 | Database        | default sql language                                                                              | MySQL         |
+| displayLock     | if true, will display the locked questions.                                                       | false         |
 
 ## Thanks
 
