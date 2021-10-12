@@ -2,7 +2,7 @@
   "name": "algorithm",
   "displayName": "algorithm",
   "description": "solve, test, debug question for leetcode",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.46.0"
   },
@@ -104,8 +104,8 @@
           "type": "boolean",
           "description": "if true, will auto import algm at the beginning of the coding file."
         },
-        "algorithm.displayLock":{
-          "type":"boolean",
+        "algorithm.displayLock": {
+          "type": "boolean",
           "description": "if true, will display the locked questions."
         }
       }
