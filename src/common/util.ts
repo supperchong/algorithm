@@ -728,6 +728,10 @@ function generateId(): string {
 	return Math.random().toString(32).slice(2)
 }
 
+function uniqueArr<T extends number | string>(arr: T[]): T[] {
+	const set = new Set(arr)
+	return [...set]
+}
 export {
 	detectEnableExt,
 	getJsTestCaseList as getTestCaseList,
@@ -741,4 +745,5 @@ export {
 	returnRegExp,
 	handleArgsType,
 	generateId,
+	uniqueArr
 }

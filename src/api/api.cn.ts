@@ -34,6 +34,7 @@ import { getDb } from '../db'
 import { GraphRes } from '../model/common'
 import { log } from '../config'
 import { sortQuestions } from '../util'
+import { uniqueArr } from '../common/util'
 export const MAPIDQUESTION = 'MapIdQuestion'
 const monthEns = [
 	'january',
@@ -438,7 +439,7 @@ export async function getTags() {
 		cache.setTags(tags)
 	}
 
-	return tags.map((tag) => tag.translatedName || tag.name)
+	return uniqueArr(tags.map((tag) => tag.translatedName || tag.name))
 }
 export async function getQuestionsByTag(translatedName: string) {
 	const tags = cache.getTags() || []
