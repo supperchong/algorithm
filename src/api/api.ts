@@ -417,7 +417,7 @@ export async function saveQuestionDetail(question) {
 	await db.add(JSON.stringify(question), Number(question.questionId), Number(question.questionFrontendId))
 }
 export async function getTags() {
-	let tags: Tag[] = cache.getTags() || []
+	let tags: Tag[] | null | undefined = cache.getTags()
 	if (!tags) {
 		const data = await api.fetchTags()
 		tags = data.topics
