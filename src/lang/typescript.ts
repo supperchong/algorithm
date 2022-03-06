@@ -10,11 +10,11 @@ import babel = require('@babel/core')
 import presetTs = require('@babel/preset-typescript')
 import { outBoundArrayPlugin } from '../babelPlugin'
 import rollup = require('rollup')
-import virtual = require('@rollup/plugin-virtual')
 import resolve from '@rollup/plugin-node-resolve'
 import rollupBabelPlugin from '@rollup/plugin-babel'
 import { window } from 'vscode'
 import { addComment } from '../common/transformCode'
+const virtual = require('@rollup/plugin-virtual')
 export class TypescriptParse extends BaseLang {
 	static getPreImport() {
 		return ''

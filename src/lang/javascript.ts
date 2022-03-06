@@ -8,13 +8,12 @@ import { main } from '../debugTask/index'
 import path = require('path')
 import { outBoundArrayPlugin } from '../babelPlugin'
 import babel = require('@babel/core')
-import virtual = require('@rollup/plugin-virtual')
 import rollup = require('rollup')
 import resolve from '@rollup/plugin-node-resolve'
 import rollupBabelPlugin from '@rollup/plugin-babel'
 import { window } from 'vscode'
 import { addComment } from '../common/transformCode'
-
+const virtual = require('@rollup/plugin-virtual')
 export class JavascriptParse extends BaseLang {
 	static getPreImport() {
 		return ''

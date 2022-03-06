@@ -2,7 +2,6 @@ import rollup = require('rollup')
 import resolve from '@rollup/plugin-node-resolve'
 import rollupBabelPlugin from '@rollup/plugin-babel'
 import { transformSync } from '@babel/core'
-import virtual = require('@rollup/plugin-virtual')
 import * as path from 'path'
 import * as fs from 'fs'
 import sourceMap = require('source-map')
@@ -13,6 +12,8 @@ import { handleMsg } from '../common/util'
 import { CodeLang, getFileLang } from '../common/langConfig'
 import presetTs = require('@babel/preset-typescript')
 import { TestOptions } from '../common/lang'
+const virtual = require('@rollup/plugin-virtual')
+
 const defaultTimeout = 10000
 const supportCodeLang = [CodeLang.JavaScript, CodeLang.TypeScript]
 let options = ''
@@ -109,7 +110,7 @@ async function buildTsCode(filePath: string) {
 		treeshake: false,
 		plugins: [
 			virtual({
-				entry: entry?.code,
+				entry: entry?.code || "",
 			}),
 			resolve({ rootDir: fileDir, browser: false }),
 		],
