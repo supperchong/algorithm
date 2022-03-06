@@ -6,6 +6,7 @@
         "lib": [
             "es6"
         ],
+        "useUnknownInCatchVariables":false,
         "sourceMap": true,
         "noImplicitAny": false,
         "noImplicitThis": false,
