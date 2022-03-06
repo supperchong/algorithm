@@ -80,6 +80,16 @@ export class GoParse extends BaseLang {
 				type: 'string[][]',
 				handleFn: 'parseStringArrArr',
 			},
+			{
+				type: 'long',
+				handleFn: 'parseInteger'
+			}, {
+				type: 'long[]',
+				handleFn: 'parseIntegerArr'
+			}, {
+				type: 'long[][]',
+				handleFn: 'parseIntegerArrArr'
+			}
 		]
 		for (const { type, handleFn } of handleConfig) {
 			if (type === paramType) {
@@ -169,7 +179,18 @@ export class GoParse extends BaseLang {
 			}, {
 				type: 'character[]',
 				handleFn: 'serializeCharArr'
-			}
+			}, {
+				type: 'long',
+				handleFn: 'serializeInterface',
+			},
+			{
+				type: 'long[]',
+				handleFn: 'serializeInterface',
+			},
+			{
+				type: 'long[][]',
+				handleFn: 'serializeInterface',
+			},
 		]
 		const argStr = Array(paramCount)
 			.fill(0)

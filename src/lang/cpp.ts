@@ -31,7 +31,10 @@ const langTypeMap: Record<string, string> = {
 	'list<ListNode>': 'vector<ListNode *>',
 	'list<TreeNode>': 'vector<TreeNode *>',
 	'character': 'char',
-	'character[]': 'vector<char>'
+	'character[]': 'vector<char>',
+	'long': 'int',
+	'long[]': 'vector<int>',
+	'long[][]': 'vector<vector<int>>'
 }
 
 export class CppParse extends BaseLang {
@@ -223,6 +226,15 @@ export class CppParse extends BaseLang {
 			}, {
 				type: 'character[][]',
 				handleFn: 'serializeCharArrArr'
+			}, {
+				type: 'long',
+				handleFn: 'serializeInteger'
+			}, {
+				type: 'long[]',
+				handleFn: 'serializeIntegerArr'
+			}, {
+				type: 'long[][]',
+				handleFn: 'serializeIntegerArrArr',
 			}
 		]
 		const argStr = Array(paramCount)

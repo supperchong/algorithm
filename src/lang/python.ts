@@ -160,7 +160,10 @@ export class PythonParse extends BaseLang {
 			'boolean',
 			'double',
 			'character',
-			'character[]'
+			'character[]',
+			'long',
+			'long[]',
+			'long[][]'
 		]
 		if (jsonType.includes(paramType)) {
 			return `arg${index} = unitArgs[${index}]`
@@ -216,7 +219,10 @@ export class PythonParse extends BaseLang {
 			'character[][]',
 			'boolean',
 			'character',
-			'character[]'
+			'character[]',
+			'long',
+			'long[]',
+			'long[][]'
 		]
 
 		const argStr = Array(paramCount)

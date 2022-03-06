@@ -593,7 +593,10 @@ function handleParam(index: number, paramType: string, esbuild = false): string 
 		'boolean',
 		'double',
 		'character',
-		'character[]'
+		'character[]',
+		'long',
+		'long[]',
+		'long[][]'
 	]
 	if (jsonType.includes(paramType)) {
 		return `const arg${index} =JSON.parse(unitArgs[${index}])`
@@ -656,7 +659,10 @@ function handleReturn(
 		'character[][]',
 		'boolean',
 		'character',
-		'character[]'
+		'character[]',
+		'long',
+		'long[]',
+		'long[][]'
 	]
 
 	const argStr = Array(paramCount)
