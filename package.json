@@ -2,7 +2,7 @@
   "name": "algorithm",
   "displayName": "algorithm",
   "description": "solve, test, debug question for leetcode",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "engines": {
     "vscode": "^1.46.0"
   },
