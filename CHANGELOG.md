@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.9](https://github.com/supperchong/algorithm/compare/v0.0.8...v0.0.9) (2022-05-24)
+
+
+### Bug Fixes
+
+* change domain ([c2a814e](https://github.com/supperchong/algorithm/commit/c2a814e2af6b0e5c042bba8fce95aa729d5842b9))
+
 ### 0.0.8 (2022-03-14)
 
 
