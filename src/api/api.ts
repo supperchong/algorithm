@@ -27,7 +27,7 @@ import { checkParams, ContestDetail, Problems, Tag } from '../model/common'
 import { getDb } from '../db'
 import { GraphRes, ErrorStatus } from '../model/common'
 import { showLoginMessage } from '../login/index'
-import { log } from '../config'
+import { log, DomainEN } from '../config'
 import { sortQuestions } from '../util'
 import { parseSubmissionDetailHtml } from '../common/util'
 import { MAPIDQUESTION } from './api.cn'
@@ -88,12 +88,12 @@ async function request<T>(config: AxiosRequestConfig): Promise<T> {
 async function graphql<T>(data: GraphqlRequestData): Promise<T> {
 	const headers = await getHeaders()
 	return request<GraphRes<T>>({
-		url: 'https://leetcode.com/graphql',
+		url: `${DomainEN}/graphql`,
 		data,
 		method: 'POST',
 		headers: {
-			origin: 'https://leetcode.com',
-			referer: 'https://leetcode.com/problemset/all/',
+			origin: DomainEN,
+			referer: `${DomainEN}/problemset/all/`,
 			...headers,
 		},
 	}).then((res) => {
@@ -112,13 +112,13 @@ const config = {
 	},
 	getQuestionsByCategory(category: Category): AxiosRequestConfig {
 		return {
-			url: `https://leetcode.com/api/problems/${category}/`,
+			url: `${DomainEN}/api/problems/${category}/`,
 			method: 'GET',
 		}
 	},
 	tags: {
-		url: 'https://leetcode.com/problems/api/tags/',
-		referer: 'https://leetcode.com/problemset/all/',
+		url: `${DomainEN}/problems/api/tags/`,
+		referer: `${DomainEN}/problemset/all/`,
 	},
 	contests: {
 		operationName: null,
@@ -179,7 +179,7 @@ const config = {
 	},
 	getContest(titleSlug: string): AxiosRequestConfig {
 		return {
-			url: `https://leetcode.com/contest/api/info/${titleSlug}/`,
+			url: `${DomainEN}/contest/api/info/${titleSlug}/`,
 			method: 'GET',
 		}
 	},
@@ -192,10 +192,10 @@ const config = {
 	},
 	getQuestionContest(titleSlug: string, weekname: string): AxiosRequestConfig {
 		return {
-			url: `https://leetcode.com/contest/${weekname}/problems/${titleSlug}/`,
+			url: `${DomainEN}/contest/${weekname}/problems/${titleSlug}/`,
 			method: 'GET',
 			headers: {
-				referer: `https://leetcode.com/contest/${weekname}/`,
+				referer: `${DomainEN}/contest/${weekname}/`,
 			},
 		}
 	},
@@ -203,12 +203,12 @@ const config = {
 		const { titleSlug, weekname, question_id, typed_code } = options
 		checkParams(options, ['titleSlug', 'weekname', 'question_id', 'typed_code'])
 		return {
-			url: `https://leetcode.com/contest/api/${weekname}/problems/${titleSlug}/submit/`,
+			url: `${DomainEN}/contest/api/${weekname}/problems/${titleSlug}/submit/`,
 			method: 'POST',
 			headers: {
 				'x-requested-with': 'XMLHttpRequest',
-				origin: 'https://leetcode.com',
-				referer: `https://leetcode.com/contest/${weekname}/problems/${titleSlug}/`,
+				origin: DomainEN,
+				referer: `${DomainEN}/contest/${weekname}/problems/${titleSlug}/`,
 			},
 			data: {
 				question_id: question_id,
@@ -224,11 +224,11 @@ const config = {
 		const { titleSlug, question_id, typed_code, lang = 'javascript' } = options
 		checkParams(options, ['titleSlug', 'question_id', 'typed_code'])
 		return {
-			url: `https://leetcode.com/problems/${titleSlug}/submit/`,
+			url: `${DomainEN}/problems/${titleSlug}/submit/`,
 			method: 'POST',
 			headers: {
-				referer: `https://leetcode.com/problems/${titleSlug}/submissions/`,
-				origin: 'https://leetcode.com',
+				referer: `${DomainEN}/problems/${titleSlug}/submissions/`,
+				origin: DomainEN,
 			},
 			data: {
 				question_id,
@@ -244,10 +244,10 @@ const config = {
 		const { submission_id, titleSlug } = options
 		checkParams(options, ['submission_id', 'titleSlug'])
 		return {
-			url: `https://leetcode.com/submissions/detail/${submission_id}/check/`,
+			url: `${DomainEN}/submissions/detail/${submission_id}/check/`,
 			method: 'GET',
 			headers: {
-				referer: `https://leetcode.com/problems/${titleSlug}/submissions/`,
+				referer: `${DomainEN}/problems/${titleSlug}/submissions/`,
 			},
 		}
 	},
@@ -256,10 +256,10 @@ const config = {
 		checkParams(options, ['submission_id', 'titleSlug', 'weekname'])
 
 		return {
-			url: `https://leetcode.com/submissions/detail/${submission_id}/check/`,
+			url: `${DomainEN}/submissions/detail/${submission_id}/check/`,
 			method: 'GET',
 			headers: {
-				referer: `https://leetcode.com/contest/${weekname}/problems/${titleSlug}/`,
+				referer: `${DomainEN}/contest/${weekname}/problems/${titleSlug}/`,
 				'x-requested-with': 'XMLHttpRequest',
 			},
 		}
@@ -280,7 +280,7 @@ const config = {
 	getSubmissionDetail(options: SubmissionDetailOptions): AxiosRequestConfig {
 		const { id: submission_id } = options
 		return {
-			url: `https://leetcode.com/submissions/detail/${submission_id}/`,
+			url: `${DomainEN}/submissions/detail/${submission_id}/`,
 			method: 'GET',
 			headers: {
 				'x-requested-with': 'XMLHttpRequest',
@@ -363,7 +363,7 @@ export const api = {
 	},
 }
 export async function fetchAllQuestions() {
-	const url = 'https://leetcode.com/graphql'
+	const url = `${DomainEN}/graphql`
 	const headers = await getHeaders()
 	axios.request({
 		url,

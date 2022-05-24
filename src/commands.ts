@@ -264,7 +264,7 @@ export async function switchEndpointCommand() {
 		{
 			lang: Lang.cn,
 			label: '力扣',
-			description: 'leetcode-cn.com',
+			description: 'leetcode.cn',
 			detail: '启用中国版Leetcode',
 		},
 	]

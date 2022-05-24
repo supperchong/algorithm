@@ -32,7 +32,7 @@ import { showLoginMessage } from '../login/index'
 
 import { getDb } from '../db'
 import { GraphRes } from '../model/common'
-import { log } from '../config'
+import { log, DomainCN } from '../config'
 import { sortQuestions } from '../util'
 import { uniqueArr } from '../common/util'
 export const MAPIDQUESTION = 'MapIdQuestion'
@@ -115,12 +115,12 @@ async function request<T>(config: AxiosRequestConfig): Promise<T> {
 async function graphql<T>(data: GraphqlRequestData): Promise<T> {
 	const headers = await getHeaders()
 	return request<GraphRes<T>>({
-		url: 'https://leetcode-cn.com/graphql',
+		url: `${DomainCN}/graphql`,
 		data,
 		method: 'POST',
 		headers: {
-			origin: 'https://leetcode-cn.com',
-			referer: 'https://leetcode-cn.com/problemset/all/',
+			origin: DomainCN,
+			referer: `${DomainCN}/problemset/all/`,
 			...headers,
 		},
 	}).then((res) => {
@@ -138,13 +138,13 @@ const config = {
 	},
 	getQuestionsByCategory(category: Category): AxiosRequestConfig {
 		return {
-			url: `https://leetcode-cn.com/api/problems/${category}/`,
+			url: `${DomainCN}/api/problems/${category}/`,
 			method: 'GET',
 		}
 	},
 	tags: {
-		url: 'https://leetcode-cn.com/problems/api/tags/',
-		referer: 'https://leetcode-cn.com/problemset/all/',
+		url: `${DomainCN}/problems/api/tags/`,
+		referer: `${DomainCN}/problemset/all/`,
 	},
 	contests: {
 		operationName: null,
@@ -191,7 +191,7 @@ const config = {
 	},
 	getContest(titleSlug: string): AxiosRequestConfig {
 		return {
-			url: `https://leetcode-cn.com/contest/api/info/${titleSlug}/`,
+			url: `${DomainCN}/contest/api/info/${titleSlug}/`,
 			method: 'GET',
 		}
 	},
@@ -204,10 +204,10 @@ const config = {
 	},
 	getQuestionContest(titleSlug: string, weekname: string): AxiosRequestConfig {
 		return {
-			url: `https://leetcode-cn.com/contest/${weekname}/problems/${titleSlug}/`,
+			url: `${DomainCN}/contest/${weekname}/problems/${titleSlug}/`,
 			method: 'GET',
 			headers: {
-				referer: `https://leetcode-cn.com/contest/${weekname}/`,
+				referer: `${DomainCN}/contest/${weekname}/`,
 			},
 		}
 	},
@@ -215,12 +215,12 @@ const config = {
 		const { titleSlug, weekname, question_id, typed_code } = options
 		checkParams(options, ['titleSlug', 'weekname', 'question_id', 'typed_code'])
 		return {
-			url: `https://leetcode-cn.com/contest/api/${weekname}/problems/${titleSlug}/submit/`,
+			url: `${DomainCN}/contest/api/${weekname}/problems/${titleSlug}/submit/`,
 			method: 'POST',
 			headers: {
 				'x-requested-with': 'XMLHttpRequest',
-				origin: 'https://leetcode-cn.com',
-				referer: `https://leetcode-cn.com/contest/${weekname}/problems/${titleSlug}/`,
+				origin: DomainCN,
+				referer: `${DomainCN}/contest/${weekname}/problems/${titleSlug}/`,
 			},
 			data: {
 				question_id: question_id,
@@ -236,11 +236,11 @@ const config = {
 		const { titleSlug, question_id, typed_code, lang = 'javascript' } = options
 		checkParams(options, ['titleSlug', 'question_id', 'typed_code'])
 		return {
-			url: `https://leetcode-cn.com/problems/${titleSlug}/submit/`,
+			url: `${DomainCN}/problems/${titleSlug}/submit/`,
 			method: 'POST',
 			headers: {
-				referer: `https://leetcode-cn.com/problems/${titleSlug}/submissions/`,
-				origin: 'https://leetcode-cn.com',
+				referer: `${DomainCN}/problems/${titleSlug}/submissions/`,
+				origin: DomainCN,
 			},
 			data: {
 				question_id,
@@ -256,10 +256,10 @@ const config = {
 		const { submission_id, titleSlug } = options
 		checkParams(options, ['submission_id', 'titleSlug'])
 		return {
-			url: `https://leetcode-cn.com/submissions/detail/${submission_id}/check/`,
+			url: `${DomainCN}/submissions/detail/${submission_id}/check/`,
 			method: 'GET',
 			headers: {
-				referer: `https://leetcode-cn.com/problems/${titleSlug}/submissions/`,
+				referer: `${DomainCN}/problems/${titleSlug}/submissions/`,
 			},
 		}
 	},
@@ -268,10 +268,10 @@ const config = {
 		checkParams(options, ['submission_id', 'titleSlug', 'weekname'])
 
 		return {
-			url: `https://leetcode-cn.com/submissions/detail/${submission_id}/check/`,
+			url: `${DomainCN}/submissions/detail/${submission_id}/check/`,
 			method: 'GET',
 			headers: {
-				referer: `https://leetcode-cn.com/contest/${weekname}/problems/${titleSlug}/`,
+				referer: `${DomainCN}/contest/${weekname}/problems/${titleSlug}/`,
 				'x-requested-with': 'XMLHttpRequest',
 			},
 		}

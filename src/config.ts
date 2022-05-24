@@ -23,6 +23,8 @@ const algmVersion = '0.1.9'
 const ESBUILD = 'esbuild'
 const defaultDisplayLock = false
 const defaultDataBase = DataBase.MySQL
+export const DomainCN = 'https://leetcode.cn'
+export const DomainEN = 'https://leetcode.com'
 export const log = window.createOutputChannel('algorithm')
 export const InstallState = {
 	installEsbuild: false,

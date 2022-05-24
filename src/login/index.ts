@@ -1,7 +1,7 @@
 import _request = require('request')
 import { promisify } from 'util'
 import { window } from 'vscode'
-import { config } from '../config'
+import { config, DomainCN, DomainEN } from '../config'
 import { User } from './input'
 import { writeFileAsync } from '../common/util'
 import { signInCommand } from '../commands'
@@ -166,8 +166,8 @@ async function githubRedirectBack(body: string, request: RequestAsync) {
 }
 
 export async function githubLogin(user: User) {
-	const domain = config.lang === 'en' ? 'leetcode' : 'leetcode-cn'
-	const url = `https://${domain}.com/accounts/github/login/?next=%2F`
+	const domain = config.lang === 'en' ? DomainEN : DomainCN
+	const url = `${domain}/accounts/github/login/?next=%2F`
 	// store the cookie in request
 	const j = _request.jar()
 	const request: RequestAsync = promisify(_request.defaults({ jar: j }))
@@ -192,14 +192,14 @@ export async function cookieLogin(cookie: string) {
 }
 export async function accountLogin(user: User) {
 	// not support the us website
-	const url = 'https://leetcode-cn.com/accounts/login/'
+	const url = `${DomainCN}/accounts/login/`
 	const request = promisify(_request)
 	const res = await request({
 		url,
 		method: 'POST',
 		headers: {
-			Origin: 'https://leetcode-cn.com',
-			Referer: 'https://leetcode-cn.com/accounts/login/',
+			Origin: DomainCN,
+			Referer: url,
 			Cookie: 'csrftoken=null;',
 		},
 		form: {

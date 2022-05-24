@@ -1,8 +1,8 @@
 import { Lang } from '../model/common'
-import { config } from '../config'
+import { config, DomainCN, DomainEN } from '../config'
 export enum Website {
 	Leetcode = 'https://leetcode.com',
-	LeetcodeCn = 'https://leetcode-cn.com',
+	LeetcodeCn = 'https://leetcode.cn',
 }
 export const WebsiteMap = {
 	[Lang.cn]: Website.LeetcodeCn,

@@ -40,7 +40,7 @@ An excellent vscode extension for leetcode.
 
 -   search question
 -   contain daily challenge
--   support login in https://leetcode.com/ and https://leetcode-cn.com/
+-   support login in https://leetcode.com/ and https://leetcode.cn/
 
 ## Requirements
 
@@ -102,7 +102,7 @@ press `ctrl+shift+p` and run the Command `algorithm:switch default database`
 ### current support:
 
 -   leetcode.com
--   leetcode-cn.com
+-   leetcode.cn
 
 > Note: The accounts of different endpoints are not shared.
 
@@ -111,7 +111,7 @@ press `ctrl+shift+p` and run the Command `algorithm:switch default database`
 The way to login in referred to the official extension [vscode-leetcode](https://github.com/LeetCode-OpenSource/vscode-leetcode).
 
 -   leetcode.com support github and cookie login.
--   leetcode-cn.com support account,github and cookie login.
+-   leetcode.cn support account,github and cookie login.
 
 ## Test in the file
 
@@ -191,7 +191,7 @@ open `Extensions->algorithm`,you will see the settings:
 | Auto Import Str | The string will be inserted at the beginning of the coding file                                   | ""            |
 | Base Dir        | The path of the folder to save the problem files                                                  | $HOME/.alg    |
 | Code Lang       | default code language                                                                             | JavaScript    |
-| Lang            | Specify the active endpoint.support leetcode.com and leetcode-cn.com                              | leetcode.com  |
+| Lang            | Specify the active endpoint.support leetcode.com and leetcode.cn                              | leetcode.com  |
 | Node Path       | The absolute pathname of the executable that started the Node.js process. eg: /usr/local/bin/node | node          |
 | javaPath        | The absolute pathname of java                                                                     | java          |
 | javacPath       | The absolute pathname of javac                                                                    | javac         |

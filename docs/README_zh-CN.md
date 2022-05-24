@@ -37,7 +37,7 @@ An excellent vscode extension for leetcode.
 
 -   搜索题目
 -   每日一题
--   支持同时登录 https://leetcode.com/ 和 https://leetcode-cn.com/
+-   支持同时登录 https://leetcode.com/ 和 https://leetcode.cn/
 
 ## 运行条件
 
@@ -96,7 +96,7 @@ An excellent vscode extension for leetcode.
 ### 目前支持:
 
 -   leetcode.com
--   leetcode-cn.com
+-   leetcode.cn
 
 > Note: 账户不互通.
 
@@ -105,7 +105,7 @@ An excellent vscode extension for leetcode.
 登录方式参考了官方插件 [vscode-leetcode](https://github.com/LeetCode-OpenSource/vscode-leetcode).
 
 -   leetcode.com 支持 github 和 cookie.
--   leetcode-cn.com 支持 账号密码,github 和 cookie.
+-   leetcode.cn 支持 账号密码,github 和 cookie.
 
 ## 运行测试
 
